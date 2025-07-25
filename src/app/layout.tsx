@@ -3,6 +3,7 @@ import './globals.css';
 import { ReactNode } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 
+// ✅ Properly defined metadata
 export const metadata = {
   title: 'Your App Title',
   description: 'Your app description',
