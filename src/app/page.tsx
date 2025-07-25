@@ -25,6 +25,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Badge } from '@/components/ui/badge';
+import SupplierPage from '@/app/supplier/page';
 
 type View = 'vendor' | 'supplier';
 
@@ -65,7 +66,7 @@ const Header = ({
 }) => (
   <header className="flex items-center justify-between p-4 border-b border-border">
     <div className="flex items-center gap-4">
-      <h1 className="text-xl font-semibold">Dashboard</h1>
+      <h1 className="text-xl font-semibold">Trade Flow</h1>
       <div className="flex items-center bg-card p-1 rounded-full">
         <Button
           variant={view === 'vendor' ? 'secondary' : 'ghost'}
@@ -258,7 +259,7 @@ export default function App() {
       <div className="flex-1 flex flex-col">
         <Header view={view} setView={setView} />
         <main className="flex-1 overflow-y-auto">
-          {view === 'vendor' ? <VendorDashboard /> : <div>Supplier View</div>}
+          {view === 'vendor' ? <VendorDashboard /> : <SupplierPage />}
         </main>
       </div>
     </div>
