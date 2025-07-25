@@ -37,12 +37,11 @@ const recentOrders = [
 ];
 
 const statusColors: { [key: string]: string } = {
-    Delivered: 'border-green-500/50 bg-green-500/10 text-green-400',
-    Shipped: 'border-blue-500/50 bg-blue-500/10 text-blue-400',
-    Processing: 'border-yellow-500/50 bg-yellow-500/10 text-yellow-400',
-    Cancelled: 'border-red-500/50 bg-red-500/10 text-red-400',
+  Delivered: 'border-green-500/50 bg-green-500/10 text-green-400',
+  Shipped: 'border-blue-500/50 bg-blue-500/10 text-blue-400',
+  Processing: 'border-yellow-500/50 bg-yellow-500/10 text-yellow-400',
+  Cancelled: 'border-red-500/50 bg-red-500/10 text-red-400',
 };
-
 
 export const SupplierView = () => {
   return (
@@ -79,7 +78,10 @@ export const SupplierView = () => {
                     <TableCell>{order.customer}</TableCell>
                     <TableCell>{order.amount}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={statusColors[order.status]}>
+                      <Badge
+                        variant="outline"
+                        className={statusColors[order.status]}
+                      >
                         {order.status}
                       </Badge>
                     </TableCell>
@@ -91,7 +93,7 @@ export const SupplierView = () => {
           </CardContent>
         </Card>
       </section>
-      
+
       <section id="analytics">
         <h3 className="text-xl font-semibold mb-4">Analytics</h3>
         <Card>

@@ -7,7 +7,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Star, MapPin, Calendar, ShieldCheck } from 'lucide-react';
 import { Product } from '@/app/types/product';
@@ -43,9 +42,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             />
           </div>
           <div className="space-y-4">
-            <p className="text-lg text-foreground">
-              {product.description}
-            </p>
+            <p className="text-lg text-foreground">{product.description}</p>
             <div className="flex items-center justify-between">
               <div className="text-3xl font-bold text-primary">
                 ₹{product.price}/kg
