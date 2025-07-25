@@ -1,4 +1,3 @@
-
 'use client';
 import React from 'react';
 import StatsCardsGrid from '@/components/dashboard/stats-cards-grid';
@@ -24,14 +23,14 @@ const recentOrders = [
   {
     orderId: '#ORD001',
     customer: 'Stellar Solutions',
-    amount: '$1,250.00',
+    amount: '₹1,250.00',
     status: 'Delivered',
     date: '5 days ago',
   },
   {
     orderId: '#ORD002',
     customer: 'Cosmic Co.',
-    amount: '$800.50',
+    amount: '₹800.50',
     status: 'Shipped',
     date: '2 days ago',
   },
