@@ -1,4 +1,3 @@
-
 'use client';
 import React from 'react';
 import {
@@ -24,12 +23,12 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 }) => {
   return (
     <Dialog open={true} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] md:max-w-[600px] bg-white dark:bg-gray-900 rounded-lg shadow-2xl">
+      <DialogContent className="sm:max-w-[425px] md:max-w-[600px] bg-secondary rounded-lg shadow-2xl border-border">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+          <DialogTitle className="text-2xl font-bold text-foreground">
             {product.name}
           </DialogTitle>
-          <DialogDescription className="text-gray-500 dark:text-gray-400">
+          <DialogDescription className="text-muted-foreground">
             Detailed information about the product.
           </DialogDescription>
         </DialogHeader>
@@ -44,22 +43,22 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             />
           </div>
           <div className="space-y-4">
-            <p className="text-lg text-gray-800 dark:text-gray-200">
+            <p className="text-lg text-foreground">
               {product.description}
             </p>
             <div className="flex items-center justify-between">
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+              <div className="text-3xl font-bold text-primary">
                 ₹{product.price}/kg
               </div>
               <div className="flex items-center gap-2 text-lg">
                 <Star className="w-6 h-6 text-yellow-500" />
-                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                <span className="font-semibold text-foreground">
                   {product.rating}/5
                 </span>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <MapPin className="h-5 w-5" />
                 <span>{product.farmLocation}</span>
               </div>
@@ -71,13 +70,13 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 <span>Stock: {product.stock} kg</span>
               </div>
               {product.expiryDate && (
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <Calendar className="h-5 w-5" />
                   <span>Expires on: {product.expiryDate}</span>
                 </div>
               )}
               {product.isFssaiCertified && (
-                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold">
+                <div className="flex items-center gap-2 text-blue-400 font-semibold">
                   <ShieldCheck className="h-5 w-5" />
                   <span>FSSAI Certified</span>
                 </div>
