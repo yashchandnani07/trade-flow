@@ -10,20 +10,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  BarChart,
   Bell,
   CheckCircle,
-  ChevronRight,
-  ClipboardList,
   Flame,
   Gavel,
   Gem,
-  Megaphone,
-  MessageSquare,
   ShieldCheck,
   Star,
   Trophy,
-  Users,
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 

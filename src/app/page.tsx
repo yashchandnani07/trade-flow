@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { SupplierView } from './supplier/supplier-view';
 import { RestaurantView } from './restaurant/restaurant-view';
-import { Building, Wheat, Moon, Sun } from 'lucide-react';
+import { Building, Wheat } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function App() {
