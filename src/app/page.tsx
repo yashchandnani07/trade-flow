@@ -251,7 +251,7 @@ const VendorDashboard = () => (
 );
 
 export default function App() {
-  const [view, setView] = useState<View>('vendor');
+  const [view, setView] = useState<View>('supplier');
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
