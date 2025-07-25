@@ -7,8 +7,8 @@ import ComplianceStatus from './components/compliance-status';
 
 export default function SupplierPage() {
   return (
-    <div className="p-6 space-y-6 bg-gray-50/50 dark:bg-card">
-      <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+    <div className="p-6 space-y-6">
+      <h2 className="text-2xl font-bold">
         Supplier Dashboard
       </h2>
       <KeyMetrics />
@@ -16,9 +16,9 @@ export default function SupplierPage() {
         <div className="lg:col-span-2 space-y-6">
           <TrustBadges />
           <OrderManagement />
-          <BiddingDashboard />
         </div>
         <div className="space-y-6">
+          <BiddingDashboard />
           <FactoryDiary />
           <ComplianceStatus />
         </div>

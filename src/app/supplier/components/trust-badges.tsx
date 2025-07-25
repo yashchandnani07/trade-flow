@@ -39,7 +39,7 @@ const badges = [
 const TrustBadges = () => {
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Trust Badges</h3>
+      <h3 className="text-lg font-semibold mb-4">Trust Badges</h3>
       <Carousel
         opts={{
           align: 'start',
@@ -51,19 +51,19 @@ const TrustBadges = () => {
           {badges.map((badge, index) => (
             <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
               <div className="p-1">
-                <Card className={`bg-white dark:bg-gray-800 border-2 ${badge.borderColor} shadow-md`}>
+                <Card className={`bg-secondary border-2 ${badge.borderColor} shadow-md transition-transform hover:scale-105`}>
                   <CardContent className="flex flex-col items-center justify-center p-6 space-y-2">
                     {badge.icon}
-                    <p className="font-semibold text-gray-800 dark:text-white">{badge.title}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{badge.date}</p>
+                    <p className="font-semibold">{badge.title}</p>
+                    <p className="text-xs text-muted-foreground">{badge.date}</p>
                   </CardContent>
                 </Card>
               </div>
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious />
-        <CarouselNext />
+        <CarouselPrevious className="hidden sm:flex" />
+        <CarouselNext className="hidden sm:flex" />
       </Carousel>
     </div>
   );

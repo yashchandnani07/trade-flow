@@ -16,7 +16,7 @@ const orders = {
         { status: 'Order Placed', time: 'Jun 20, 10:30 AM', completed: true },
         { status: 'Vendor Confirmed', time: 'Jun 20, 11:00 AM', completed: true },
         { status: 'In Production', time: 'Started Jun 21, 9:00 AM', completed: true },
-        { status: 'Quality Check', time: 'Current', completed: false },
+        { status: 'Quality Check', time: 'Current', completed: false, current: true },
       ],
     },
      {
@@ -30,7 +30,7 @@ const orders = {
         { status: 'Vendor Confirmed', time: 'Jun 18, 2:30 PM', completed: true },
         { status: 'In Production', time: 'Started Jun 19, 8:00 AM', completed: true },
         { status: 'Quality Check', time: 'Completed Jun 20, 5:00 PM', completed: true },
-        { status: 'Shipped', time: 'Current', completed: false },
+        { status: 'Shipped', time: 'Current', completed: false, current: true },
       ],
     },
   ],
@@ -44,27 +44,27 @@ const orders = {
 const getStatusClass = (status: string) => {
   switch (status) {
     case 'Processing':
-      return 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700';
+      return 'text-blue-400 border-blue-400/50';
     case 'Shipped':
-      return 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/50 dark:text-purple-300 dark:border-purple-700';
+      return 'text-purple-400 border-purple-400/50';
     case 'Delivered':
-      return 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700';
+      return 'text-green-400 border-green-400/50';
     case 'Cancelled':
-      return 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/50 dark:text-red-300 dark:border-red-700';
+      return 'text-red-400 border-red-400/50';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'text-muted-foreground border-muted-foreground/50';
   }
 };
 
 const OrderCard = ({ order }: { order: any }) => (
-  <Card className="bg-white dark:bg-gray-800 shadow-md mb-4">
+  <Card className="bg-secondary mb-4">
     <CardContent className="p-4">
       <div className="flex justify-between items-start">
         <div>
-          <p className="font-semibold text-gray-800 dark:text-white">
-            Order {order.id} <span className="text-gray-500 dark:text-gray-400">•</span> {order.supplier}
+          <p className="font-semibold">
+            Order {order.id} <span className="text-muted-foreground">•</span> {order.supplier}
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             {order.amount} • {order.date}
           </p>
         </div>
@@ -72,15 +72,15 @@ const OrderCard = ({ order }: { order: any }) => (
       </div>
       {order.timeline && (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Order Timeline:</p>
+          <p className="text-sm font-semibold text-muted-foreground mb-2">Order Timeline:</p>
           <div className="flex flex-col space-y-2 text-xs">
             {order.timeline.map((item: any, index: number) => (
               <div key={index} className="flex items-center">
-                <div className={`w-3 h-3 rounded-full mr-3 ${item.completed ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
-                <span className={`font-medium ${item.completed ? 'text-gray-700 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'}`}>
+                <div className={`w-3 h-3 rounded-full mr-3 ${item.completed ? 'bg-primary' : 'bg-muted-foreground/50'} ${item.current ? 'animate-pulse' : ''}`}></div>
+                <span className={`font-medium ${item.completed ? 'text-foreground' : 'text-muted-foreground'}`}>
                   {item.status}
                 </span>
-                <span className="ml-auto text-gray-500 dark:text-gray-400">{item.time}</span>
+                <span className="ml-auto text-muted-foreground">{item.time}</span>
               </div>
             ))}
           </div>
@@ -94,30 +94,34 @@ const OrderManagement = () => {
   const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
 
   return (
-    <div>
-      <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Order Management</h3>
-      <div className="flex space-x-2 mb-4">
-        <Button
-          variant={activeTab === 'active' ? 'secondary' : 'ghost'}
-          onClick={() => setActiveTab('active')}
-          className="rounded-full"
-        >
-          Active Orders
-        </Button>
-        <Button
-          variant={activeTab === 'history' ? 'secondary' : 'ghost'}
-          onClick={() => setActiveTab('history')}
-           className="rounded-full"
-        >
-          Order History
-        </Button>
-      </div>
-      <div>
-        {orders[activeTab].map((order) => (
-          <OrderCard key={order.id} order={order} />
-        ))}
-      </div>
-    </div>
+    <Card className="bg-card-gradient">
+        <CardHeader>
+            <CardTitle>Order Management</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <div className="flex space-x-2 mb-4 border-b border-border">
+                <Button
+                variant={activeTab === 'active' ? 'ghost' : 'ghost'}
+                onClick={() => setActiveTab('active')}
+                className={`rounded-none border-b-2 ${activeTab === 'active' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}
+                >
+                Active Orders
+                </Button>
+                <Button
+                variant={activeTab === 'history' ? 'ghost' : 'ghost'}
+                onClick={() => setActiveTab('history')}
+                className={`rounded-none border-b-2 ${activeTab === 'history' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}
+                >
+                Order History
+                </Button>
+            </div>
+            <div>
+                {orders[activeTab].map((order) => (
+                <OrderCard key={order.id} order={order} />
+                ))}
+            </div>
+        </CardContent>
+    </Card>
   );
 };
 
