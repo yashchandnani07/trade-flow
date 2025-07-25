@@ -4,8 +4,8 @@ import { ReactNode } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata = {
-  title: 'AgriConnect',
-  description: 'Connecting Suppliers and Restaurants',
+  title: 'Trade Flow',
+  description: 'Streamlining Supply Chains',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
