@@ -28,7 +28,7 @@ interface AuthContextType {
   sendOtp: (phoneNumber: string, router: AppRouterInstance) => Promise<void>;
   verifyOtp: (otp: string) => Promise<void>;
   signup: (otp: string, phoneNumber: string, additionalData: { role: Role; businessName: string }, router: AppRouterInstance) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: (router: AppRouterInstance) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,20 +53,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   
-  const setupRecaptcha = useCallback(() => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': (response: any) => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-        },
-        'expired-callback': () => {
-          // Response expired. Ask user to solve reCAPTCHA again.
-        }
-      });
-    }
-  }, []);
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
@@ -78,6 +64,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 ...userData
             });
         } else {
+            // This case might happen if user is created in Auth but not in Firestore
+            console.log("User exists in Auth but not in Firestore. Logging out.");
             await signOut(auth);
             setUser(null);
         }
@@ -92,16 +80,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const sendOtp = async (phoneNumber: string, router: AppRouterInstance) => {
     try {
-        setupRecaptcha();
-        const appVerifier = window.recaptchaVerifier!;
+        if (!window.recaptchaVerifier) {
+            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                'size': 'invisible',
+                'callback': (response: any) => {
+                  console.log("reCAPTCHA solved, proceeding with OTP");
+                },
+                'expired-callback': () => {
+                   console.log("reCAPTCHA expired, please try again");
+                }
+            });
+        }
+        const appVerifier = window.recaptchaVerifier;
         const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
         window.confirmationResult = confirmationResult;
     } catch(error) {
-        console.error("Error sending OTP:", error);
+        console.error("Full error object sending OTP:", error);
         if (error instanceof FirebaseError) {
           if (error.code === 'auth/invalid-phone-number') {
             throw new Error('The phone number is not valid.');
           }
+           throw new Error(`Firebase error: ${error.message} (Code: ${error.code})`);
         }
         throw new Error('An unexpected error occurred while sending the OTP.');
     }
@@ -140,12 +139,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         points: 0,
       });
 
-      // Let onAuthStateChanged handle setting user state, and then redirect
-      if (additionalData.role === 'supplier') {
-        router.push('/supplier-dashboard');
-      } else {
-        router.push('/dashboard');
-      }
     } catch(error) {
         if (error instanceof FirebaseError) {
           if (error.code === 'auth/invalid-verification-code') {
@@ -168,7 +161,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     sendOtp,
     verifyOtp,
     signup,
-    logout: (router: AppRouterInstance) => logout(router),
+    logout,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
