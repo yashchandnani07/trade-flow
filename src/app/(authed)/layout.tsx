@@ -47,7 +47,7 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
           <AppSidebar />
           <div className="flex flex-col flex-1">
             <AppHeader />
-            <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+            <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8" style={{ scrollBehavior: 'smooth' }}>
               {children}
             </main>
           </div>
