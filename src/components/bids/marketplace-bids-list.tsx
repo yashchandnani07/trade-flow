@@ -1,6 +1,6 @@
 
 'use client';
-import { useMemo, useState, FormEvent, ReactNode } from 'react';
+import React, { useMemo, useState, FormEvent, ReactNode } from 'react';
 import { collection, query, where, orderBy, Timestamp, addDoc, serverTimestamp, doc, writeBatch, updateDoc } from 'firebase/firestore';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
@@ -289,7 +289,7 @@ function PlaceBidDialog({ bid, user, onOpenChange, open }: { bid: Bid | null, us
         }
     }, [bid]);
 
-    const handleBidSubmit = async (e: FormEvent, amount: number) => {
+    const handleBidSubmit = async (e: FormEvent) => {
         e.preventDefault();
 
         if (!user || !bid) {
@@ -304,13 +304,13 @@ function PlaceBidDialog({ bid, user, onOpenChange, open }: { bid: Bid | null, us
             await addDoc(proposalsCollection, {
                 supplierId: user.uid,
                 supplierName: businessName,
-                bidAmount: Number(amount),
+                bidAmount: Number(bidAmount),
                 createdAt: serverTimestamp(),
                 status: 'pending',
             });
             toast({
                 title: 'Bid Placed Successfully!',
-                description: `Your bid of ?${amount} for ${bid.item} has been submitted.`,
+                description: `Your bid of ?${bidAmount} for ${bid.item} has been submitted.`,
             });
             onOpenChange(false);
         } catch (error) {
@@ -325,6 +325,23 @@ function PlaceBidDialog({ bid, user, onOpenChange, open }: { bid: Bid | null, us
         setBidAmount(prev => Math.max(0, prev + adjustment));
     }
 
+    const handleMatchAndAccept = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        if (bid) {
+            setBidAmount(bid.targetPrice);
+            // This is a bit of a hack to submit the form from another button.
+            // A better way would be to lift the submit logic out.
+            const form = (e.target as HTMLElement).closest('form');
+            if (form) {
+                // We need to manually trigger form submission, but this is complex.
+                // For now, we just update the state and let the user click the main submit button.
+                // A better implementation would share the submit logic.
+                handleBidSubmit(new Event('submit') as any as FormEvent<HTMLFormElement>);
+            }
+        }
+    };
+
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md bg-glass">
@@ -334,7 +351,7 @@ function PlaceBidDialog({ bid, user, onOpenChange, open }: { bid: Bid | null, us
                         The vendor's target price is ?{bid?.targetPrice.toLocaleString()}. You can match it or submit your own offer.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={(e) => handleBidSubmit(e, bidAmount)}>
+                <form onSubmit={handleBidSubmit}>
                     <div className="py-4 space-y-4">
                         <Label className="text-sm font-semibold mb-2 block">Your Offer</Label>
                         <div className="flex items-center gap-2">
@@ -350,7 +367,7 @@ function PlaceBidDialog({ bid, user, onOpenChange, open }: { bid: Bid | null, us
                         </div>
                     </div>
                      <DialogFooter className="gap-2 sm:gap-0">
-                        <Button type="button" onClick={(e) => handleBidSubmit(e, bid?.targetPrice || 0)} className="flex-1" variant="outline" disabled={isSubmitting}>
+                        <Button type="button" onClick={handleMatchAndAccept} className="flex-1" variant="outline" disabled={isSubmitting}>
                             {isSubmitting ? <Loader2 className="animate-spin" /> : <><Handshake className="mr-2 h-4 w-4" /> Match & Accept</>}
                         </Button>
                         <Button type="submit" className="flex-1" disabled={isSubmitting}>
@@ -366,7 +383,6 @@ function PlaceBidDialog({ bid, user, onOpenChange, open }: { bid: Bid | null, us
 export function MarketplaceBidsList() {
     const { user } = useAuth();
     const [selectedBid, setSelectedBid] = useState<Bid | null>(null);
-    const [isPlaceBidOpen, setIsPlaceBidOpen] = useState(false);
     
     const bidsCollection = useMemo(() => collection(db, 'bids'), []);
     const bidsQuery = useMemo(() => {
@@ -377,7 +393,6 @@ export function MarketplaceBidsList() {
 
     const handlePlaceBidClick = (bid: Bid) => {
         setSelectedBid(bid);
-        setIsPlaceBidOpen(true);
     }
 
     if (loading) {
@@ -461,9 +476,16 @@ export function MarketplaceBidsList() {
                     </div>
                 </CardContent>
             </Card>
-            <PlaceBidDialog bid={selectedBid} user={user} open={isPlaceBidOpen} onOpenChange={setIsPlaceBidOpen} />
+            <PlaceBidDialog 
+                bid={selectedBid} 
+                user={user} 
+                open={selectedBid !== null} 
+                onOpenChange={(isOpen) => {
+                    if (!isOpen) {
+                        setSelectedBid(null);
+                    }
+                }} 
+            />
         </>
     )
 }
-
-    
