@@ -13,24 +13,24 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  // useEffect(() => {
-  //   // Wait until the loading is complete before checking for a user.
-  //   if (!loading) {
-  //     if (!user) {
-  //       // If there's no user, always redirect to the root page.
-  //       router.replace('/');
-  //     } else {
-  //       // Handle role-based redirects only when a user is confirmed.
-  //       const isSupplierDashboard = window.location.pathname.startsWith('/supplier-dashboard');
-  //       const isVendorArea = window.location.pathname.startsWith('/dashboard') || window.location.pathname.startsWith('/bidding') || window.location.pathname.startsWith('/supplier');
-  //       if (user.role === 'supplier' && !isSupplierDashboard) {
-  //           router.replace('/supplier-dashboard');
-  //       } else if (user.role !== 'supplier' && isSupplierDashboard) {
-  //            router.replace('/dashboard');
-  //       }
-  //     }
-  //   }
-  // }, [user, loading, router]);
+  useEffect(() => {
+    // Wait until the loading is complete before checking for a user.
+    if (!loading) {
+      if (!user) {
+        // If there's no user, always redirect to the root page.
+        router.replace('/');
+      } else {
+        // Handle role-based redirects only when a user is confirmed.
+        const isSupplierDashboard = window.location.pathname.startsWith('/supplier-dashboard');
+        const isVendorArea = window.location.pathname.startsWith('/dashboard') || window.location.pathname.startsWith('/bidding') || window.location.pathname.startsWith('/supplier');
+        if (user.role === 'supplier' && !isSupplierDashboard) {
+            router.replace('/supplier-dashboard');
+        } else if (user.role !== 'supplier' && isSupplierDashboard) {
+             router.replace('/dashboard');
+        }
+      }
+    }
+  }, [user, loading, router]);
 
   if (loading) {
     return (

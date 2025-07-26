@@ -9,14 +9,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
 import {
   Shield,
   Package,
   Wheat,
   Store,
-  Phone,
   Check,
   Star,
   Users,
@@ -35,7 +35,9 @@ import {
   ThumbsUp,
   Award,
   Leaf,
-  UserCheck,
+  Mail,
+  KeyRound,
+  Loader2,
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -43,16 +45,15 @@ import Image from "next/image";
 import { Role } from "@/lib/types";
 import { FirebaseError } from "firebase/app";
 
-const countries = [
-  { code: "+1", flag: "🇺🇸", name: "United States" },
-  { code: "+52", flag: "🇲🇽", name: "Mexico" },
-  { code: "+91", flag: "🇮🇳", name: "India" },
-  { code: "+86", flag: "🇨🇳", name: "China" },
-  { code: "+44", flag: "🇬🇧", name: "United Kingdom" },
-  { code: "+49", flag: "🇩🇪", name: "Germany" },
-  { code: "+33", flag: "🇫🇷", name: "France" },
-  { code: "+55", flag: "🇧🇷", name: "Brazil" },
-]
+const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="24px" height="24px" {...props}>
+        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.655-3.373-11.303-8H6.306C9.656,39.663,16.318,44,24,44z" />
+        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C39.901,35.636,44,30.138,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+    </svg>
+);
+
 
 const roles: {id: Role, title: string, description: string, icon: React.ElementType, color: string, emoji: string}[] = [
   {
@@ -166,20 +167,17 @@ const testimonials = [
 ]
 
 export default function SupplyChainConnect() {
-  const [selectedCountry, setSelectedCountry] = useState("+91")
-  const [phoneNumber, setPhoneNumber] = useState("")
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [businessName, setBusinessName] = useState("");
-  const [selectedRole, setSelectedRole] = useState<Role | ''>("")
-  const [showOTP, setShowOTP] = useState(false)
-  const [otp, setOtp] = useState(["", "", "", "", "", ""])
-  const [isLoading, setIsLoading] = useState(false)
-  const [isVerified, setIsVerified] = useState(false)
-  const [stats, setStats] = useState({ users: 0, successRate: 0, volume: 0 })
-  const [currentTestimonial, setCurrentTestimonial] = useState(0)
+  const [selectedRole, setSelectedRole] = useState<Role | ''>("vendor");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [stats, setStats] = useState({ users: 0, successRate: 0, volume: 0 });
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
 
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([])
   const router = useRouter();
-  const { sendOtp, signup, user } = useAuth();
+  const { user, signupWithEmail, loginWithEmail, signInWithGoogle } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -228,78 +226,68 @@ export default function SupplyChainConnect() {
     return () => clearInterval(interval)
   }, [])
 
-  const handlePhoneChange = (value: string) => {
-    const cleaned = value.replace(/\D/g, "")
-    setPhoneNumber(cleaned);
-  }
-
-  const handleOTPChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return
-
-    const newOtp = [...otp]
-    newOtp[index] = value
-    setOtp(newOtp)
-
-    if (value && index < 5) {
-      otpRefs.current[index + 1]?.focus()
-    }
-  }
-
-  const handleOTPKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus()
-    }
-  }
-
- const handleSendOTP = async () => {
-    if (!phoneNumber || !selectedRole || !businessName) {
-      toast({ variant: "destructive", title: "Missing Information", description: "Please fill out all fields." });
+  const handleEmailSubmit = async (e: React.FormEvent, type: 'login' | 'signup') => {
+    e.preventDefault();
+    if (!email || !password || (type === 'signup' && (!businessName || !selectedRole))) {
+      toast({ variant: 'destructive', title: "Missing Information", description: "Please fill out all required fields." });
       return;
     }
-    
+
     setIsLoading(true);
     try {
-      const fullNumber = selectedCountry + phoneNumber;
-      await sendOtp(fullNumber, router);
-      setShowOTP(true);
-      toast({ title: "OTP Sent", description: `A verification code has been sent to ${fullNumber}.` });
+      if (type === 'signup') {
+        await signupWithEmail(email, password, { role: selectedRole as Role, businessName });
+        toast({ title: "Welcome!", description: "Your account has been created successfully." });
+      } else {
+        await loginWithEmail(email, password);
+        toast({ title: "Welcome Back!", description: "You have successfully logged in." });
+      }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-      toast({ variant: "destructive", title: "Failed to send OTP", description: errorMessage });
+      let message = "An unknown error occurred.";
+      if (error instanceof FirebaseError) {
+          switch (error.code) {
+              case 'auth/email-already-in-use':
+                  message = 'This email is already in use. Please log in.';
+                  break;
+              case 'auth/invalid-email':
+                  message = 'Please enter a valid email address.';
+                  break;
+              case 'auth/weak-password':
+                  message = 'Password should be at least 6 characters.';
+                  break;
+              case 'auth/user-not-found':
+              case 'auth/wrong-password':
+              case 'auth/invalid-credential':
+                  message = 'Invalid email or password.';
+                  break;
+              default:
+                  message = `An error occurred: ${error.message}`;
+          }
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      toast({ variant: "destructive", title: "Authentication Failed", description: message });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleVerifyOTPAndSignup = async () => {
-    const otpCode = otp.join('');
-    if (otpCode.length !== 6 || !selectedRole) {
-        toast({ variant: "destructive", title: "Invalid Input", description: "Please enter the full 6-digit OTP and select a role." });
-        return;
+  }
+  
+  const handleGoogleSignIn = async () => {
+    if (!selectedRole) {
+      toast({ variant: "destructive", title: "Role not selected", description: "Please select your role before signing in." });
+      return;
     }
-
-    setIsLoading(true);
+    setIsGoogleLoading(true);
     try {
-        const fullNumber = selectedCountry + phoneNumber;
-        await signup(otpCode, fullNumber, { role: selectedRole, businessName }, router);
-        setIsVerified(true);
-        toast({ title: "Welcome!", description: "Your account has been created successfully." });
+      await signInWithGoogle({ role: selectedRole, businessName: '' }); // Let's auto-generate a business name from their Google name if needed
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        toast({ variant: "destructive", title: "Verification Failed", description: errorMessage });
+       const message = error instanceof Error ? error.message : "An unknown error occurred with Google Sign-In.";
+       toast({ variant: "destructive", title: "Google Sign-In Failed", description: message });
     } finally {
-        setIsLoading(false);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!showOTP) {
-        handleSendOTP();
-    } else {
-        handleVerifyOTPAndSignup();
+      setIsGoogleLoading(false);
     }
   }
+
 
   const handleStartForFree = () => {
     const formSection = document.getElementById('signup-form');
@@ -308,7 +296,6 @@ export default function SupplyChainConnect() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-hidden">
-        <div id="recaptcha-container" />
       <div className="fixed inset-0 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700">
           <div className="absolute inset-0 opacity-5">
@@ -423,196 +410,76 @@ export default function SupplyChainConnect() {
               <div className="mx-auto w-full max-w-md" id="signup-form">
                 <Card className="bg-gradient-to-br from-slate-800/60 to-slate-700/60 backdrop-blur-2xl border border-slate-600/50 shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
                   <CardContent className="p-8">
-                    <div className="text-center mb-8">
-                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-purple-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg animate-pulse">
-                        <Shield className="w-8 h-8 text-white" />
-                      </div>
-                      <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2">
-                        Join the Network
-                      </h2>
-                      <p className="text-slate-400">Secure phone verification in seconds</p>
-                    </div>
-
-                    {isVerified ? (
-                      <div className="text-center space-y-6">
-                        <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full flex items-center justify-center mx-auto shadow-lg animate-bounce">
-                          <Check className="w-10 h-10 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-2xl font-bold text-emerald-400 mb-2">Welcome!</h3>
-                          <p className="text-slate-300">Your account has been verified successfully.</p>
-                        </div>
-                        <Button onClick={() => router.push('/dashboard')} className="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white py-4 rounded-xl shadow-lg">
-                          <ArrowRight className="w-5 h-5 mr-2" />
-                          Continue to Dashboard
-                        </Button>
-                      </div>
-                    ) : (
-                      <form onSubmit={handleSubmit} className="space-y-6">
-                        {!showOTP ? (
-                          <>
-                           <div className="space-y-2">
-                                <Label htmlFor="businessName" className="text-sm font-semibold text-white flex items-center">
-                                    <Store className="w-4 h-4 mr-2" />
-                                    Business Name
-                                </Label>
-                                <Input
-                                    id="businessName"
-                                    type="text"
-                                    value={businessName}
-                                    onChange={(e) => setBusinessName(e.target.value)}
-                                    placeholder="e.g., Acme Fresh Produce"
-                                    className="bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 focus:ring-0"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="country" className="text-sm font-semibold text-white flex items-center">
-                                <Globe className="w-4 h-4 mr-2" />
-                                Country
-                              </Label>
-                              <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-                                <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50 transition-colors">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="bg-slate-800 border-slate-700">
-                                  {countries.map((country) => (
-                                    <SelectItem
-                                      key={country.code}
-                                      value={country.code}
-                                      className="text-white hover:bg-slate-700"
-                                    >
-                                      {country.flag} {country.name} ({country.code})
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label htmlFor="phone" className="text-sm font-semibold text-white flex items-center">
-                                <Phone className="w-4 h-4 mr-2" />
-                                Phone Number
-                              </Label>
-                              <div className="flex rounded-xl overflow-hidden border border-slate-600 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all hover:border-slate-500">
-                                <span className="inline-flex items-center px-4 bg-slate-700/50 text-slate-300 font-mono">
-                                  {selectedCountry}
-                                </span>
-                                <Input
-                                  id="phone"
-                                  type="tel"
-                                  value={phoneNumber}
-                                  onChange={(e) => handlePhoneChange(e.target.value)}
-                                  placeholder="5551234567"
-                                  className="flex-1 bg-slate-700/50 border-0 text-white placeholder-slate-400 focus:ring-0"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="space-y-3">
-                              <Label className="text-sm font-semibold text-white flex items-center">
-                                <Target className="w-4 h-4 mr-2" />
-                                Select Your Role
-                              </Label>
-                              <div className="space-y-3">
-                                {roles.map((role) => (
-                                  <div
-                                    key={role.id}
-                                    onClick={() => setSelectedRole(role.id)}
-                                    className={`relative flex items-center p-4 rounded-xl cursor-pointer transition-all duration-300 hover:scale-[1.02] group ${
-                                      selectedRole === role.id
-                                        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-2 border-blue-500/50 shadow-lg shadow-blue-500/25"
-                                        : "bg-slate-700/30 border border-slate-600 hover:border-slate-500 hover:bg-slate-600/30"
-                                    }`}
-                                  >
-                                    <div
-                                      className={`w-12 h-12 rounded-xl flex items-center justify-center mr-4 text-2xl bg-gradient-to-br ${role.color} group-hover:scale-110 transition-transform duration-300`}
-                                    >
-                                      {role.emoji}
-                                    </div>
-                                    <div className="flex-1">
-                                      <div className="font-semibold text-white">{role.title}</div>
-                                      <div className="text-sm text-slate-400">{role.description}</div>
-                                    </div>
-                                    <div
-                                      className={`w-6 h-6 rounded-full border-2 transition-all ${
-                                        selectedRole === role.id
-                                          ? "border-blue-500 bg-blue-500 shadow-lg"
-                                          : "border-slate-500"
-                                      }`}
-                                    >
-                                      {selectedRole === role.id && (
-                                        <div className="w-2 h-2 bg-white rounded-full m-auto mt-1" />
-                                      )}
-                                    </div>
+                    <Tabs defaultValue="signup" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 bg-slate-700/50 border-slate-600">
+                            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                            <TabsTrigger value="login">Log In</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="signup" className="space-y-6 pt-6">
+                            <form onSubmit={(e) => handleEmailSubmit(e, 'signup')} className="space-y-4">
+                               <div className="space-y-2">
+                                    <Label htmlFor="signup-email" className="text-sm font-semibold text-white flex items-center"><Mail className="w-4 h-4 mr-2" />Email Address</Label>
+                                    <Input id="signup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 focus:ring-0" required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="signup-password" className="text-sm font-semibold text-white flex items-center"><KeyRound className="w-4 h-4 mr-2" />Password</Label>
+                                    <Input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 focus:ring-0" required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="businessName" className="text-sm font-semibold text-white flex items-center"><Store className="w-4 h-4 mr-2" />Business Name</Label>
+                                    <Input id="businessName" type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="e.g., Acme Fresh Produce" className="bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 focus:ring-0" required />
+                                </div>
+                                <div className="space-y-3">
+                                  <Label className="text-sm font-semibold text-white flex items-center"><Target className="w-4 h-4 mr-2" />Select Your Role</Label>
+                                  <div className="space-y-3">
+                                    {roles.map((role) => (
+                                      <div key={role.id} onClick={() => setSelectedRole(role.id)} className={`relative flex items-center p-4 rounded-xl cursor-pointer transition-all duration-300 hover:scale-[1.02] group ${selectedRole === role.id ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-2 border-blue-500/50 shadow-lg shadow-blue-500/25" : "bg-slate-700/30 border border-slate-600 hover:border-slate-500 hover:bg-slate-600/30"}`}>
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center mr-4 text-2xl bg-gradient-to-br ${role.color} group-hover:scale-110 transition-transform duration-300`}>{role.emoji}</div>
+                                        <div className="flex-1">
+                                          <div className="font-semibold text-white">{role.title}</div>
+                                          <div className="text-sm text-slate-400">{role.description}</div>
+                                        </div>
+                                        <div className={`w-6 h-6 rounded-full border-2 transition-all ${selectedRole === role.id ? "border-blue-500 bg-blue-500 shadow-lg" : "border-slate-500"}`}>{selectedRole === role.id && (<div className="w-2 h-2 bg-white rounded-full m-auto mt-1" />)}</div>
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
+                                </div>
+                                <Button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl shadow-lg">
+                                  {isLoading ? <Loader2 className="animate-spin" /> : "Create Account"}
+                                </Button>
+                            </form>
+                             <div className="relative my-4">
+                                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-600" /></div>
+                                <div className="relative flex justify-center text-xs uppercase"><span className="bg-slate-800/80 px-2 text-slate-400 backdrop-blur-sm">Or continue with</span></div>
                             </div>
-                          </>
-                        ) : (
-                          <div className="space-y-6">
-                            <div className="text-center">
-                              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                                <Phone className="w-8 h-8 text-white" />
-                              </div>
-                              <h3 className="text-xl font-semibold text-white mb-2">Enter Verification Code</h3>
-                              <p className="text-slate-400">We sent a 6-digit code to your phone</p>
+                            <Button variant="outline" onClick={handleGoogleSignIn} disabled={isGoogleLoading || !selectedRole} className="w-full bg-slate-700/50 border-slate-600 hover:bg-slate-600/50">
+                                {isGoogleLoading ? <Loader2 className="animate-spin" /> : <><GoogleIcon className="mr-2" />Sign Up with Google</>}
+                            </Button>
+                        </TabsContent>
+                        <TabsContent value="login" className="space-y-6 pt-6">
+                            <form onSubmit={(e) => handleEmailSubmit(e, 'login')} className="space-y-4">
+                               <div className="space-y-2">
+                                    <Label htmlFor="login-email" className="text-sm font-semibold text-white flex items-center"><Mail className="w-4 h-4 mr-2" />Email Address</Label>
+                                    <Input id="login-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 focus:ring-0" required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="login-password" className="text-sm font-semibold text-white flex items-center"><KeyRound className="w-4 h-4 mr-2" />Password</Label>
+                                    <Input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 focus:ring-0" required />
+                                </div>
+                                <Button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl shadow-lg">
+                                    {isLoading ? <Loader2 className="animate-spin" /> : "Log In"}
+                                </Button>
+                            </form>
+                             <div className="relative my-4">
+                                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-600" /></div>
+                                <div className="relative flex justify-center text-xs uppercase"><span className="bg-slate-800/80 px-2 text-slate-400 backdrop-blur-sm">Or log in with</span></div>
                             </div>
-
-                            <div className="flex justify-center space-x-3">
-                              {otp.map((digit, index) => (
-                                <Input
-                                  key={index}
-                                  ref={(el) => (otpRefs.current[index] = el)}
-                                  type="text"
-                                  maxLength={1}
-                                  value={digit}
-                                  onChange={(e) => handleOTPChange(index, e.target.value)}
-                                  onKeyDown={(e) => handleOTPKeyDown(index, e)}
-                                  className="w-12 h-12 text-center text-xl font-bold bg-slate-700/50 border-slate-600 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:bg-slate-600/50 transition-colors"
-                                />
-                              ))}
-                            </div>
-
-                            <div className="text-center">
-                              <p className="text-sm text-slate-400 mb-2">Did not you receive the code?</p>
-                              <Button variant="link" className="text-blue-400 hover:text-blue-300 p-0" onClick={handleSendOTP}>
-                                Resend Code
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="flex items-center justify-center space-x-6 text-xs text-slate-400 py-4 bg-slate-800/30 rounded-lg">
-                          <div className="flex items-center">
-                            <Shield className="w-4 h-4 mr-1 text-emerald-400" />
-                            <span>Firebase Authenticated</span>
-                          </div>
-                          <div className="flex items-center">
-                            <Lock className="w-4 h-4 mr-1 text-emerald-400" />
-                            <span>Secure</span>
-                          </div>
-                        </div>
-
-                        <Button
-                          type="submit"
-                          disabled={isLoading || ((!phoneNumber || !selectedRole) && !showOTP)}
-                          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                        >
-                          {isLoading ? (
-                            <div className="flex items-center justify-center">
-                              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                              {showOTP ? "Verifying..." : "Sending OTP..."}
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-center">
-                              <span>{showOTP ? "Verify Code" : "Send OTP"}</span>
-                              <ArrowRight className="w-5 h-5 ml-2" />
-                            </div>
-                          )}
-                        </Button>
-
-                        <p className="text-xs text-slate-400 text-center leading-relaxed bg-slate-800/20 p-3 rounded-lg">
+                            <Button variant="outline" onClick={handleGoogleSignIn} disabled={isGoogleLoading} className="w-full bg-slate-700/50 border-slate-600 hover:bg-slate-600/50">
+                                {isGoogleLoading ? <Loader2 className="animate-spin" /> : <><GoogleIcon className="mr-2" />Sign In with Google</>}
+                            </Button>
+                        </TabsContent>
+                    </Tabs>
+                    <p className="text-xs text-slate-400 text-center leading-relaxed bg-slate-800/20 p-3 rounded-lg mt-6">
                           By continuing, you agree to our{" "}
                           <a href="#" className="text-blue-400 hover:text-blue-300 underline">
                             Terms of Service
@@ -621,9 +488,7 @@ export default function SupplyChainConnect() {
                           <a href="#" className="text-blue-400 hover:text-blue-300 underline">
                             Privacy Policy
                           </a>
-                        </p>
-                      </form>
-                    )}
+                    </p>
                   </CardContent>
                 </Card>
 
@@ -814,7 +679,7 @@ export default function SupplyChainConnect() {
                     variant="outline"
                     className="border-slate-600 text-slate-300 hover:bg-slate-800/50 px-8 py-4 rounded-xl backdrop-blur-sm bg-transparent"
                   >
-                    <Phone className="w-5 h-5 mr-2" />
+                    <Globe className="w-5 h-5 mr-2" />
                     Schedule Demo
                   </Button>
                 </div>
