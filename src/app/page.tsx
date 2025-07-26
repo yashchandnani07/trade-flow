@@ -1,3 +1,4 @@
+
 "use client"
 
 import type React from "react"
@@ -166,7 +167,7 @@ export default function SupplyChainConnect() {
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
   const router = useRouter();
-  const { sendOtp, signup } = useAuth();
+  // const { sendOtp, signup } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -227,57 +228,14 @@ export default function SupplyChainConnect() {
     }
   }
 
-  const handleSendOTP = async () => {
-    if (!phoneNumber || !selectedRole) {
-        toast({variant: 'destructive', title: "Missing Information", description: "Please enter your phone number and select a role."})
-        return
-    }
-
-    setIsLoading(true);
-    const completePhoneNumber = `${selectedCountry}${phoneNumber}`;
-    setFullPhoneNumber(completePhoneNumber);
-
-    try {
-        await sendOtp(completePhoneNumber);
-        setShowOTP(true)
-        toast({ title: 'OTP Sent', description: `A code has been sent to ${completePhoneNumber}` });
-        setTimeout(() => otpRefs.current[0]?.focus(), 100);
-    } catch(error: any) {
-        toast({variant: 'destructive', title: "Failed to send OTP", description: error.message || "An unexpected error occurred."})
-    } finally {
-        setIsLoading(false);
-    }
-  }
-
-  const handleVerifyOTP = async () => {
-    const otpValue = otp.join("")
-    if (otpValue.length !== 6) {
-        toast({variant: 'destructive', title: "Invalid OTP", description: "Please enter the complete 6-digit code."})
-        return
-    }
-
-    setIsLoading(true)
-    try {
-        // In a real app, you would have a businessName field
-        await signup(otpValue, fullPhoneNumber, { role: selectedRole as Role, businessName: "New User" });
-        setIsVerified(true);
-        toast({title: "Verification Successful!", description: "Redirecting you to the dashboard..."});
-        // The main AuthProvider will redirect on successful login
-    } catch(error: any) {
-         toast({variant: 'destructive', title: "Verification Failed", description: error.message || "An unexpected error occurred."})
-    } finally {
-        setIsLoading(false)
-    }
-  }
-
-
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!showOTP) {
-        handleSendOTP();
-    } else {
-        handleVerifyOTP();
-    }
+    e.preventDefault();
+    router.push('/dashboard');
+    // if (!showOTP) {
+    //     handleSendOTP();
+    // } else {
+    //     handleVerifyOTP();
+    // }
   }
 
   const handleStartForFree = () => {
@@ -791,3 +749,4 @@ export default function SupplyChainConnect() {
     </div>
   )
 }
+```
