@@ -79,7 +79,7 @@ export async function checkOrderHistory(vendorId: string, supplierId: string): P
       ordersRef,
       where('vendorId', '==', vendorId),
       where('supplierId', '==', supplierId),
-      where('status', '==', 'delivered'),
+      where('status', '==', 'Received'),
       limit(1)
     );
     
