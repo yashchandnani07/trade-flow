@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { collection, addDoc, serverTimestamp, query, where, orderBy, doc, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, orderBy, doc, getDocs, writeBatch, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader2, AlertTriangle, PackageSearch, Handshake, Inbox } from 'lucide-react';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
@@ -187,7 +187,9 @@ function MyBidsList() {
                     {bids && bids.length > 0 ? (
                         bids.map(bid => {
                             const typedBid = bid as Bid;
-                            const createdAt = typedBid.createdAt?.toDate ? formatDistanceToNow(typedBid.createdAt.toDate(), { addSuffix: true }) : 'just now';
+                            const createdAt = typedBid.createdAt instanceof Timestamp 
+                                ? formatDistanceToNow(typedBid.createdAt.toDate(), { addSuffix: true }) 
+                                : 'just now';
                             return (
                                 <Dialog key={typedBid.id}>
                                     <div className="border p-4 rounded-lg bg-background/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
