@@ -541,7 +541,7 @@ export default function SupplyChainConnect() {
                             </div>
 
                             <div className="text-center">
-                              <p className="text-sm text-slate-400 mb-2">Didn't receive the code?</p>
+                              <p className="text-sm text-slate-400 mb-2">Did not you receive the code?</p>
                               <Button variant="link" className="text-blue-400 hover:text-blue-300 p-0">
                                 Resend Code
                               </Button>
