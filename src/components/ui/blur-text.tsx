@@ -53,7 +53,7 @@ const BlurText: FC<BlurTextProps> = ({
   return (
     <motion.div
       ref={ref}
-      className={cn("flex flex-wrap justify-center", className)}
+      className={cn("flex flex-wrap", className)}
       onAnimationComplete={onAnimationComplete}
     >
       {animationData.map((data, index) => (
@@ -67,9 +67,9 @@ const BlurText: FC<BlurTextProps> = ({
             delay: index * delay,
             ease: "easeOut",
           }}
-          style={{ whiteSpace: "pre" }} // To preserve spaces between words
+          style={{ whiteSpace: "pre-wrap" }} // Use pre-wrap to respect newlines
         >
-          {data}{animateBy === 'words' ? ' ' : ''}
+          {data}{animateBy === 'words' && !data.includes('\n') ? ' ' : ''}
         </motion.span>
       ))}
     </motion.div>

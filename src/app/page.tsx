@@ -302,16 +302,16 @@ export default function SupplyChainConnect() {
                   </Badge>
                 </div>
 
-                <div className="space-y-1 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                     <BlurText
                       text={"Secure.\nFast.\nFair."}
                       delay={0.1}
                       animateBy="words"
                       direction="top"
                       onAnimationComplete={handleAnimationComplete}
-                      className="bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent"
+                      className="bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent !justify-start"
                     />
-                </div>
+                </h1>
 
                 <p className="text-lg md:text-xl text-slate-300 max-w-2xl leading-relaxed">
                   Connect directly with verified suppliers, eliminate middlemen, and transform your street-food business
