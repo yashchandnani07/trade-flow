@@ -8,7 +8,6 @@ import {
   ReactNode,
 } from 'react';
 import {
-  getAuth,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -16,10 +15,8 @@ import {
   User as FirebaseUser,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp, GeoPoint } from 'firebase/firestore';
-import { app, db } from '@/lib/firebase';
+import { app, db, auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-
-const auth = getAuth(app);
 
 type Role = 'vendor' | 'supplier' | 'farmer';
 
