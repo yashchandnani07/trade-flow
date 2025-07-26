@@ -78,6 +78,8 @@ function ProposalsDialog({ bid }: { bid: Bid }) {
   }
 
   const isBidOwner = user?.uid === bid.vendorId;
+  const isSupplier = user?.role === 'supplier';
+
 
   return (
     <DialogContent className="sm:max-w-2xl bg-glass">
@@ -223,38 +225,36 @@ function BidCard({ bid }: { bid: Bid }) {
     const isVendorOwner = user?.uid === bid.vendorId;
 
     return (
-        <Dialog>
-            <Card className="p-4 rounded-lg bg-glass flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                <div>
-                    <h3 className="font-semibold text-lg">{bid.item}</h3>
-                    <p className="text-sm text-muted-foreground">
-                        {bid.quantity} kg | Target Price: ₹{bid.targetPrice.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        Posted by {bid.vendorName} • {createdAt}
-                    </p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize">{bid.status}</Badge>
-                    
-                    <Dialog open={isProposalsOpen} onOpenChange={setProposalsOpen}>
-                      <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">View Proposals</Button>
-                      </DialogTrigger>
-                      <ProposalsDialog bid={bid} />
-                    </Dialog>
+        <Card className="p-4 rounded-lg bg-glass flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+            <div>
+                <h3 className="font-semibold text-lg">{bid.item}</h3>
+                <p className="text-sm text-muted-foreground">
+                    {bid.quantity} kg | Target Price: ₹{bid.targetPrice.toLocaleString()}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                    Posted by {bid.vendorName} • {createdAt}
+                </p>
+            </div>
+            <div className="flex items-center gap-2">
+                <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize">{bid.status}</Badge>
+                
+                <Dialog open={isProposalsOpen} onOpenChange={setProposalsOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">View Proposals</Button>
+                    </DialogTrigger>
+                    <ProposalsDialog bid={bid} />
+                </Dialog>
 
-                    {isSupplier && bid.status === 'active' && (
-                        <Dialog open={isPlaceBidOpen} onOpenChange={setPlaceBidOpen}>
-                            <DialogTrigger asChild>
-                                <Button size="sm">Place Bid</Button>
-                            </DialogTrigger>
-                            <PlaceBidDialog bid={bid} onBidPlaced={() => setPlaceBidOpen(false)} />
-                        </Dialog>
-                    )}
-                </div>
-            </Card>
-        </Dialog>
+                {isSupplier && bid.status === 'active' && (
+                    <Dialog open={isPlaceBidOpen} onOpenChange={setPlaceBidOpen}>
+                        <DialogTrigger asChild>
+                            <Button size="sm">Place Bid</Button>
+                        </DialogTrigger>
+                        <PlaceBidDialog bid={bid} onBidPlaced={() => setPlaceBidOpen(false)} />
+                    </Dialog>
+                )}
+            </div>
+        </Card>
     )
 }
 
