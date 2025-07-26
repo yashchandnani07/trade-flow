@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { collection, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
@@ -56,6 +56,15 @@ export function SupplierReviews() {
         });
     }, [reviewsSnapshot]);
 
+    useEffect(() => {
+      if (!loading && !error) {
+        console.log("Fetched reviews from Firestore:", reviews);
+      }
+      if(error) {
+        console.error("Error fetching reviews:", error);
+      }
+    }, [reviews, loading, error]);
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -98,7 +107,7 @@ export function SupplierReviews() {
                 ))}
             </div>
         )}
-        {error && <p className="text-destructive">Error: {error.message}</p>}
+        {error && <p className="text-destructive">Error: Your Firestore rules might be incorrect. Please set them to test mode. {error.message}</p>}
         {!loading && !error && reviews.map((review) => (
           <div key={review.id} className="flex gap-4">
             <Avatar>
