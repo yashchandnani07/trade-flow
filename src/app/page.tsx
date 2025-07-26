@@ -39,10 +39,7 @@ export default function LandingPage() {
     }
   }, [user, loading, router]);
 
-  // If auth is loading, or the user is logged in, we show a spinner.
-  // The useEffect above will handle the redirect. This prevents the page
-  // from flashing before the redirect happens.
-  if (loading || user) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -71,7 +68,7 @@ export default function LandingPage() {
         </nav>
       </header>
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-cover bg-center" style={{ backgroundImage: "url('https://placehold.co/1920x1080?text=Abstract+Food')" }} data-ai-hint="abstract food illustration">
+        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-cover bg-center" style={{ backgroundImage: "url('https://i.imgur.com/8L3n2mb.jpeg')" }} data-ai-hint="food market produce">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center space-y-4 text-center text-white bg-black/50 p-8 rounded-lg">
               <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
