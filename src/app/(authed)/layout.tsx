@@ -2,7 +2,7 @@
 'use client';
 import { ReactNode, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/sidebar';
 import { AppHeader } from '@/components/layout/header';
 import { useAuth } from '@/hooks/use-auth';
@@ -26,8 +26,8 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
 
         if (user.role === 'supplier' && !isSupplierPath) {
             router.replace('/supplier-dashboard');
-        } else if (user.role !== 'supplier' && !isVendorPath) {
-            router.replace('/dashboard');
+        } else if (user.role !== 'supplier' && (pathname === '/' || pathname === '/dashboard' ) && !isVendorPath) {
+             if (pathname !== '/dashboard') router.replace('/dashboard');
         }
     }
   }, [user, loading, router, pathname]);
@@ -48,7 +48,7 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
   if (user) {
     return (
       <SidebarProvider>
-        <div className="min-h-screen bg-background flex">
+        <div className="min-h-screen bg-background flex w-full">
           <AppSidebar />
           <div className="flex flex-col w-full">
             <AppHeader />
