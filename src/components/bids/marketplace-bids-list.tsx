@@ -279,7 +279,7 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
 }
 
 function PlaceBidDialog({ bid, user, open, onOpenChange }: { bid: Bid | null; user: any; open: boolean; onOpenChange: (open: boolean) => void; }) {
-    const [bidAmount, setBidAmount] = useState(bid?.targetPrice || 0);
+    const [bidAmount, setBidAmount] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
 
@@ -330,9 +330,10 @@ function PlaceBidDialog({ bid, user, open, onOpenChange }: { bid: Bid | null; us
     const handleMatchAndAccept = () => {
       if (bid) {
           setBidAmount(bid.targetPrice);
+          // Directly submit the form
           const form = document.getElementById(`bid-form-${bid.id}`);
           if (form) {
-            form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+            form.requestSubmit();
           }
       }
     };
@@ -489,5 +490,3 @@ export function MarketplaceBidsList() {
         </>
     )
 }
-
-    
