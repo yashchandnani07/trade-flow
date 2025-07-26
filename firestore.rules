@@ -1,29 +1,39 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public read access to suppliers and reviews for demonstration.
-    // In a production app, you would restrict this further.
-    match /suppliers/{supplierId} {
-      allow read: if true;
-      allow write: if request.auth != null; // Allow logged-in users to write (for seeding)
+    // Default to denying all access
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    match /reviews/{reviewId} {
-      // Allow anyone to read reviews
-      allow read: if true;
-      // Allow any authenticated user to create a review
-      allow create: if request.auth != null;
-       // Allow a user to update or delete their own review
-      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
-    }
-
-    // Users can only read and update their own user document.
+    // Users can read and update their own user document, but not delete it.
+    // New users can create their own document.
     match /users/{userId} {
-      allow read, update: if request.auth != null && request.auth.uid == userId;
-      // Deny creating or deleting user documents directly from the client
-      allow create, delete: if false;
+      allow read, update: if request.auth.uid == userId;
+      allow create: if request.auth.uid == userId;
+    }
+
+    // Authenticated users can read the list of suppliers and individual profiles.
+    // Writing should be handled by a backend process or admin SDK for security.
+    match /suppliers/{supplierId} {
+        allow read: if request.auth != null;
+    }
+    
+    // Authenticated users can read all reviews.
+    // Authenticated users can create new reviews.
+    match /reviews/{reviewId} {
+      allow read, create: if request.auth != null;
+    }
+
+    // Rules for the 'bids' collection
+    match /bids/{bidId} {
+      // Any authenticated user can create a bid (vendors).
+      allow create: if request.auth != null;
+      // Any authenticated user can read bids (for suppliers to view).
+      allow read: if request.auth != null;
+      // Allow the user who created the bid to update or delete it (optional, good practice).
+      allow update, delete: if request.auth.uid == resource.data.vendorId;
     }
   }
 }
