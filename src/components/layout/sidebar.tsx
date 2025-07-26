@@ -61,7 +61,7 @@ export function AppSidebar() {
     <BaseSidebar
       className={cn(
         "border-r-0 dark:bg-card dark:border-r",
-        "light:bg-glass/8 light:border-glass-border light:text-white",
+        "light:glassmorphic",
         "backdrop-blur-2xl transition-all duration-300"
       )}
       collapsible="icon"
@@ -95,7 +95,7 @@ export function AppSidebar() {
                 asChild
                 isActive={pathname === item.href}
                 tooltip={{ children: item.label, className:"dark:bg-popover dark:text-popover-foreground" }}
-                className="light:text-white/80 light:hover:bg-glass-hover light:hover:text-white light:data-[active=true]:bg-glass-active light:data-[active=true]:text-white transition-all transform hover:translate-x-1"
+                className="light:text-white/80 light:hover:text-white light:data-[active=true]:bg-glass-active light:data-[active=true]:text-white transition-all transform nav-link-shine"
               >
                 <Link href={item.href}>
                   <item.icon />
@@ -111,7 +111,7 @@ export function AppSidebar() {
                 asChild
                 isActive={pathname === item.href}
                 tooltip={{ children: item.label, className:"dark:bg-popover dark:text-popover-foreground" }}
-                className="light:text-white/80 light:hover:bg-glass-hover light:hover:text-white light:data-[active=true]:bg-glass-active light:data-[active=true]:text-white transition-all transform hover:translate-x-1"
+                className="light:text-white/80 light:hover:text-white light:data-[active=true]:bg-glass-active light:data-[active=true]:text-white transition-all transform nav-link-shine"
               >
                 <Link href={item.href}>
                   <item.icon />
@@ -125,7 +125,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Settings", className:"dark:bg-popover dark:text-popover-foreground" }} className="light:text-white/80 light:hover:bg-glass-hover light:hover:text-white">
+                <SidebarMenuButton asChild tooltip={{ children: "Settings", className:"dark:bg-popover dark:text-popover-foreground" }} className="light:text-white/80 light:hover:text-white nav-link-shine">
                 <Link href="#">
                     <Settings />
                     <span>Settings</span>

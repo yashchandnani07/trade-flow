@@ -94,4 +94,29 @@ html {
     border-width: 1px;
     border-color: hsl(var(--border));
   }
+  
+  .light .nav-link-shine {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .light .nav-link-shine::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s;
+  }
+
+  .light .nav-link-shine:hover::before {
+    left: 100%;
+  }
+
+  .light .nav-link-shine:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateX(4px);
+  }
 }
