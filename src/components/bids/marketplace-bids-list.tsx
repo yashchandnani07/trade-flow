@@ -282,21 +282,19 @@ function PlaceBidDialog({ bid, user, open, onOpenChange }: { bid: Bid | null; us
 
     const handleBidSubmit = async (e: FormEvent) => {
         e.preventDefault();
+        if (!bid) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Cannot place bid. Bid information is missing.',
+            });
+            return;
+        }
         if (!user || bidAmount === '' || bidAmount <= 0) {
              toast({
                 variant: 'destructive',
                 title: 'Invalid Bid',
                 description: 'Please enter a valid bid amount.',
-            });
-            return;
-        }
-
-        if (!bid || !bid.id) {
-            console.error("Bid object or bid ID is missing.");
-             toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Cannot place bid. Bid information is missing.',
             });
             return;
         }
