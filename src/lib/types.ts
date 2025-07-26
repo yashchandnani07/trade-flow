@@ -78,6 +78,7 @@ export type Bid = {
   status: 'active' | 'closed' | 'awarded';
   createdAt: Timestamp;
   awardedTo?: string;
+  finalAmount?: number;
 };
 
 export type Proposal = {

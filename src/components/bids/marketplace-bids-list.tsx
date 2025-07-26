@@ -37,8 +37,8 @@ const proposalStatusVariantMap: Record<Proposal['status'], "default" | "secondar
     pending: "outline",
     accepted: "default",
     rejected: "destructive",
-    negotiating: "default",
-} as const;
+    negotiating: "secondary",
+};
 
 
 function NegotiationDialog({ bid, proposal, user, children }: { bid: Bid, proposal: Proposal, user: any, children: ReactNode }) {
