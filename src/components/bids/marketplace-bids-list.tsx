@@ -166,7 +166,7 @@ function PlaceBidDialog({ bid, user, children }: { bid: Bid, user: any, children
             const proposalsCollection = collection(db, 'bids', bid.id, 'proposals');
             await addDoc(proposalsCollection, {
                 supplierId: user.uid,
-                supplierName: user.businessName,
+                supplierName: user.businessName || 'Unnamed Supplier',
                 bidAmount: Number(bidAmount),
                 createdAt: serverTimestamp(),
                 status: 'pending',
