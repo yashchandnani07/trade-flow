@@ -57,6 +57,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
         } else {
             // This case might happen if user document creation fails after signup
+            // or if the user exists in Auth but not in Firestore.
+            // We can try to create a default document here or sign them out.
+            // For now, we sign them out to maintain a consistent state.
             await signOut(auth);
             setUser(null);
         }
@@ -82,6 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           location: null,
           createdAt: serverTimestamp()
         });
+
         // Manually set user after signup to trigger redirect
         const userData = await fetchUserDocument(firebaseUser.uid);
          if (userData) {
@@ -100,20 +104,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (email: string, password: string) => {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const firebaseUser = userCredential.user;
-    const userData = await fetchUserDocument(firebaseUser.uid);
-    if (userData) {
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const firebaseUser = userCredential.user;
+        let userData = await fetchUserDocument(firebaseUser.uid);
+
+        // If user document doesn't exist, create one with default values
+        if (!userData) {
+            console.warn("User document not found for UID:", firebaseUser.uid, "- Creating a default document.");
+            const defaultData = {
+                email: firebaseUser.email,
+                role: 'vendor' as Role, // Default role
+                businessName: 'New User', // Default business name
+                fssaiStatus: 'pending',
+                location: null,
+                createdAt: serverTimestamp()
+            };
+            await setDoc(doc(db, "users", firebaseUser.uid), defaultData);
+            userData = defaultData;
+        }
+
         setUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email,
             ...userData
         });
-    } else {
-        // This case would be rare, but good to handle.
-        await signOut(auth);
-        setUser(null);
-        throw new Error("User data not found in database.");
+        
+    } catch (error) {
+        console.error("Login Error in AuthProvider:", error);
+        if (error instanceof FirebaseError) {
+             if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                throw new Error('Invalid email or password.');
+            }
+        }
+        // Re-throw other errors to be handled by the component
+        throw error;
     }
   };
 
