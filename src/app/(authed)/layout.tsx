@@ -6,7 +6,6 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/sidebar';
 import { AppHeader } from '@/components/layout/header';
 import { useAuth } from '@/hooks/use-auth';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
 
 export default function AuthedLayout({ children }: { children: ReactNode }) {
@@ -15,20 +14,22 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+
+    if (!user) {
       router.replace('/');
       return;
     }
 
-    if (!loading && user) {
-        const isSupplierPath = pathname.startsWith('/supplier-dashboard');
-        
-        if (user.role === 'supplier' && !isSupplierPath) {
-            router.replace('/supplier-dashboard');
-        } else if (user.role !== 'supplier' && pathname === '/') {
-             router.replace('/dashboard');
-        }
+    const isSupplierDashboard = pathname.startsWith('/supplier-dashboard');
+    const isVendorDashboard = pathname.startsWith('/dashboard');
+
+    if (user.role === 'supplier' && !isSupplierDashboard) {
+        router.replace('/supplier-dashboard');
+    } else if (user.role !== 'supplier' && !isVendorDashboard && pathname !== '/bidding' && !pathname.startsWith('/supplier/')) {
+        router.replace('/dashboard');
     }
+
   }, [user, loading, router, pathname]);
 
   if (loading || !user) {
