@@ -13,8 +13,6 @@ import {
   signOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { app, db, auth } from '@/lib/firebase';
@@ -25,19 +23,18 @@ import { FirebaseError } from 'firebase/app';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signupWithEmail: (email: string, password: string, additionalData: { role: Role; businessName: string }) => Promise<void>;
-  loginWithEmail: (email: string, password: string) => Promise<void>;
-  signInWithGoogle: (additionalData: { role: Role; businessName: string }) => Promise<void>;
+  signupWithPhone: (phoneNumber: string, password: string, additionalData: { role: Role; businessName: string }) => Promise<void>;
+  loginWithPhone: (phoneNumber: string, password: string) => Promise<void>;
   logout: (router: AppRouterInstance) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const fetchUserDocument = async (uid: string): Promise<Omit<User, 'uid' | 'phoneNumber' | 'email'> | null> => {
+const fetchUserDocument = async (uid: string): Promise<Omit<User, 'uid'> | null> => {
     const userDocRef = doc(db, "users", uid);
     const userDoc = await getDoc(userDocRef);
     if (userDoc.exists()) {
-        return userDoc.data() as Omit<User, 'uid' | 'phoneNumber' | 'email'>;
+        return userDoc.data() as Omit<User, 'uid'>;
     }
     return null;
 }
@@ -53,8 +50,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (userData) {
             setUser({
                 uid: firebaseUser.uid,
-                phoneNumber: firebaseUser.phoneNumber,
-                email: firebaseUser.email,
                 ...userData
             });
         } else {
@@ -71,14 +66,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  const signupWithEmail = async (email: string, password: string, additionalData: { role: Role; businessName: string }) => {
+  const signupWithPhone = async (phoneNumber: string, password: string, additionalData: { role: Role; businessName: string }) => {
+    // Firebase doesn't support phone+password directly. We use the phone number as the email.
+    // To make this work, we'll append a dummy domain.
+    const email = `${phoneNumber}@tradeflow.app`;
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
 
     const userDocRef = doc(db, "users", firebaseUser.uid);
     await setDoc(userDocRef, {
         ...additionalData,
-        email,
+        email: firebaseUser.email, // Store the dummy email
+        phoneNumber,
         fssaiStatus: 'pending',
         location: null,
         createdAt: serverTimestamp(),
@@ -86,29 +85,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   }
 
-  const loginWithEmail = async (email: string, password: string) => {
+  const loginWithPhone = async (phoneNumber: string, password: string) => {
+    const email = `${phoneNumber}@tradeflow.app`;
     await signInWithEmailAndPassword(auth, email, password);
-  }
-
-  const signInWithGoogle = async (additionalData: { role: Role; businessName: string }) => {
-    const provider = new GoogleAuthProvider();
-    const userCredential = await signInWithPopup(auth, provider);
-    const firebaseUser = userCredential.user;
-
-    const userDocRef = doc(db, "users", firebaseUser.uid);
-    const userDoc = await getDoc(userDocRef);
-
-    if (!userDoc.exists()) {
-        await setDoc(userDocRef, {
-            email: firebaseUser.email,
-            businessName: firebaseUser.displayName || additionalData.businessName,
-            role: additionalData.role,
-            fssaiStatus: 'pending',
-            location: null,
-            createdAt: serverTimestamp(),
-            points: 0,
-        });
-    }
   }
 
   const logout = async (router: AppRouterInstance) => {
@@ -120,9 +99,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     user,
     loading,
-    signupWithEmail,
-    loginWithEmail,
-    signInWithGoogle,
+    signupWithPhone,
+    loginWithPhone,
     logout,
   };
 

@@ -6,11 +6,14 @@ import { OrderTracking } from "@/components/dashboard/order-tracking";
 import { OverviewCards } from "@/components/dashboard/overview-cards";
 import { SupplierReviews } from "@/components/dashboard/supplier-reviews";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { seedDatabase } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function DashboardPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSeed = async () => {
     toast({
@@ -38,6 +41,13 @@ export default function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <Button onClick={handleSeed} variant="outline">Seed Database</Button>
         </section>
+        
+        <Card className="glassmorphic">
+          <CardContent className="p-6">
+            <CardTitle>Welcome back, {user?.businessName || "User"}!</CardTitle>
+          </CardContent>
+        </Card>
+
         <section>
         <OverviewCards />
         </section>
