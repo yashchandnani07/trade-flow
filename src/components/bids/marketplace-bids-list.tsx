@@ -282,6 +282,13 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
     const { toast } = useToast();
     const [bidAmount, setBidAmount] = useState(bid.targetPrice);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    React.useEffect(() => {
+        if (bid) {
+            setBidAmount(bid.targetPrice);
+        }
+    }, [bid]);
+
 
     const createdAt = bid.createdAt instanceof Timestamp 
         ? formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true }) 
@@ -290,21 +297,19 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
     const isSupplier = user?.role === 'supplier';
     const isVendorOwner = user?.uid === bid.vendorId;
 
-    const handleBidSubmit = async (e: FormEvent, amount: number) => {
-        e.preventDefault();
-
+    const handleBidSubmit = async (theBid: Bid, amount: number) => {
         if (!user) {
             toast({ variant: 'destructive', title: 'Not Authenticated', description: 'You must be logged in to place a bid.' });
             return;
         }
-        if (!bid || !bid.id) {
+        if (!theBid || !theBid.id) {
             toast({ variant: 'destructive', title: 'Error', description: 'Cannot place bid. Bid information is missing.' });
             return;
         }
 
         setIsSubmitting(true);
         try {
-            const proposalsCollection = collection(db, 'bids', bid.id, 'proposals');
+            const proposalsCollection = collection(db, 'bids', theBid.id, 'proposals');
             const businessName = user.businessName || 'Unnamed Supplier';
 
             await addDoc(proposalsCollection, {
@@ -317,7 +322,7 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
 
             toast({
                 title: 'Bid Placed Successfully!',
-                description: `Your bid of ?${amount} for ${bid.item} has been submitted.`,
+                description: `Your bid of ?${amount} for ${theBid.item} has been submitted.`,
             });
         } catch (error) {
             console.error('Error placing bid:', error);
@@ -331,10 +336,16 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
         setBidAmount(prev => Math.max(0, prev + adjustment));
     };
 
-    const handleMatchAndAccept = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const onFormSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleBidSubmit(bid, bidAmount);
+    }
+    
+    const onMatchAndAccept = () => {
         setBidAmount(bid.targetPrice);
-        handleBidSubmit(e, bid.targetPrice);
-    };
+        handleBidSubmit(bid, bid.targetPrice);
+    }
+
 
     return (
         <Card className="p-6 rounded-xl bg-background/50 flex flex-col justify-between gap-6 border-2">
@@ -360,7 +371,7 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
 
                 {isSupplier && !isVendorOwner && bid.status === 'active' && (
                     <Card className="bg-glass p-4">
-                        <form onSubmit={(e) => handleBidSubmit(e, bidAmount)}>
+                        <form onSubmit={onFormSubmit}>
                             <Label className="text-sm font-semibold mb-2 block">Your Offer (?)</Label>
                             <div className="flex items-center gap-2 mb-4">
                                 <Button type="button" variant="outline" size="icon" onClick={() => adjustBid(-100)} disabled={isSubmitting}><Minus className="h-4 w-4" /></Button>
@@ -377,7 +388,7 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
                                 <Button type="submit" className="flex-1" disabled={isSubmitting}>
                                     {isSubmitting ? <Loader2 className="animate-spin" /> : "Submit Offer"}
                                 </Button>
-                                <Button type="button" onClick={handleMatchAndAccept} className="flex-1" variant="outline" disabled={isSubmitting}>
+                                <Button type="button" onClick={onMatchAndAccept} className="flex-1" variant="outline" disabled={isSubmitting}>
                                     {isSubmitting ? <Loader2 className="animate-spin" /> : <><Handshake className="mr-2 h-4 w-4" /> Match & Accept</>}
                                 </Button>
                             </div>
@@ -445,3 +456,5 @@ export function MarketplaceBidsList() {
         </Card>
     )
 }
+
+    
