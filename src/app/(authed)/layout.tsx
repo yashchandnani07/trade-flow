@@ -13,23 +13,27 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
+    // If loading is finished and there's no user, redirect to login.
     if (!loading && !user) {
-      router.push('/login');
+      router.replace('/login');
     }
   }, [user, loading, router]);
 
+  // While loading, or if there's no user yet, show a loading skeleton.
   if (loading || !user) {
     return (
-        <div className="flex items-center justify-center min-h-screen">
-            <div className="p-8 space-y-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
+        <div className="flex items-center justify-center min-h-screen bg-background">
+            <div className="space-y-4 text-center">
+                <Skeleton className="h-24 w-24 rounded-full mx-auto" />
+                <Skeleton className="h-6 w-48 mx-auto" />
+                <Skeleton className="h-4 w-64 mx-auto" />
+                <p className="text-muted-foreground mt-2">Loading your dashboard...</p>
             </div>
         </div>
     );
   }
 
+  // If loading is finished and there is a user, show the authed layout.
   return (
     <SidebarProvider>
       <div className="min-h-screen">
