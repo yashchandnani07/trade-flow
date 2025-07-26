@@ -1,6 +1,6 @@
 
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, FormEvent, ReactNode } from 'react';
 import { collection, query, where, orderBy, Timestamp, addDoc, serverTimestamp, doc, writeBatch } from 'firebase/firestore';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
@@ -144,13 +144,13 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
   );
 }
 
-function PlaceBidDialog({ bid, user, children, onBidPlaced }: { bid: Bid; user: any; children: React.ReactNode, onBidPlaced: () => void }) {
+function PlaceBidDialog({ bid, user, onBidPlaced, children }: { bid: Bid, user: any, onBidPlaced: () => void, children: ReactNode }) {
     const [bidAmount, setBidAmount] = useState<number | ''>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
 
-    const handleBidSubmit = async (e: React.FormEvent) => {
+    const handleBidSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (!user || bidAmount === '' || bidAmount <= 0) {
              toast({
@@ -232,7 +232,6 @@ function PlaceBidDialog({ bid, user, children, onBidPlaced }: { bid: Bid; user: 
     );
 }
 
-
 export function MarketplaceBidsList() {
     const { user } = useAuth();
     const bidsCollection = useMemo(() => collection(db, 'bids'), []);
@@ -282,9 +281,9 @@ export function MarketplaceBidsList() {
                             const isVendorOwner = user?.uid === bid.vendorId;
 
                             return (
-                                <Dialog key={bid.id}>
-                                    <Card className="p-4 rounded-lg bg-background/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                                        <div>
+                                <Card key={bid.id} className="p-4 rounded-lg bg-background/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                    <Dialog>
+                                        <div className="flex-1">
                                             <h3 className="font-semibold text-lg">{bid.item}</h3>
                                             <p className="text-sm text-muted-foreground">
                                                 {bid.quantity} kg | Target Price: ₹{bid.targetPrice.toLocaleString()}
@@ -308,9 +307,9 @@ export function MarketplaceBidsList() {
                                                 </PlaceBidDialog>
                                             )}
                                         </div>
-                                    </Card>
-                                    <ProposalsDialog bid={bid} user={user} />
-                                </Dialog>
+                                        <ProposalsDialog bid={bid} user={user} />
+                                    </Dialog>
+                                </Card>
                             );
                         })
                     ) : (
