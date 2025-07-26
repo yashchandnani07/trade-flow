@@ -251,7 +251,7 @@ function BidCard({ bid }: { bid: Bid }) {
                     )}
                 </div>
             </Card>
-             <ProposalsDialog bid={bid} />
+            <ProposalsDialog bid={bid} />
         </Dialog>
     )
 }
