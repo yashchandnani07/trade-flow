@@ -79,7 +79,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 ...userData
             });
         } else {
-            console.warn("User document not found for UID:", firebaseUser.uid);
+            // This can happen if a user authenticates but their DB entry isn't created yet
+            // or was deleted. For now, we sign them out to prevent a broken state.
             await signOut(auth);
             setUser(null);
         }
@@ -157,7 +158,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     await signOut(auth);
     setUser(null);
-    router.push('/login');
+    router.push('/');
   };
 
   const value = {
