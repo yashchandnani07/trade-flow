@@ -1,7 +1,7 @@
 
 'use client';
 import { ReactNode, useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/sidebar';
 import { AppHeader } from '@/components/layout/header';
@@ -11,27 +11,26 @@ import { Loader2 } from 'lucide-react';
 export default function AuthedLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
-    if (loading) return;
-
-    if (!user) {
+    // If not loading and there's no user, redirect to the home/login page.
+    if (!loading && !user) {
       router.replace('/');
-      return;
     }
+    // Handle role-based redirects once user data is available
+    if (!loading && user) {
+        const isSupplierDashboard = window.location.pathname.startsWith('/supplier-dashboard');
+        const isVendorArea = window.location.pathname.startsWith('/dashboard') || window.location.pathname.startsWith('/bidding') || window.location.pathname.startsWith('/supplier/');
 
-    const isSupplierDashboard = pathname.startsWith('/supplier-dashboard');
-    const isVendorDashboard = pathname.startsWith('/dashboard');
-
-    if (user.role === 'supplier' && !isSupplierDashboard) {
-        router.replace('/supplier-dashboard');
-    } else if (user.role !== 'supplier' && !isVendorDashboard && pathname !== '/bidding' && !pathname.startsWith('/supplier/')) {
-        router.replace('/dashboard');
+        if (user.role === 'supplier' && !isSupplierDashboard) {
+            router.replace('/supplier-dashboard');
+        } else if (user.role !== 'supplier' && !isVendorArea) {
+             router.replace('/dashboard');
+        }
     }
+  }, [user, loading, router]);
 
-  }, [user, loading, router, pathname]);
-
+  // While loading, or if the user is null and we are waiting for the redirect, show a loader.
   if (loading || !user) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-background">
@@ -42,8 +41,8 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
         </div>
     );
   }
-
   
+  // If loading is finished and we have a user, render the authenticated layout.
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
