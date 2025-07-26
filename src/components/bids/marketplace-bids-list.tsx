@@ -126,11 +126,12 @@ function ProposalsDialog({ bid }: { bid: Bid }) {
   );
 }
 
-function PlaceBidDialog({ bid, onBidPlaced }: { bid: Bid; onBidPlaced: () => void }) {
+function PlaceBidDialog({ bid, onBidPlaced, children }: { bid: Bid; onBidPlaced: () => void, children: React.ReactNode }) {
     const [bidAmount, setBidAmount] = useState<number | ''>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
     const { user } = useAuth();
+    const [isOpen, setIsOpen] = useState(false);
 
     const handleBidSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -157,6 +158,7 @@ function PlaceBidDialog({ bid, onBidPlaced }: { bid: Bid; onBidPlaced: () => voi
                 title: 'Bid Placed Successfully!',
                 description: `Your bid of ₹${bidAmount} for ${bid.item} has been submitted.`,
             });
+            setIsOpen(false);
             onBidPlaced();
             setBidAmount('');
         } catch (error) {
@@ -172,41 +174,44 @@ function PlaceBidDialog({ bid, onBidPlaced }: { bid: Bid; onBidPlaced: () => voi
     };
 
     return (
-        <DialogContent className="sm:max-w-[425px] bg-glass">
-            <DialogHeader>
-                <DialogTitle>Place a Bid for {bid.item}</DialogTitle>
-                <DialogDescription>
-                    Submit your best offer for this requirement. The vendor will be notified of your bid.
-                </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleBidSubmit}>
-                <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="amount" className="text-right">
-                            Your Bid (₹)
-                        </Label>
-                        <Input
-                            id="amount"
-                            type="number"
-                            value={bidAmount}
-                            onChange={(e) => setBidAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                            className="col-span-3"
-                            placeholder="e.g., 9500"
-                            required
-                        />
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                {children}
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] bg-glass">
+                <DialogHeader>
+                    <DialogTitle>Place a Bid for {bid.item}</DialogTitle>
+                    <DialogDescription>
+                        Submit your best offer for this requirement. The vendor will be notified of your bid.
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleBidSubmit}>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="amount" className="text-right">
+                                Your Bid (₹)
+                            </Label>
+                            <Input
+                                id="amount"
+                                type="number"
+                                value={bidAmount}
+                                onChange={(e) => setBidAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                                className="col-span-3"
+                                placeholder="e.g., 9500"
+                                required
+                            />
+                        </div>
                     </div>
-                </div>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button type="button" variant="secondary">Cancel</Button>
-                    </DialogClose>
-                    <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Submit Bid
-                    </Button>
-                </DialogFooter>
-            </form>
-        </DialogContent>
+                    <DialogFooter>
+                        <Button type="button" variant="secondary" onClick={() => setIsOpen(false)}>Cancel</Button>
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Submit Bid
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -221,38 +226,35 @@ function BidCard({ bid }: { bid: Bid }) {
     const isVendorOwner = user?.uid === bid.vendorId;
 
     return (
-        <Dialog>
-            <Card className="p-4 rounded-lg bg-glass flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                <div>
-                    <h3 className="font-semibold text-lg">{bid.item}</h3>
-                    <p className="text-sm text-muted-foreground">
-                        {bid.quantity} kg | Target Price: ₹{bid.targetPrice.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        Posted by {bid.vendorName} • {createdAt}
-                    </p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize">{bid.status}</Badge>
-                    
-                    {(isVendorOwner || user?.role === 'supplier') && (
+        <Card className="p-4 rounded-lg bg-glass flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+            <div>
+                <h3 className="font-semibold text-lg">{bid.item}</h3>
+                <p className="text-sm text-muted-foreground">
+                    {bid.quantity} kg | Target Price: ₹{bid.targetPrice.toLocaleString()}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                    Posted by {bid.vendorName} • {createdAt}
+                </p>
+            </div>
+            <div className="flex items-center gap-2">
+                <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize">{bid.status}</Badge>
+                
+                {(isVendorOwner || user?.role === 'supplier') && (
+                    <Dialog>
                         <DialogTrigger asChild>
                             <Button variant="outline" size="sm">View Proposals</Button>
                         </DialogTrigger>
-                    )}
+                        <ProposalsDialog bid={bid} />
+                    </Dialog>
+                )}
 
-                    {isSupplier && bid.status === 'active' && (
-                         <Dialog>
-                            <DialogTrigger asChild>
-                                <Button size="sm">Place Bid</Button>
-                            </DialogTrigger>
-                            <PlaceBidDialog bid={bid} onBidPlaced={() => {}} />
-                        </Dialog>
-                    )}
-                </div>
-            </Card>
-            <ProposalsDialog bid={bid} />
-        </Dialog>
+                {isSupplier && bid.status === 'active' && (
+                        <PlaceBidDialog bid={bid} onBidPlaced={() => {}}>
+                            <Button size="sm">Place Bid</Button>
+                        </PlaceBidDialog>
+                )}
+            </div>
+        </Card>
     )
 }
 
@@ -296,9 +298,7 @@ export function MarketplaceBidsList() {
                 <div className="space-y-4">
                     {bids && bids.length > 0 ? (
                         bids.map(bid => (
-                            <div key={bid.id}>
-                                <BidCard bid={bid as Bid} />
-                            </div>
+                            <BidCard key={bid.id} bid={bid as Bid} />
                         ))
                     ) : (
                         <div className="text-center py-10 text-muted-foreground">
