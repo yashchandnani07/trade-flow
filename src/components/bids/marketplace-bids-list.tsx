@@ -275,7 +275,7 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
   );
 }
 
-function PlaceBidDialog({ bid, user, children }: { bid: Bid, user: any, children: ReactNode }) {
+function PlaceBidDialog({ bid, user, children }: { bid: Bid; user: any; children: ReactNode }) {
     const [bidAmount, setBidAmount] = useState<number | ''>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
@@ -295,7 +295,6 @@ function PlaceBidDialog({ bid, user, children }: { bid: Bid, user: any, children
         setIsSubmitting(true);
         try {
             const proposalsCollection = collection(db, 'bids', bid.id, 'proposals');
-            // FIX: Use a safe business name from the user object
             const businessName = user.businessName || 'Unnamed Supplier';
 
             await addDoc(proposalsCollection, {
