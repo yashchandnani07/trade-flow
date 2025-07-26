@@ -1,6 +1,7 @@
 
 'use client';
 import { useForm, SubmitHandler } from 'react-hook-form';
+import { useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,9 +11,14 @@ import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle, PackageSearch } from 'lucide-react';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { type Bid } from '@/lib/types';
+import { Badge } from '@/components/ui/badge';
+import { formatDistanceToNow } from 'date-fns';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const bidSchema = z.object({
   item: z.string().min(1, 'Item name is required'),
@@ -21,6 +27,88 @@ const bidSchema = z.object({
 });
 
 type BidFormValues = z.infer<typeof bidSchema>;
+
+const statusVariantMap = {
+    active: "secondary",
+    closed: "outline",
+    awarded: "default"
+} as const;
+
+function MyBidsList() {
+    const { user } = useAuth();
+    
+    const bidsCollection = useMemo(() => collection(db, 'bids'), []);
+    const bidsQuery = useMemo(() => {
+        if (!user) return null;
+        return query(bidsCollection, where("vendorId", "==", user.uid), orderBy("createdAt", "desc"));
+    }, [bidsCollection, user]);
+
+    const [bids, loading, error] = useCollectionData(bidsQuery, { idField: 'id' });
+
+    if (!user) return null;
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <p className="ml-2">Loading your bids...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+         return (
+            <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Error Loading Bids</AlertTitle>
+                <AlertDescription>
+                    Could not load your bids. Please try again later.
+                    <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
+                </AlertDescription>
+            </Alert>
+        )
+    }
+
+    return (
+        <Card className="bg-glass mt-8">
+            <CardHeader>
+                <CardTitle>My Posted Requirements</CardTitle>
+                <CardDescription>Track the status of your active and past bids.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-4">
+                    {bids && bids.length > 0 ? (
+                        bids.map(bid => {
+                            const typedBid = bid as Bid;
+                            const createdAt = typedBid.createdAt?.toDate ? formatDistanceToNow(typedBid.createdAt.toDate(), { addSuffix: true }) : 'just now';
+                            return (
+                                <div key={typedBid.id} className="border p-4 rounded-lg bg-background/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                    <div>
+                                        <h3 className="font-semibold text-lg">{typedBid.item}</h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            {typedBid.quantity} kg | Target Price: ₹{typedBid.targetPrice.toLocaleString()}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-1">{createdAt}</p>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <Badge variant={statusVariantMap[typedBid.status] || 'outline'} className="capitalize">{typedBid.status}</Badge>
+                                        <Button variant="outline" size="sm">View Proposals</Button>
+                                    </div>
+                                </div>
+                            )
+                        })
+                    ) : (
+                        <div className="text-center py-10 text-muted-foreground">
+                            <PackageSearch className="w-12 h-12 mx-auto mb-4" />
+                            <p>You haven't posted any requirements yet.</p>
+                            <p className="text-sm">Use the form above to get started.</p>
+                        </div>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
 
 export default function BiddingPage() {
   const { toast } = useToast();
@@ -44,7 +132,7 @@ export default function BiddingPage() {
       await addDoc(collection(db, 'bids'), {
         ...data,
         vendorId: user.uid,
-        vendorName: user.businessName,
+        vendorName: user.businessName || 'Unnamed Vendor',
         status: 'active',
         createdAt: serverTimestamp(),
       });
@@ -122,6 +210,9 @@ export default function BiddingPage() {
           </Form>
         </CardContent>
       </Card>
+      
+      <MyBidsList />
+
     </div>
   );
 }
