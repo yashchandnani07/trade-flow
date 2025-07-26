@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dialog';
 
 const statusVariantMap = {
-    active: "secondary",
+    active: "success",
     closed: "outline",
     awarded: "default"
 } as const;
@@ -186,7 +186,7 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
 
   if (!proposalsQuery) {
     return (
-        <DialogContent className="sm:max-w-2xl bg-glass">
+        <DialogContent className="sm:max-w-3xl bg-glass">
             <DialogHeader>
                 <DialogTitle>Loading Proposals...</DialogTitle>
             </DialogHeader>
@@ -195,15 +195,15 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
   }
 
   return (
-    <DialogContent className="sm:max-w-2xl bg-glass">
+    <DialogContent className="sm:max-w-3xl bg-glass">
       <DialogHeader>
-        <DialogTitle>Proposals for {bid.item}</DialogTitle>
+        <DialogTitle className="text-xl">Proposals for {bid.item}</DialogTitle>
         <DialogDescription>
           Review and manage bids from suppliers for this requirement.
         </DialogDescription>
       </DialogHeader>
       <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto">
-        {loading && <div className="flex items-center justify-center p-4"><Loader2 className="w-6 h-6 animate-spin" /></div>}
+        {loading && <div className="flex items-center justify-center p-8"><Loader2 className="w-8 h-8 animate-spin" /></div>}
         {error && <Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error.message}</AlertDescription></Alert>}
         {!loading && proposals && proposals.length > 0 ? (
           proposals.map(p => {
@@ -211,21 +211,21 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
             const isMyProposal = user?.uid === proposal.supplierId;
 
             return (
-              <div key={proposal.id} className="flex flex-col sm:flex-row justify-between sm:items-center bg-background/50 p-4 rounded-lg gap-4">
+              <div key={proposal.id} className="flex flex-col sm:flex-row justify-between sm:items-center bg-background/50 p-4 rounded-lg gap-4 border">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold">{proposal.supplierName}</p>
-                     <Badge variant={proposalStatusVariantMap[proposal.status || 'pending']} className="capitalize">{proposal.status}</Badge>
+                  <div className="flex items-center gap-2 mb-2">
+                    <p className="font-semibold text-lg">{proposal.supplierName}</p>
+                     <Badge variant={proposalStatusVariantMap[proposal.status || 'pending']} className="capitalize text-sm">{proposal.status}</Badge>
                   </div>
-                  <p className="text-2xl font-bold text-primary">₹{proposal.bidAmount.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-primary">₹{proposal.bidAmount.toLocaleString()}</p>
                   {proposal.status === 'negotiating' && proposal.counterOffer && (
                      <Card className="mt-2 bg-muted/50 border-primary/20">
-                        <CardContent className="p-3 text-sm">
-                           <p className="font-semibold text-primary flex items-center gap-1">
-                                <CornerDownLeft className="w-4 h-4"/>
+                        <CardContent className="p-3">
+                           <p className="font-semibold text-primary flex items-center gap-2 text-md">
+                                <CornerDownLeft className="w-5 h-5"/>
                                 Counter-offer from {proposal.counterOffer.from}: ₹{proposal.counterOffer.amount.toLocaleString()}
                            </p>
-                           {proposal.counterOffer.message && <p className="text-muted-foreground mt-1 italic">"{proposal.counterOffer.message}"</p>}
+                           {proposal.counterOffer.message && <p className="text-muted-foreground mt-1 italic text-sm">"{proposal.counterOffer.message}"</p>}
                         </CardContent>
                     </Card>
                   )}
@@ -234,11 +234,11 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
                 {isBidOwner && bid.status === 'active' && proposal.status !== 'accepted' &&(
                   <>
                     <NegotiationDialog bid={bid} proposal={proposal} user={user}>
-                        <Button variant="outline" size="sm" disabled={isAccepting !== null}>
+                        <Button variant="outline" size="lg" disabled={isAccepting !== null}>
                             <MessageSquare className="mr-2 h-4 w-4" /> Negotiate
                         </Button>
                     </NegotiationDialog>
-                    <Button size="sm" onClick={() => handleAcceptProposal(proposal)} disabled={isAccepting !== null}>
+                    <Button size="lg" onClick={() => handleAcceptProposal(proposal)} disabled={isAccepting !== null}>
                        {isAccepting === proposal.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Handshake className="mr-2 h-4 w-4" />}
                        Accept
                    </Button>
@@ -246,10 +246,10 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
                 )}
                 {isSupplier && isMyProposal && proposal.status === 'negotiating' && bid.status === 'active' && proposal.counterOffer?.from === 'vendor' &&(
                     <>
-                        <Button variant="outline" size="sm" disabled={isAccepting !== null}>
+                        <Button variant="outline" size="lg" disabled={isAccepting !== null}>
                            <CornerDownLeft className="mr-2 h-4 w-4" /> Revise Bid
                         </Button>
-                        <Button size="sm" onClick={() => handleAcceptProposal(proposal)} disabled={isAccepting !== null}>
+                        <Button size="lg" onClick={() => handleAcceptProposal(proposal)} disabled={isAccepting !== null}>
                             {isAccepting === proposal.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Handshake className="mr-2 h-4 w-4" />}
                            Accept Counter
                        </Button>
@@ -261,14 +261,14 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
           })
         ) : (
           <div className="text-center py-10 text-muted-foreground">
-            <Inbox className="w-12 h-12 mx-auto mb-4" />
-            <p>No proposals received yet.</p>
+            <Inbox className="w-16 h-16 mx-auto mb-4" />
+            <p className="text-lg">No proposals received yet.</p>
           </div>
         )}
       </div>
       <DialogFooter>
         <DialogClose asChild>
-          <Button type="button" variant="secondary">Close</Button>
+          <Button type="button" variant="secondary" size="lg">Close</Button>
         </DialogClose>
       </DialogFooter>
     </DialogContent>
@@ -295,9 +295,12 @@ function PlaceBidDialog({ bid, user, children }: { bid: Bid, user: any, children
         setIsSubmitting(true);
         try {
             const proposalsCollection = collection(db, 'bids', bid.id, 'proposals');
+            // FIX: Use a safe business name from the user object
+            const businessName = user.businessName || 'Unnamed Supplier';
+
             await addDoc(proposalsCollection, {
                 supplierId: user.uid,
-                supplierName: user.businessName || 'Unnamed Supplier',
+                supplierName: businessName,
                 bidAmount: Number(bidAmount),
                 createdAt: serverTimestamp(),
                 status: 'pending',
@@ -325,17 +328,17 @@ function PlaceBidDialog({ bid, user, children }: { bid: Bid, user: any, children
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] bg-glass">
+            <DialogContent className="sm:max-w-md bg-glass">
                 <DialogHeader>
-                    <DialogTitle>Place a Bid for {bid.item}</DialogTitle>
+                    <DialogTitle className="text-xl">Place a Bid for {bid.item}</DialogTitle>
                     <DialogDescription>
                         Submit your best offer for this requirement. The vendor will be notified of your bid.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleBidSubmit}>
                     <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="amount" className="text-right">
+                        <div className="space-y-2">
+                            <Label htmlFor="amount" className="text-base">
                                 Your Bid (₹)
                             </Label>
                             <Input
@@ -343,15 +346,15 @@ function PlaceBidDialog({ bid, user, children }: { bid: Bid, user: any, children
                                 type="number"
                                 value={bidAmount}
                                 onChange={(e) => setBidAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                                className="col-span-3"
+                                className="col-span-3 text-lg"
                                 placeholder="e.g., 9500"
                                 required
                             />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="button" variant="secondary" onClick={() => setIsOpen(false)}>Cancel</Button>
-                        <Button type="submit" disabled={isSubmitting}>
+                        <Button type="button" variant="secondary" size="lg" onClick={() => setIsOpen(false)}>Cancel</Button>
+                        <Button type="submit" size="lg" disabled={isSubmitting}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Submit Bid
                         </Button>
@@ -366,23 +369,23 @@ export function MarketplaceBidsList() {
     const { user } = useAuth();
     const bidsCollection = useMemo(() => collection(db, 'bids'), []);
     const bidsQuery = useMemo(() => {
-        return query(bidsCollection, where("status", "==", "active"), orderBy("createdAt", "desc"));
+        return query(bidsCollection, where("status", "in", ["active", "awarded", "closed"]), orderBy("createdAt", "desc"));
     }, [bidsCollection]);
 
     const [bids, loading, error] = useCollectionData(bidsQuery, { idField: 'id' });
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <p className="ml-2">Loading marketplace requirements...</p>
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                <p className="ml-4 text-lg">Loading marketplace requirements...</p>
             </div>
         );
     }
 
     if (error) {
          return (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="my-8">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Error Loading Bids</AlertTitle>
                 <AlertDescription>
@@ -394,13 +397,13 @@ export function MarketplaceBidsList() {
     }
 
     return (
-        <Card className="bg-glass mt-8">
-            <CardHeader>
-                <CardTitle>Active Marketplace Requirements</CardTitle>
-                <CardDescription>Browse active requirements from all vendors and place your bids.</CardDescription>
+        <Card className="bg-glass mt-8 border-0 shadow-none">
+            <CardHeader className="px-0">
+                <CardTitle className="text-3xl">Active Marketplace Requirements</CardTitle>
+                <CardDescription className="text-base">Browse active requirements from all vendors and place your bids.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
+            <CardContent className="px-0">
+                <div className="space-y-6">
                     {bids && bids.length > 0 ? (
                         bids.map(bidData => {
                             const bid = bidData as Bid;
@@ -411,29 +414,31 @@ export function MarketplaceBidsList() {
                             const isVendorOwner = user?.uid === bid.vendorId;
 
                             return (
-                                <Card key={bid.id} className="p-4 rounded-lg bg-background/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                <Card key={bid.id} className="p-6 rounded-xl bg-background/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-2">
                                     <div className="flex-1">
-                                        <h3 className="font-semibold text-lg">{bid.item}</h3>
-                                        <p className="text-sm text-muted-foreground">
+                                        <div className="flex items-center gap-4 mb-2">
+                                            <h3 className="font-semibold text-2xl">{bid.item}</h3>
+                                            <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize text-sm h-7">{bid.status}</Badge>
+                                        </div>
+                                        <p className="text-lg text-muted-foreground">
                                             {bid.quantity} kg | Target Price: ₹{bid.targetPrice.toLocaleString()}
                                         </p>
-                                        <p className="text-xs text-muted-foreground mt-1">
+                                        <p className="text-sm text-muted-foreground mt-2">
                                             Posted by {bid.vendorName} • {createdAt}
                                         </p>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize">{bid.status}</Badge>
+                                    <div className="flex items-center gap-4">
                                         
                                         <Dialog>
                                             <DialogTrigger asChild>
-                                                <Button variant="outline" size="sm">View Proposals</Button>
+                                                <Button variant="outline" size="lg">View Proposals</Button>
                                             </DialogTrigger>
                                             <ProposalsDialog bid={bid} user={user} />
                                         </Dialog>
 
                                         {isSupplier && !isVendorOwner && bid.status === 'active' && (
                                             <PlaceBidDialog bid={bid} user={user}>
-                                                <Button size="sm">Place Bid</Button>
+                                                <Button size="lg">Place Bid</Button>
                                             </PlaceBidDialog>
                                         )}
                                     </div>
@@ -441,9 +446,9 @@ export function MarketplaceBidsList() {
                             );
                         })
                     ) : (
-                        <div className="text-center py-10 text-muted-foreground">
-                            <PackageSearch className="w-12 h-12 mx-auto mb-4" />
-                            <p>There are no active requirements in the marketplace right now.</p>
+                        <div className="text-center py-16 text-muted-foreground bg-background/30 rounded-lg">
+                            <PackageSearch className="w-20 h-20 mx-auto mb-6" />
+                            <p className="text-xl">There are no active requirements in the marketplace right now.</p>
                         </div>
                     )}
                 </div>
