@@ -10,14 +10,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/icons/logo";
 import {
   BarChart2,
-  Gavel,
   Home,
   LogOut,
   Package,
@@ -27,9 +24,11 @@ import {
   Truck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+    const { user, logout } = useAuth();
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -51,7 +50,7 @@ export function AppSidebar() {
               isActive
               tooltip={{ children: "Dashboard" }}
             >
-              <Link href="/">
+              <Link href="/dashboard">
                 <Home />
                 <span>Dashboard</span>
               </Link>
@@ -59,7 +58,7 @@ export function AppSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip={{ children: "Tracking" }}>
-              <Link href="/#tracking">
+              <Link href="/dashboard#tracking">
                 <Truck />
                 <span>Tracking</span>
               </Link>
@@ -67,7 +66,7 @@ export function AppSidebar() {
           </SidebarMenuItem>
            <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip={{ children: "History" }}>
-              <Link href="/#history">
+              <Link href="/dashboard#history">
                 <Package />
                 <span>Order History</span>
               </Link>
@@ -83,7 +82,7 @@ export function AppSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip={{ children: "Reviews" }}>
-              <Link href="/#reviews">
+              <Link href="/dashboard#reviews">
                 <Star />
                 <span>Reviews</span>
               </Link>
@@ -113,19 +112,20 @@ export function AppSidebar() {
         <div className="border-t border-sidebar-border -mx-2 my-2" />
         <div className="flex items-center gap-3 p-2 rounded-lg">
           <Avatar>
-            <AvatarImage src="https://placehold.co/40x40" alt="User" />
-            <AvatarFallback>AD</AvatarFallback>
+            <AvatarImage src={`https://placehold.co/40x40?text=${user?.email?.[0].toUpperCase()}`} alt="User" />
+            <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
-            <p className="font-semibold text-sm truncate">Alex Doe</p>
+            <p className="font-semibold text-sm truncate">{user?.businessName || user?.email}</p>
             <p className="text-xs text-muted-foreground truncate">
-              alex.doe@example.com
+              {user?.role}
             </p>
           </div>
           <Button
             variant="ghost"
             size="icon"
             className="w-8 h-8 ml-auto group-data-[collapsible=icon]:hidden"
+            onClick={logout}
           >
             <LogOut className="w-4 h-4" />
           </Button>
