@@ -1,8 +1,10 @@
+
 'use client';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const orders = {
   active: [
@@ -56,7 +58,7 @@ const getStatusClass = (status: string) => {
   }
 };
 
-const OrderCard = ({ order }: { order: any }) => (
+const OrderCard = ({ order, isHistory = false }: { order: any, isHistory?: boolean }) => (
   <Card className="bg-secondary/50 mb-4">
     <CardContent className="p-4">
       <div className="flex justify-between items-start">
@@ -70,16 +72,24 @@ const OrderCard = ({ order }: { order: any }) => (
         </div>
         <Badge variant="outline" className={getStatusClass(order.status)}>{order.status}</Badge>
       </div>
-      {order.timeline && (
+      {!isHistory && order.timeline && (
         <div className="mt-4">
           <p className="text-sm font-semibold text-muted-foreground mb-2">Order Timeline:</p>
           <div className="flex flex-col space-y-2 text-xs">
             {order.timeline.map((item: any, index: number) => (
               <div key={index} className="flex items-center">
-                <div className={`w-3 h-3 rounded-full mr-3 ${item.completed ? 'bg-primary' : 'bg-muted-foreground/50'} ${item.current ? 'animate-pulse' : ''}`}></div>
-                <span className={`font-medium ${item.completed ? 'text-foreground' : 'text-muted-foreground'}`}>
+                 <Checkbox
+                    id={`timeline-${order.id}-${index}`}
+                    checked={item.completed}
+                    disabled
+                    className={`mr-3 ${item.current ? 'animate-pulse' : ''}`}
+                  />
+                <label
+                  htmlFor={`timeline-${order.id}-${index}`}
+                  className={`font-medium ${item.completed ? 'text-foreground' : 'text-muted-foreground'}`}
+                >
                   {item.status}
-                </span>
+                </label>
                 <span className="ml-auto text-muted-foreground">{item.time}</span>
               </div>
             ))}
@@ -117,7 +127,7 @@ const OrderManagement = () => {
             </div>
             <div>
                 {orders[activeTab].map((order) => (
-                <OrderCard key={order.id} order={order} />
+                    <OrderCard key={order.id} order={order} isHistory={activeTab === 'history'} />
                 ))}
             </div>
         </CardContent>
