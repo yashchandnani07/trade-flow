@@ -6,7 +6,7 @@ import { Star, Flame, Bell, ShieldCheck } from 'lucide-react';
 const KeyMetrics = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <Card className="bg-card-gradient">
+      <Card className="bg-glass">
         <CardHeader>
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Supplier Points
@@ -20,7 +20,7 @@ const KeyMetrics = () => {
           </p>
         </CardContent>
       </Card>
-      <Card className="bg-card-gradient">
+      <Card className="bg-glass">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Performance Streak
@@ -34,7 +34,7 @@ const KeyMetrics = () => {
           </p>
         </CardContent>
       </Card>
-      <Card className="bg-card-gradient">
+      <Card className="bg-glass">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Satisfaction Rating
@@ -48,7 +48,7 @@ const KeyMetrics = () => {
           </p>
         </CardContent>
       </Card>
-      <Card className="bg-card-gradient">
+      <Card className="bg-glass">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Compliance Alerts

@@ -57,7 +57,7 @@ const getStatusClass = (status: string) => {
 };
 
 const OrderCard = ({ order }: { order: any }) => (
-  <Card className="bg-secondary mb-4">
+  <Card className="bg-secondary/50 mb-4">
     <CardContent className="p-4">
       <div className="flex justify-between items-start">
         <div>
@@ -94,7 +94,7 @@ const OrderManagement = () => {
   const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
 
   return (
-    <Card className="bg-card-gradient">
+    <Card className="bg-glass">
         <CardHeader>
             <CardTitle>Order Management</CardTitle>
         </CardHeader>

@@ -5,7 +5,7 @@ import { ShieldCheck } from 'lucide-react';
 
 const ComplianceStatus = () => {
   return (
-    <Card className="bg-card-gradient">
+    <Card className="bg-glass">
       <CardHeader>
         <CardTitle>Compliance Status</CardTitle>
       </CardHeader>

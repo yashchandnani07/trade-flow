@@ -44,7 +44,7 @@ const TrustBadges = () => {
   return (
     <div>
       <h3 className="text-lg font-semibold mb-4">Trust Badges</h3>
-      <Card className="bg-card-gradient">
+      <Card className="bg-glass">
         <CardContent className="p-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {badges.map((badge, index) => (

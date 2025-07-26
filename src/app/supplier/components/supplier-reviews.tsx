@@ -40,7 +40,7 @@ const Rating = ({ rating }: { rating: number }) => (
 
 const SupplierReviews = () => {
   return (
-    <Card className="bg-card-gradient">
+    <Card className="bg-glass">
       <CardHeader>
         <CardTitle>Supplier Reviews</CardTitle>
         <CardDescription>Feedback from recent transactions</CardDescription>

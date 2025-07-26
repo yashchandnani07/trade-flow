@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 
 const BiddingDashboard = () => {
   return (
-    <Card className="bg-card-gradient">
+    <Card className="bg-glass">
       <CardHeader>
         <CardTitle>Bidding Dashboard</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <h4 className="font-semibold text-muted-foreground">Active Bids</h4>
-          <Card className="bg-secondary p-4">
+          <Card className="bg-secondary/50 p-4">
             <p className="font-medium">Requirement: 200kg Chicken (Pune Market)</p>
             <div className="flex justify-between items-center mt-2">
               <p className="text-sm">
@@ -25,7 +25,7 @@ const BiddingDashboard = () => {
         </div>
         <div className="mt-6 space-y-4">
           <h4 className="font-semibold text-muted-foreground">Won Bids</h4>
-          <Card className="bg-secondary p-4">
+          <Card className="bg-secondary/50 p-4">
              <div className="flex justify-between items-center">
                <div>
                   <p className="font-medium">150kg Tomatoes (Mumbai Market)</p>

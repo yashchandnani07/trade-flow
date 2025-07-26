@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 
 const FactoryDiary = () => {
   return (
-    <Card className="bg-card-gradient">
+    <Card className="bg-glass">
       <CardHeader>
         <CardTitle>Factory Diary</CardTitle>
         <CardDescription>Production Batch Tracking</CardDescription>

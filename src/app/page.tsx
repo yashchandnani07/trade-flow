@@ -30,7 +30,7 @@ import SupplierPage from '@/app/supplier/page';
 type View = 'vendor' | 'supplier';
 
 const Sidebar = () => (
-  <aside className="w-16 flex flex-col items-center space-y-6 py-4 bg-card-gradient border-r border-border">
+  <aside className="w-16 flex flex-col items-center space-y-6 py-4 bg-glass border-r border-border">
     <div className="p-2 bg-primary/10 rounded-lg text-primary">
       <Wallet size={24} />
     </div>
@@ -107,7 +107,7 @@ const VendorDashboard = () => (
   <div className="p-6 space-y-6">
     <h2 className="text-2xl font-bold">Dashboard</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <Card className="bg-card-gradient">
+      <Card className="bg-glass">
         <CardHeader>
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Vendor Points
@@ -121,7 +121,7 @@ const VendorDashboard = () => (
           </p>
         </CardContent>
       </Card>
-      <Card className="bg-card-gradient">
+      <Card className="bg-glass">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Performance Streak
@@ -135,7 +135,7 @@ const VendorDashboard = () => (
           </p>
         </CardContent>
       </Card>
-      <Card className="bg-card-gradient flex flex-col items-center justify-center text-center p-4">
+      <Card className="bg-glass flex flex-col items-center justify-center text-center p-4">
         <div className="relative h-24 w-24">
            <svg className="w-full h-full" viewBox="0 0 36 36">
             <path
@@ -168,7 +168,7 @@ const VendorDashboard = () => (
         </CardTitle>
         <p className="text-xs text-muted-foreground">Based on 2,342 reviews</p>
       </Card>
-      <Card className="bg-card-gradient">
+      <Card className="bg-glass">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             AI Alerts
@@ -189,7 +189,7 @@ const VendorDashboard = () => (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-4">
         <h3 className="text-lg font-semibold">Recent Orders</h3>
-        <Card className="bg-card-gradient">
+        <Card className="bg-glass">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-secondary rounded-lg">
@@ -207,7 +207,7 @@ const VendorDashboard = () => (
             <Badge variant="outline" className="text-yellow-400 border-yellow-400/50">Shipped</Badge>
           </CardContent>
         </Card>
-        <Card className="bg-card-gradient">
+        <Card className="bg-glass">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-secondary rounded-lg">
@@ -228,7 +228,7 @@ const VendorDashboard = () => (
       </div>
       <div>
         <h3 className="text-lg font-semibold">Order Timeline</h3>
-        <Card className="bg-card-gradient mt-4 p-4">
+        <Card className="bg-glass mt-4 p-4">
             <CardTitle className="text-base font-semibold">Track Your Order</CardTitle>
             <CardDescription>Order #A0K-425</CardDescription>
             <div className="text-right">
@@ -254,7 +254,7 @@ export default function App() {
   const [view, setView] = useState<View>('supplier');
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="flex min-h-screen bg-background text-foreground bg-gradient-to-br from-indigo-900 via-blue-900 to-purple-900">
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Header view={view} setView={setView} />
