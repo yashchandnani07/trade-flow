@@ -64,14 +64,6 @@ const roles: {id: Role, title: string, description: string, icon: React.ElementT
     color: "from-blue-500/20 to-cyan-500/20",
     emoji: "📦",
   },
-  {
-    id: "farmer",
-    title: "Farmer",
-    description: "Agricultural producer",
-    icon: Wheat,
-    color: "from-green-500/20 to-emerald-500/20",
-    emoji: "🌾",
-  },
 ];
 
 
