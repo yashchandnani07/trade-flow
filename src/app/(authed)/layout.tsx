@@ -20,14 +20,12 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
     }
 
     if (!loading && user) {
-        // Redirect logic based on role
         const isSupplierPath = pathname.startsWith('/supplier-dashboard');
-        const isVendorPath = pathname.startsWith('/dashboard') || pathname.startsWith('/supplier');
-
+        
         if (user.role === 'supplier' && !isSupplierPath) {
             router.replace('/supplier-dashboard');
-        } else if (user.role !== 'supplier' && (pathname === '/' || pathname === '/dashboard' ) && !isVendorPath) {
-             if (pathname !== '/dashboard') router.replace('/dashboard');
+        } else if (user.role !== 'supplier' && pathname === '/') {
+             router.replace('/dashboard');
         }
     }
   }, [user, loading, router, pathname]);
@@ -36,9 +34,6 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-background">
             <div className="space-y-4 text-center">
-                <Skeleton className="h-24 w-24 rounded-full mx-auto" />
-                <Skeleton className="h-6 w-48 mx-auto" />
-                <Skeleton className="h-4 w-64 mx-auto" />
                 <p className="text-muted-foreground mt-2">Loading your experience...</p>
             </div>
         </div>
@@ -52,7 +47,7 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
           <AppSidebar />
           <div className="flex flex-col flex-1">
             <AppHeader />
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
               {children}
             </main>
           </div>

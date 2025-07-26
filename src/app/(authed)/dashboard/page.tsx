@@ -33,7 +33,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-8 bg-transparent">
+    <div className="space-y-8">
         <section className="flex justify-between items-center" id="overview">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <Button onClick={handleSeed} variant="outline">Seed Database</Button>
@@ -57,6 +57,6 @@ export default function DashboardPage() {
             <SupplierReviews />
         </div>
         </div>
-    </main>
+    </div>
     );
 }

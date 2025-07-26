@@ -85,14 +85,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           points: 0,
         });
 
-        // Manually set user after signup to trigger redirect
         const userData = await fetchUserDocument(firebaseUser.uid);
          if (userData) {
-            setUser({
+            const fullUser = {
                 uid: firebaseUser.uid,
                 email: firebaseUser.email,
                 ...userData
-            });
+            };
+            setUser(fullUser as User);
         }
     } catch(error) {
         if (error instanceof FirebaseError) {
@@ -114,8 +114,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.warn("User document not found for UID:", firebaseUser.uid, "- Creating a default document.");
             const defaultData = {
                 email: firebaseUser.email,
-                role: 'vendor' as Role, // Default role
-                businessName: 'New User', // Default business name
+                role: 'vendor' as Role,
+                businessName: 'New User',
                 fssaiStatus: 'pending',
                 location: null,
                 createdAt: serverTimestamp(),
