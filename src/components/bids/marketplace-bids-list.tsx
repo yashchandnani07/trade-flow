@@ -213,6 +213,7 @@ function PlaceBidDialog({ bid, onBidPlaced }: { bid: Bid; onBidPlaced: () => voi
 function BidCard({ bid }: { bid: Bid }) {
     const { user } = useAuth();
     const [isPlaceBidOpen, setPlaceBidOpen] = useState(false);
+    const [isProposalsOpen, setProposalsOpen] = useState(false);
     
     const createdAt = bid.createdAt instanceof Timestamp 
         ? formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true }) 
@@ -222,8 +223,8 @@ function BidCard({ bid }: { bid: Bid }) {
     const isVendorOwner = user?.uid === bid.vendorId;
 
     return (
-        <Dialog onOpenChange={(open) => !open && setPlaceBidOpen(false)}>
-            <div className="border p-4 rounded-lg bg-background/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <Dialog>
+            <Card className="p-4 rounded-lg bg-glass flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                 <div>
                     <h3 className="font-semibold text-lg">{bid.item}</h3>
                     <p className="text-sm text-muted-foreground">
@@ -236,9 +237,12 @@ function BidCard({ bid }: { bid: Bid }) {
                 <div className="flex items-center gap-2">
                     <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize">{bid.status}</Badge>
                     
-                    <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">View Proposals</Button>
-                    </DialogTrigger>
+                    <Dialog open={isProposalsOpen} onOpenChange={setProposalsOpen}>
+                      <DialogTrigger asChild>
+                          <Button variant="outline" size="sm">View Proposals</Button>
+                      </DialogTrigger>
+                      <ProposalsDialog bid={bid} />
+                    </Dialog>
 
                     {isSupplier && bid.status === 'active' && (
                         <Dialog open={isPlaceBidOpen} onOpenChange={setPlaceBidOpen}>
@@ -249,8 +253,7 @@ function BidCard({ bid }: { bid: Bid }) {
                         </Dialog>
                     )}
                 </div>
-            </div>
-             <ProposalsDialog bid={bid} />
+            </Card>
         </Dialog>
     )
 }
