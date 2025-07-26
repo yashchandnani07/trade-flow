@@ -281,8 +281,8 @@ export function MarketplaceBidsList() {
                             const isVendorOwner = user?.uid === bid.vendorId;
 
                             return (
-                                <Card key={bid.id} className="p-4 rounded-lg bg-background/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                                    <Dialog>
+                                <Dialog key={bid.id}>
+                                    <Card className="p-4 rounded-lg bg-background/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                                         <div className="flex-1">
                                             <h3 className="font-semibold text-lg">{bid.item}</h3>
                                             <p className="text-sm text-muted-foreground">
@@ -307,9 +307,9 @@ export function MarketplaceBidsList() {
                                                 </PlaceBidDialog>
                                             )}
                                         </div>
-                                        <ProposalsDialog bid={bid} user={user} />
-                                    </Dialog>
-                                </Card>
+                                    </Card>
+                                    <ProposalsDialog bid={bid} user={user} />
+                                </Dialog>
                             );
                         })
                     ) : (
