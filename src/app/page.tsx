@@ -45,6 +45,7 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Role } from "@/lib/types";
 import { FirebaseError } from "firebase/app";
+import BlurText from "@/components/ui/blur-text";
 
 const roles: {id: Role, title: string, description: string, icon: React.ElementType, color: string, emoji: string}[] = [
   {
@@ -259,6 +260,10 @@ export default function SupplyChainConnect() {
     formSection?.scrollIntoView({ behavior: 'smooth' });
   }
 
+  const handleAnimationComplete = () => {
+    console.log('Animation completed!');
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-hidden">
       <div className="fixed inset-0 overflow-hidden">
@@ -305,18 +310,15 @@ export default function SupplyChainConnect() {
                   </Badge>
                 </div>
 
-                <div className="space-y-1">
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                    <div className="bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent mb-1">
-                      Secure.
-                    </div>
-                    <div className="bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent mb-1">
-                      Fast.
-                    </div>
-                    <div className="bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-                      Fair.
-                    </div>
-                  </h1>
+                <div className="space-y-1 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                    <BlurText
+                      text={"Secure.\nFast.\nFair."}
+                      delay={0.1}
+                      animateBy="words"
+                      direction="top"
+                      onAnimationComplete={handleAnimationComplete}
+                      className="bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent"
+                    />
                 </div>
 
                 <p className="text-lg md:text-xl text-slate-300 max-w-2xl leading-relaxed">
