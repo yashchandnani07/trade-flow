@@ -77,6 +77,7 @@ export type Bid = {
   targetPrice: number;
   status: 'active' | 'closed' | 'awarded';
   createdAt: Timestamp;
+  awardedTo?: string;
 };
 
 export type Proposal = {
@@ -85,5 +86,11 @@ export type Proposal = {
   supplierName: string;
   bidAmount: number;
   createdAt: Timestamp;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: 'pending' | 'accepted' | 'rejected' | 'negotiating';
+  counterOffer?: {
+    amount: number;
+    message: string;
+    from: 'vendor' | 'supplier';
+  };
+  finalAmount?: number;
 };
