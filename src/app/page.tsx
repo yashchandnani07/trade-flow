@@ -41,6 +41,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Role } from "@/lib/types";
+import { FirebaseError } from "firebase/app";
 
 const countries = [
   { code: "+1", flag: "🇺🇸", name: "United States" },
@@ -167,7 +168,7 @@ const testimonials = [
 export default function SupplyChainConnect() {
   const [selectedCountry, setSelectedCountry] = useState("+91")
   const [phoneNumber, setPhoneNumber] = useState("")
-  const [fullPhoneNumber, setFullPhoneNumber] = useState("")
+  const [businessName, setBusinessName] = useState("");
   const [selectedRole, setSelectedRole] = useState<Role | ''>("")
   const [showOTP, setShowOTP] = useState(false)
   const [otp, setOtp] = useState(["", "", "", "", "", ""])
@@ -178,8 +179,19 @@ export default function SupplyChainConnect() {
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
   const router = useRouter();
-  // const { sendOtp, signup } = useAuth();
+  const { sendOtp, signup, user } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (user) {
+        if(user.role === 'supplier') {
+            router.replace('/supplier-dashboard');
+        } else {
+            router.replace('/dashboard');
+        }
+    }
+  }, [user, router]);
+
 
   useEffect(() => {
     const animateStats = () => {
@@ -239,14 +251,54 @@ export default function SupplyChainConnect() {
     }
   }
 
+ const handleSendOTP = async () => {
+    if (!phoneNumber || !selectedRole || !businessName) {
+      toast({ variant: "destructive", title: "Missing Information", description: "Please fill out all fields." });
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const fullNumber = selectedCountry + phoneNumber;
+      await sendOtp(fullNumber);
+      setShowOTP(true);
+      toast({ title: "OTP Sent", description: `A verification code has been sent to ${fullNumber}.` });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+      toast({ variant: "destructive", title: "Failed to send OTP", description: errorMessage });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOTPAndSignup = async () => {
+    const otpCode = otp.join('');
+    if (otpCode.length !== 6 || !selectedRole) {
+        toast({ variant: "destructive", title: "Invalid Input", description: "Please enter the full 6-digit OTP and select a role." });
+        return;
+    }
+
+    setIsLoading(true);
+    try {
+        const fullNumber = selectedCountry + phoneNumber;
+        await signup(otpCode, fullNumber, { role: selectedRole, businessName });
+        setIsVerified(true);
+        toast({ title: "Welcome!", description: "Your account has been created successfully." });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        toast({ variant: "destructive", title: "Verification Failed", description: errorMessage });
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/dashboard');
-    // if (!showOTP) {
-    //     handleSendOTP();
-    // } else {
-    //     handleVerifyOTP();
-    // }
+    if (!showOTP) {
+        handleSendOTP();
+    } else {
+        handleVerifyOTPAndSignup();
+    }
   }
 
   const handleStartForFree = () => {
@@ -256,6 +308,7 @@ export default function SupplyChainConnect() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-hidden">
+        <div id="recaptcha-container" />
       <div className="fixed inset-0 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700">
           <div className="absolute inset-0 opacity-5">
@@ -398,6 +451,20 @@ export default function SupplyChainConnect() {
                       <form onSubmit={handleSubmit} className="space-y-6">
                         {!showOTP ? (
                           <>
+                           <div className="space-y-2">
+                                <Label htmlFor="businessName" className="text-sm font-semibold text-white flex items-center">
+                                    <Store className="w-4 h-4 mr-2" />
+                                    Business Name
+                                </Label>
+                                <Input
+                                    id="businessName"
+                                    type="text"
+                                    value={businessName}
+                                    onChange={(e) => setBusinessName(e.target.value)}
+                                    placeholder="e.g., Acme Fresh Produce"
+                                    className="bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 focus:ring-0"
+                                />
+                            </div>
                             <div className="space-y-2">
                               <Label htmlFor="country" className="text-sm font-semibold text-white flex items-center">
                                 <Globe className="w-4 h-4 mr-2" />
@@ -509,7 +576,7 @@ export default function SupplyChainConnect() {
 
                             <div className="text-center">
                               <p className="text-sm text-slate-400 mb-2">Did not you receive the code?</p>
-                              <Button variant="link" className="text-blue-400 hover:text-blue-300 p-0">
+                              <Button variant="link" className="text-blue-400 hover:text-blue-300 p-0" onClick={handleSendOTP}>
                                 Resend Code
                               </Button>
                             </div>
