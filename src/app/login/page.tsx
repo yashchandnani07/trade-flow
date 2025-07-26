@@ -28,6 +28,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast({ title: 'Login successful!' });
+      router.push('/dashboard');
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
