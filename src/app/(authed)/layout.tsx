@@ -22,7 +22,7 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
     if (!loading && user) {
         // Redirect logic based on role
         const isSupplierPath = pathname.startsWith('/supplier-dashboard');
-        const isVendorPath = pathname.startsWith('/dashboard');
+        const isVendorPath = pathname.startsWith('/dashboard') || pathname.startsWith('/supplier');
 
         if (user.role === 'supplier' && !isSupplierPath) {
             router.replace('/supplier-dashboard');
@@ -48,12 +48,14 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
   if (user) {
     return (
       <SidebarProvider>
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background flex">
           <AppSidebar />
-          <SidebarInset>
+          <div className="flex flex-col w-full">
             <AppHeader />
-            {children}
-          </SidebarInset>
+            <main className="flex-1 overflow-y-auto">
+              {children}
+            </main>
+          </div>
         </div>
       </SidebarProvider>
     );
