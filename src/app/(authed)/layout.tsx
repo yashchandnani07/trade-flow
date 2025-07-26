@@ -13,24 +13,26 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // If not loading and there's no user, redirect to the home/login page.
-    if (!loading && !user) {
-      router.replace('/');
-    }
-    // Handle role-based redirects once user data is available
-    if (!loading && user) {
+    // Wait until the loading is complete before checking for a user.
+    if (!loading) {
+      if (!user) {
+        // If there's no user, always redirect to the root page.
+        router.replace('/');
+      } else {
+        // Handle role-based redirects only when a user is confirmed.
         const isSupplierDashboard = window.location.pathname.startsWith('/supplier-dashboard');
-        const isVendorArea = window.location.pathname.startsWith('/dashboard') || window.location.pathname.startsWith('/bidding') || window.location.pathname.startsWith('/supplier/');
+        const isVendorArea = window.location.pathname.startsWith('/dashboard') || window.location.pathname.startsWith('/bidding') || window.location.pathname.startsWith('/supplier');
 
         if (user.role === 'supplier' && !isSupplierDashboard) {
             router.replace('/supplier-dashboard');
-        } else if (user.role !== 'supplier' && !isVendorArea) {
+        } else if (user.role !== 'supplier' && isSupplierDashboard) {
              router.replace('/dashboard');
         }
+      }
     }
   }, [user, loading, router]);
 
-  // While loading, or if the user is null and we are waiting for the redirect, show a loader.
+  // While loading auth state, or if we're waiting for the redirect to happen, show a loader.
   if (loading || !user) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-background">
