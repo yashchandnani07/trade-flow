@@ -430,16 +430,6 @@ export default function SupplyChainConnect() {
                             </form>
                         </TabsContent>
                     </Tabs>
-                    <p className="text-xs text-slate-400 text-center leading-relaxed bg-slate-800/20 p-3 rounded-lg mt-6">
-                          By continuing, you agree to our{" "}
-                          <a href="#" className="text-blue-400 hover:text-blue-300 underline">
-                            Terms of Service
-                          </a>{" "}
-                          and{" "}
-                          <a href="#" className="text-blue-400 hover:text-blue-300 underline">
-                            Privacy Policy
-                          </a>
-                    </p>
                   </CardContent>
                 </Card>
 
