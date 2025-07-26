@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ChevronRight,
   Search,
@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 
 export function AppHeader() {
   const { user, logout } = useAuth();
+  const router = useRouter();
   const pathname = usePathname();
   const pathSegments = pathname.split('/').filter(Boolean);
   const breadcrumbs = pathSegments.map((segment, index) => {
@@ -95,7 +96,7 @@ export function AppHeader() {
             <span>Settings</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator className="light:bg-white/10" />
-          <DropdownMenuItem onClick={logout} className="light:focus:bg-glass-hover">
+          <DropdownMenuItem onClick={() => logout(router)} className="light:focus:bg-glass-hover">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Logout</span>
           </DropdownMenuItem>

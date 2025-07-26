@@ -18,16 +18,16 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { app, db, auth } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
+import { type AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import type { User, Role } from '@/lib/types';
 import { FirebaseError } from 'firebase/app';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  sendOtp: (phoneNumber: string) => Promise<void>;
+  sendOtp: (phoneNumber: string, router: AppRouterInstance) => Promise<void>;
   verifyOtp: (otp: string) => Promise<void>;
-  signup: (otp: string, phoneNumber: string, additionalData: { role: Role; businessName: string }) => Promise<void>;
+  signup: (otp: string, phoneNumber: string, additionalData: { role: Role; businessName: string }, router: AppRouterInstance) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -52,7 +52,6 @@ declare global {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
   
   const setupRecaptcha = useCallback(() => {
     if (!window.recaptchaVerifier) {
@@ -79,8 +78,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 ...userData
             });
         } else {
-            // This can happen if a user authenticates but their DB entry isn't created yet
-            // or was deleted. For now, we sign them out to prevent a broken state.
             await signOut(auth);
             setUser(null);
         }
@@ -93,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  const sendOtp = async (phoneNumber: string) => {
+  const sendOtp = async (phoneNumber: string, router: AppRouterInstance) => {
     try {
         setupRecaptcha();
         const appVerifier = window.recaptchaVerifier!;
@@ -116,7 +113,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       try {
           await window.confirmationResult.confirm(otp);
-          // onAuthStateChanged will handle setting the user state.
       } catch (error) {
           console.error("Error verifying OTP:", error);
           if (error instanceof FirebaseError && error.code === 'auth/invalid-verification-code') {
@@ -126,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
   }
 
-  const signup = async (otp: string, phoneNumber: string, additionalData: { role: Role; businessName: string }) => {
+  const signup = async (otp: string, phoneNumber: string, additionalData: { role: Role; businessName: string }, router: AppRouterInstance) => {
     if (!window.confirmationResult) {
           throw new Error("No confirmation result available. Please send OTP first.");
     }
@@ -144,7 +140,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         points: 0,
       });
 
-      // Let onAuthStateChanged handle setting user state
+      // Let onAuthStateChanged handle setting user state, and then redirect
+      if (additionalData.role === 'supplier') {
+        router.push('/supplier-dashboard');
+      } else {
+        router.push('/dashboard');
+      }
     } catch(error) {
         if (error instanceof FirebaseError) {
           if (error.code === 'auth/invalid-verification-code') {
@@ -155,7 +156,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const logout = async () => {
+  const logout = async (router: AppRouterInstance) => {
     await signOut(auth);
     setUser(null);
     router.push('/');
@@ -167,7 +168,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     sendOtp,
     verifyOtp,
     signup,
-    logout,
+    logout: (router: AppRouterInstance) => logout(router),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Sidebar as BaseSidebar,
   SidebarContent,
@@ -53,6 +53,7 @@ const commonNavItems = [
 
 export function AppSidebar() {
     const { user, logout } = useAuth();
+    const router = useRouter();
     const pathname = usePathname();
     const { state, toggleSidebar } = useSidebar();
 
@@ -150,7 +151,7 @@ export function AppSidebar() {
             variant="ghost"
             size="icon"
             className="w-8 h-8 ml-auto group-data-[collapsible=icon]:hidden light:text-white/70 hover:light:bg-glass-hover hover:light:text-white"
-            onClick={logout}
+            onClick={() => logout(router)}
           >
             <LogOut className="w-4 h-4" />
           </Button>

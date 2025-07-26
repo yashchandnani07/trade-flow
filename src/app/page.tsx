@@ -260,7 +260,7 @@ export default function SupplyChainConnect() {
     setIsLoading(true);
     try {
       const fullNumber = selectedCountry + phoneNumber;
-      await sendOtp(fullNumber);
+      await sendOtp(fullNumber, router);
       setShowOTP(true);
       toast({ title: "OTP Sent", description: `A verification code has been sent to ${fullNumber}.` });
     } catch (error) {
@@ -281,7 +281,7 @@ export default function SupplyChainConnect() {
     setIsLoading(true);
     try {
         const fullNumber = selectedCountry + phoneNumber;
-        await signup(otpCode, fullNumber, { role: selectedRole, businessName });
+        await signup(otpCode, fullNumber, { role: selectedRole, businessName }, router);
         setIsVerified(true);
         toast({ title: "Welcome!", description: "Your account has been created successfully." });
     } catch (error) {
