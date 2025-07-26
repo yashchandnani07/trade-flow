@@ -5,22 +5,23 @@ import type { Timestamp, GeoPoint } from "firebase/firestore";
 
 export type Order = {
   id: string;
-  product: string;
-  customer: string;
-  date: string;
-  amount: string;
-  status: "Pending" | "Shipped" | "Delivered" | "Cancelled";
+  vendorId: string;
+  supplierId: string;
+  items: any[];
+  status: "pending" | "shipped" | "delivered" | "cancelled";
+  deliveryTimestamp: Timestamp | null;
 };
 
 export type Review = {
   id: string;
   supplierId: string;
-  userId: string;
+  vendorId: string;
   author: string;
   avatar: string;
-  date: Timestamp | string; // Firestore timestamp or string
+  timestamp: Timestamp | string; // Firestore timestamp or string
   rating: number;
   comment: string;
+  verified: boolean;
 };
 
 export type Supplier = {

@@ -2,9 +2,9 @@
 'use server';
 
 import { aiEnhancedAlert, type AiEnhancedAlertInput, type AiEnhancedAlertOutput } from "@/ai/flows/ai-enhanced-alerts";
-import { collection, getDocs, writeBatch, doc } from "firebase/firestore";
+import { collection, getDocs, writeBatch, doc, query, where, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { mockSuppliers, mockReviews } from "@/lib/data";
+import { mockSuppliers, mockReviews, mockOrders } from "@/lib/data";
 
 export async function generateAlert(): Promise<AiEnhancedAlertOutput> {
   const eventTypes = ['Order Shipped', 'New Bid Received', 'Payment Processed', 'Low Stock Warning', 'Contract expiring soon'];
@@ -37,38 +37,59 @@ export async function seedDatabase() {
   try {
     const batch = writeBatch(db);
 
-    // Seed suppliers
-    const suppliersCollection = collection(db, "suppliers");
-    const suppliersSnapshot = await getDocs(suppliersCollection);
-    if (suppliersSnapshot.empty) {
-        mockSuppliers.forEach(supplier => {
-            const docRef = doc(suppliersCollection, supplier.id);
-            batch.set(docRef, supplier);
+    const seedCollection = async (collectionName: string, data: any[]) => {
+      const collectionRef = collection(db, collectionName);
+      const snapshot = await getDocs(query(collectionRef, limit(1)));
+      if (snapshot.empty) {
+        data.forEach(item => {
+          const docRef = item.id ? doc(collectionRef, item.id) : doc(collectionRef);
+          batch.set(docRef, item);
         });
-        console.log('Seeding suppliers...');
-    } else {
-        console.log('Suppliers collection already exists, skipping seeding.');
+        console.log(`Seeding ${collectionName}...`);
+        return true;
+      }
+      console.log(`${collectionName} collection already contains data, skipping seeding.`);
+      return false;
     }
 
-    // Seed reviews
-    const reviewsCollection = collection(db, "reviews");
-    const reviewsSnapshot = await getDocs(reviewsCollection);
-    if (reviewsSnapshot.empty) {
-        mockReviews.forEach(review => {
-            const docRef = doc(reviewsCollection, review.id); 
-            batch.set(docRef, review);
-        });
-        console.log('Seeding reviews...');
+    let seeded = false;
+    seeded = await seedCollection("suppliers", mockSuppliers) || seeded;
+    seeded = await seedCollection("reviews", mockReviews) || seeded;
+    seeded = await seedCollection("orders", mockOrders) || seeded;
+
+    if (seeded) {
+        await batch.commit();
+        return { success: true, message: "Database seeded successfully." };
     } else {
-        console.log('Reviews collection already exists, skipping seeding.');
+        return { success: true, message: "Database already contains data. No new data was added." };
     }
 
-    await batch.commit();
-
-    return { success: true, message: "Database seeded successfully (if collections were empty)." };
   } catch (error) {
     console.error("Error seeding database: ", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return { success: false, message: `Error seeding database: ${errorMessage}` };
+  }
+}
+
+
+export async function checkOrderHistory(vendorId: string, supplierId: string): Promise<{ hasCompletedOrder: boolean }> {
+  try {
+    const ordersRef = collection(db, 'orders');
+    const q = query(
+      ordersRef,
+      where('vendorId', '==', vendorId),
+      where('supplierId', '==', supplierId),
+      where('status', '==', 'delivered'),
+      limit(1)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    return { hasCompletedOrder: !querySnapshot.empty };
+
+  } catch (error) {
+    console.error("Error checking order history:", error);
+    // In case of error, default to false to be safe.
+    return { hasCompletedOrder: false };
   }
 }

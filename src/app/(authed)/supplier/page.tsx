@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { collection, query } from 'firebase/firestore';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Star } from 'lucide-react';
@@ -32,7 +32,7 @@ function StarRating({ rating, className }: { rating: number; className?: string 
 }
 
 const SupplierCard = ({ supplier }: { supplier: Supplier }) => (
-  <Card className="bg-glass hover:shadow-lg transition-shadow duration-300">
+  <Card className="bg-glass hover:shadow-lg transition-shadow duration-300 flex flex-col">
     <CardHeader>
         <div className="flex items-start gap-4">
             <Avatar className="w-16 h-16 border">
@@ -48,12 +48,14 @@ const SupplierCard = ({ supplier }: { supplier: Supplier }) => (
             </div>
         </div>
     </CardHeader>
-    <CardContent>
+    <CardContent className="flex-grow">
       <p className="text-muted-foreground text-sm mb-4 h-10 overflow-hidden">{supplier.description}</p>
+    </CardContent>
+    <CardFooter>
       <Button asChild className="w-full">
         <Link href={`/supplier/${supplier.id}`}>View Profile</Link>
       </Button>
-    </CardContent>
+    </CardFooter>
   </Card>
 );
 
@@ -64,7 +66,12 @@ export default function SupplierListPage() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6">
-      <h2 className="text-3xl font-bold tracking-tight">Browse Suppliers</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-bold tracking-tight">Browse Suppliers</h2>
+        <Button asChild>
+            <Link href="/supplier/review">Leave a Review</Link>
+        </Button>
+      </div>
        {error && (
          <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />

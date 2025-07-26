@@ -1,9 +1,15 @@
+
 "use client";
 
 import * as React from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
+import { useAuth } from "@/hooks/use-auth";
+import { collection, query, where } from "firebase/firestore";
+import { useCollectionData } from "react-firebase-hooks/firestore";
+import { db } from "@/lib/firebase";
+import type { Order } from "@/lib/types";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -29,20 +35,45 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { mockOrders } from "@/lib/data";
+import { Skeleton } from "../ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { AlertTriangle } from "lucide-react";
+
 
 const statusVariantMap = {
-    Delivered: "default",
-    Shipped: "secondary",
-    Pending: "outline",
-    Cancelled: "destructive"
+    delivered: "default",
+    shipped: "secondary",
+    pending: "outline",
+    cancelled: "destructive"
 } as const;
 
 export function OrderHistory({ className }: React.HTMLAttributes<HTMLDivElement>) {
+  const { user } = useAuth();
   const [date, setDate] = React.useState<DateRange | undefined>({
-    from: new Date(2024, 4, 1),
-    to: new Date(2024, 4, 30),
+    from: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+    to: new Date(),
   });
+
+  const ordersCollection = React.useMemo(() => collection(db, 'orders'), []);
+  const ordersQuery = React.useMemo(() => {
+    if (!user) return null;
+    return query(ordersCollection, where("vendorId", "==", user.uid));
+  }, [ordersCollection, user]);
+
+  const [orders, loading, error] = useCollectionData(ordersQuery, { idField: 'id' });
+
+  const filteredOrders = React.useMemo(() => {
+    if (!orders) return [];
+    return orders.filter(order => {
+        if (!date?.from || !order.deliveryTimestamp) return true;
+        const orderDate = (order.deliveryTimestamp as any).toDate();
+        if (date.to) {
+            return orderDate >= date.from && orderDate <= date.to;
+        }
+        return orderDate >= date.from;
+    }) as Order[];
+  }, [orders, date]);
+
 
   return (
     <Card className={cn("glassmorphic", className)}>
@@ -97,22 +128,46 @@ export function OrderHistory({ className }: React.HTMLAttributes<HTMLDivElement>
           <TableHeader>
             <TableRow>
               <TableHead>Order ID</TableHead>
-              <TableHead>Product</TableHead>
+              <TableHead>Supplier ID</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockOrders.map((order) => (
+            {loading && [...Array(5)].map((_, i) => (
+                <TableRow key={i}>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                </TableRow>
+            ))}
+            {error && (
+                <TableRow>
+                    <TableCell colSpan={4}>
+                        <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>{error.message}</AlertDescription>
+                        </Alert>
+                    </TableCell>
+                </TableRow>
+            )}
+            {!loading && filteredOrders.length === 0 && (
+                 <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                        No orders found for the selected period.
+                    </TableCell>
+                </TableRow>
+            )}
+            {!loading && filteredOrders.map((order) => (
               <TableRow key={order.id}>
-                <TableCell className="font-medium">{order.id}</TableCell>
-                <TableCell>{order.product}</TableCell>
+                <TableCell className="font-mono text-xs">{order.id}</TableCell>
+                <TableCell className="font-medium">{order.supplierId}</TableCell>
                 <TableCell>
-                  <Badge variant={statusVariantMap[order.status]}>{order.status}</Badge>
+                  <Badge variant={statusVariantMap[order.status]} className="capitalize">{order.status}</Badge>
                 </TableCell>
-                <TableCell>{order.date}</TableCell>
-                <TableCell className="text-right">{order.amount}</TableCell>
+                <TableCell>{order.deliveryTimestamp ? format((order.deliveryTimestamp as any).toDate(), "PPP") : 'N/A'}</TableCell>
               </TableRow>
             ))}
           </TableBody>

@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import Link from 'next/link';
 
 
 const RatingInput = ({ rating, onRate, readOnly = false }: { rating: number, onRate?: (rating: number) => void, readOnly?: boolean }) => (
@@ -37,11 +38,9 @@ const RatingInput = ({ rating, onRate, readOnly = false }: { rating: number, onR
 const SupplierProfileReviews = ({ supplierId }: { supplierId: string }) => {
     const { toast } = useToast();
     const { user } = useAuth();
-    const [newComment, setNewComment] = useState("");
-    const [newRating, setNewRating] = useState(0);
 
     const reviewsCollection = useMemo(() => collection(db, 'reviews'), []);
-    const reviewsQuery = useMemo(() => query(reviewsCollection, where("supplierId", "==", supplierId), orderBy("date", "desc")), [reviewsCollection, supplierId]);
+    const reviewsQuery = useMemo(() => query(reviewsCollection, where("supplierId", "==", supplierId), orderBy("timestamp", "desc")), [reviewsCollection, supplierId]);
     const [reviewsSnapshot, loading, error] = useCollectionData(reviewsQuery, {
       idField: 'id'
     });
@@ -49,45 +48,15 @@ const SupplierProfileReviews = ({ supplierId }: { supplierId: string }) => {
     const reviews: Review[] = useMemo(() => {
         if (!reviewsSnapshot) return [];
         return reviewsSnapshot.map(doc => {
-            const data = doc as Omit<Review, 'id' | 'date'> & { date: Timestamp };
+            const data = doc as Omit<Review, 'id' | 'timestamp'> & { timestamp: Timestamp };
             return {
                 id: doc.id,
                 ...data,
-                date: data.date?.toDate ? data.date.toDate().toLocaleDateString('en-CA') : 'Date not available',
+                timestamp: data.timestamp?.toDate ? data.timestamp.toDate().toLocaleDateString('en-CA') : 'Date not available',
             };
         });
     }, [reviewsSnapshot]);
     
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
-        if (newComment.trim() && newRating > 0 && user) {
-            try {
-                await addDoc(collection(db, "reviews"), {
-                    supplierId,
-                    author: user.businessName || "Anonymous Vendor",
-                    avatar: user.businessName?.[0] || "A",
-                    date: serverTimestamp(),
-                    rating: newRating,
-                    comment: newComment,
-                    userId: user.uid,
-                });
-                setNewComment("");
-                setNewRating(0);
-                 toast({
-                    title: "Review Submitted!",
-                    description: "Thank you for your feedback.",
-                });
-            } catch (e) {
-                console.error("Error adding document: ", e);
-                 toast({
-                    variant: "destructive",
-                    title: "Submission Failed",
-                    description: "Could not submit your review. Please try again.",
-                });
-            }
-        }
-    };
-
   return (
     <Card className="bg-glass">
       <CardHeader>
@@ -132,7 +101,7 @@ const SupplierProfileReviews = ({ supplierId }: { supplierId: string }) => {
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="font-semibold">{review.author}</p>
-                    <p className="text-xs text-muted-foreground">{String(review.date)}</p>
+                    <p className="text-xs text-muted-foreground">{String(review.timestamp)}</p>
                   </div>
                   <RatingInput rating={review.rating} readOnly />
                 </div>
@@ -142,20 +111,11 @@ const SupplierProfileReviews = ({ supplierId }: { supplierId: string }) => {
           ))}
         </div>
         <div className="mt-6 pt-6 border-t border-border">
-          <p className="font-semibold text-lg">Leave a review</p>
-          <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-            <div>
-                <p className="text-sm font-medium mb-2">Your Rating</p>
-                <RatingInput rating={newRating} onRate={setNewRating} />
-            </div>
-            <Textarea 
-                placeholder="Share your experience with this supplier..." 
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                rows={3}
-            />
-            <Button type="submit" size="sm" disabled={!newComment.trim() || newRating === 0 || !user}>Submit Review</Button>
-          </form>
+          <p className="font-semibold text-lg">Have you worked with them?</p>
+          <p className="text-sm text-muted-foreground mb-4">Share your experience to help other vendors.</p>
+          <Button asChild>
+            <Link href="/supplier/review">Leave a review</Link>
+          </Button>
         </div>
       </CardContent>
     </Card>

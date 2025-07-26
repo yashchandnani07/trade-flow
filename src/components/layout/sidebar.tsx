@@ -26,6 +26,7 @@ import {
   Truck,
   Gavel,
   ChevronLeft,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -37,7 +38,7 @@ const vendorNavItems = [
     { href: "/dashboard#tracking", icon: Truck, label: "Tracking" },
     { href: "/dashboard#history", icon: Package, label: "Order History" },
     { href: "/supplier", icon: Users, label: "Suppliers" },
-    { href: "/dashboard#reviews", icon: Star, label: "Reviews" },
+    { href: "/supplier/review", icon: MessageSquare, label: "Leave a Review" },
 ];
 
 const supplierNavItems = [
