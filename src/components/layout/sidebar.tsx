@@ -72,6 +72,14 @@ export function AppSidebar() {
           {user?.role !== 'supplier' && (
             <>
               <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Bidding" }}>
+                  <Link href="/bidding">
+                    <Gavel />
+                    <span>Bidding</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{ children: "Tracking" }}>
                   <Link href="/dashboard#tracking">
                     <Truck />
