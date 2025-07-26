@@ -39,6 +39,9 @@ export default function LandingPage() {
     }
   }, [user, loading, router]);
 
+  // If auth is loading, or the user is logged in, we show a spinner.
+  // The useEffect above will handle the redirect. This prevents the page
+  // from flashing before the redirect happens.
   if (loading || user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -47,6 +50,7 @@ export default function LandingPage() {
     );
   }
 
+  // If not loading and no user, show the landing page.
   return (
     <div className="flex flex-col min-h-screen">
       <header className="px-4 lg:px-6 h-14 flex items-center">
