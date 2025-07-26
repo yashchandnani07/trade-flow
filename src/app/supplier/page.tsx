@@ -14,9 +14,6 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
-import { AppHeader } from '@/components/layout/header';
-import { AppSidebar } from '@/components/layout/sidebar';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 function StarRating({ rating, className }: { rating: number; className?: string }) {
   return (
@@ -83,7 +80,7 @@ export default function SupplierListPage() {
         {!loading && suppliers?.map(supplier => (
             <SupplierCard key={supplier.id} supplier={supplier as Supplier} />
         ))}
-        {!loading && suppliers?.length === 0 && (
+        {!loading && !error && (!suppliers || suppliers.length === 0) && (
              <Card className="col-span-full bg-glass">
                 <CardContent className="p-6 text-center text-muted-foreground">
                     <p>No suppliers found in the database.</p>
