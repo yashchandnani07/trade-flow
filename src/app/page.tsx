@@ -749,4 +749,3 @@ export default function SupplyChainConnect() {
     </div>
   )
 }
-```
