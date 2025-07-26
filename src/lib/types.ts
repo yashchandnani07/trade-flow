@@ -3,13 +3,21 @@
 import type { AiEnhancedAlertOutput } from "@/ai/flows/ai-enhanced-alerts";
 import type { Timestamp, GeoPoint } from "firebase/firestore";
 
+export type OrderStatus = 'Order Placed' | 'Shipped' | 'Received';
+
 export type Order = {
   id: string;
   vendorId: string;
   supplierId: string;
+  supplierName: string;
   items: any[];
-  status: "pending" | "shipped" | "delivered" | "cancelled";
+  status: OrderStatus;
+  orderDate: Timestamp;
   deliveryTimestamp: Timestamp | null;
+  preDeliveryImage?: string | null;
+  postDeliveryImage?: string | null;
+  rating?: number;
+  review?: string;
 };
 
 export type Review = {

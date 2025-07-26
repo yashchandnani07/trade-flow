@@ -3,9 +3,43 @@ import type { Order, Review, Supplier } from "@/lib/types";
 import { Timestamp } from "firebase/firestore";
 
 export const mockOrders: Omit<Order, 'id'>[] = [
-  { vendorId: "MOCK_VENDOR_1", supplierId: "stellar-solutions", items: [], status: "delivered", deliveryTimestamp: Timestamp.now() },
-  { vendorId: "MOCK_VENDOR_1", supplierId: "apex-logistics", items: [], status: "shipped", deliveryTimestamp: null },
-  { vendorId: "MOCK_VENDOR_2", supplierId: "stellar-solutions", items: [], status: "delivered", deliveryTimestamp: Timestamp.now() },
+  {
+    vendorId: "MOCK_VENDOR_1",
+    supplierId: "stellar-solutions",
+    supplierName: "Stellar Solutions",
+    items: [{ name: "Eco-friendly Cups", quantity: 500 }],
+    status: "Shipped",
+    orderDate: Timestamp.fromDate(new Date('2024-07-20')),
+    deliveryTimestamp: null,
+    preDeliveryImage: "https://placehold.co/400x300.png",
+    postDeliveryImage: null,
+    rating: undefined,
+    review: undefined,
+  },
+  {
+    vendorId: "MOCK_VENDOR_1",
+    supplierId: "apex-logistics",
+    supplierName: "Apex Logistics",
+    items: [{ name: "Shipping Boxes", quantity: 1000 }],
+    status: "Order Placed",
+    orderDate: Timestamp.fromDate(new Date('2024-07-22')),
+    deliveryTimestamp: null,
+    preDeliveryImage: null,
+    postDeliveryImage: null,
+  },
+  {
+    vendorId: "MOCK_VENDOR_2",
+    supplierId: "stellar-solutions",
+    supplierName: "Stellar Solutions",
+    items: [{ name: "Recycled Cardboard", quantity: 200 }],
+    status: "Received",
+    orderDate: Timestamp.fromDate(new Date('2024-07-15')),
+    deliveryTimestamp: Timestamp.fromDate(new Date('2024-07-18')),
+    preDeliveryImage: "https://placehold.co/400x300.png",
+    postDeliveryImage: "https://placehold.co/400x300.png",
+    rating: 5,
+    review: "The products were of excellent quality and arrived right on time. Great communication from the supplier!"
+  },
 ];
 
 export const mockSuppliers: Supplier[] = [
@@ -57,7 +91,7 @@ export const mockSuppliers: Supplier[] = [
 ];
 
 
-export const mockReviews: Omit<Review, 'date'>[] = [
+export const mockReviews: Omit<Review, 'timestamp'>[] = [
     {
         id: "1",
         supplierId: "stellar-solutions",

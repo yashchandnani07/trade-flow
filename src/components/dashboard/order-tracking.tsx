@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Package, Truck, CheckCircle } from "lucide-react";
@@ -36,13 +37,13 @@ export function OrderTracking() {
       <CardHeader>
         <CardTitle>Order Tracking</CardTitle>
         <CardDescription>
-          Live tracking for order #ORD002
+          Live tracking for your most recent order.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
           <Image
-            src="https://placehold.co/800x250"
+            src="https://placehold.co/800x250.png"
             alt="Map showing order route"
             width={800}
             height={250}

@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { useAuth } from "@/hooks/use-auth";
-import { collection, query, where } from "firebase/firestore";
+import { collection, query, where, Timestamp } from "firebase/firestore";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase";
 import type { Order } from "@/lib/types";
@@ -38,13 +38,13 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "../ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertTriangle } from "lucide-react";
+import Link from 'next/link';
 
 
 const statusVariantMap = {
-    delivered: "default",
-    shipped: "secondary",
-    pending: "outline",
-    cancelled: "destructive"
+    'Received': "default",
+    'Shipped': "secondary",
+    'Order Placed': "outline",
 } as const;
 
 export function OrderHistory({ className }: React.HTMLAttributes<HTMLDivElement>) {
@@ -65,8 +65,8 @@ export function OrderHistory({ className }: React.HTMLAttributes<HTMLDivElement>
   const filteredOrders = React.useMemo(() => {
     if (!orders) return [];
     return orders.filter(order => {
-        if (!date?.from || !order.deliveryTimestamp) return true;
-        const orderDate = (order.deliveryTimestamp as any).toDate();
+        if (!date?.from || !order.orderDate) return true;
+        const orderDate = (order.orderDate as Timestamp).toDate();
         if (date.to) {
             return orderDate >= date.from && orderDate <= date.to;
         }
@@ -81,7 +81,7 @@ export function OrderHistory({ className }: React.HTMLAttributes<HTMLDivElement>
         <div>
             <CardTitle>Order History</CardTitle>
             <CardDescription>
-                Review your recent B2B and factory orders.
+                Review your past orders.
             </CardDescription>
         </div>
         <div className={cn("grid gap-2 mt-4 md:mt-0")}>
@@ -128,7 +128,7 @@ export function OrderHistory({ className }: React.HTMLAttributes<HTMLDivElement>
           <TableHeader>
             <TableRow>
               <TableHead>Order ID</TableHead>
-              <TableHead>Supplier ID</TableHead>
+              <TableHead>Supplier</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Date</TableHead>
             </TableRow>
@@ -162,12 +162,16 @@ export function OrderHistory({ className }: React.HTMLAttributes<HTMLDivElement>
             )}
             {!loading && filteredOrders.map((order) => (
               <TableRow key={order.id}>
-                <TableCell className="font-mono text-xs">{order.id}</TableCell>
-                <TableCell className="font-medium">{order.supplierId}</TableCell>
+                 <TableCell>
+                    <Button variant="link" asChild className="p-0 h-auto font-mono text-xs">
+                        <Link href={`/orders/${order.id}`}>{order.id}</Link>
+                    </Button>
+                </TableCell>
+                <TableCell className="font-medium">{order.supplierName}</TableCell>
                 <TableCell>
                   <Badge variant={statusVariantMap[order.status]} className="capitalize">{order.status}</Badge>
                 </TableCell>
-                <TableCell>{order.deliveryTimestamp ? format((order.deliveryTimestamp as any).toDate(), "PPP") : 'N/A'}</TableCell>
+                <TableCell>{order.orderDate ? format((order.orderDate as Timestamp).toDate(), "PPP") : 'N/A'}</TableCell>
               </TableRow>
             ))}
           </TableBody>
