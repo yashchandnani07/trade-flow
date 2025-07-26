@@ -48,9 +48,9 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
   if (user) {
     return (
       <SidebarProvider>
-        <div className="min-h-screen bg-background flex w-full">
+        <div className="flex min-h-screen w-full bg-background">
           <AppSidebar />
-          <div className="flex flex-col w-full">
+          <div className="flex flex-col flex-1">
             <AppHeader />
             <main className="flex-1 overflow-y-auto">
               {children}
