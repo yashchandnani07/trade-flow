@@ -17,21 +17,18 @@ import { getFirestore } from "firebase/firestore";
 // =================================================================================
 
 const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY_HERE",
-  authDomain: "PASTE_YOUR_AUTH_DOMAIN_HERE",
-  projectId: "PASTE_YOUR_PROJECT_ID_HERE",
-  storageBucket: "PASTE_YOUR_STORAGE_BUCKET_HERE",
-  messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID_HERE",
-  appId: "PASTE_YOUR_APP_ID_HERE",
-  measurementId: "PASTE_YOUR_MEASUREMENT_ID_HERE"
+  apiKey: "AIzaSyCTaMprB7jYy600mLLagtTh83ZtHXGnqss",
+  authDomain: "tradeflow-m8xdr.firebaseapp.com",
+  projectId: "tradeflow-m8xdr",
+  storageBucket: "tradeflow-m8xdr.firebasestorage.app",
+  messagingSenderId: "1028755677401",
+  appId: "1:1028755677401:web:19cf7dd81b9c0e48739ec8"
 };
+
 
 // Initialize Firebase
 let app;
 if (getApps().length === 0) {
-  if (firebaseConfig.apiKey === "PASTE_YOUR_API_KEY_HERE") {
-    console.error("Firebase config is not set. Please update src/lib/firebase.ts with your project's credentials.");
-  }
   app = initializeApp(firebaseConfig);
 } else {
   app = getApp();
