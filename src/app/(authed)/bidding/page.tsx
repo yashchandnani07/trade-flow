@@ -11,8 +11,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import { MarketplaceBidsList } from '@/components/bids/marketplace-bids-list';
+import Link from 'next/link';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const bidSchema = z.object({
   item: z.string().min(1, 'Item name is required'),
@@ -73,6 +75,15 @@ export default function BiddingPage() {
           <CardDescription>Let suppliers know what you need and get the best offers.</CardDescription>
         </CardHeader>
         <CardContent>
+          {!user ? (
+             <Alert variant="destructive" className="mb-6">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Not Authenticated</AlertTitle>
+                <AlertDescription>
+                  You must be logged in to post a bid. <Link href="/" className="font-bold underline">Login or Sign Up</Link>
+                </AlertDescription>
+            </Alert>
+          ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-w-lg">
               <FormField
@@ -120,6 +131,7 @@ export default function BiddingPage() {
               </Button>
             </form>
           </Form>
+          )}
         </CardContent>
       </Card>
       

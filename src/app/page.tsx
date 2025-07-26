@@ -34,6 +34,8 @@ import {
   Camera,
   ThumbsUp,
   Award,
+  Leaf,
+  UserCheck,
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -54,29 +56,38 @@ const countries = [
 const roles: {id: Role, title: string, description: string, icon: React.ElementType, color: string, emoji: string}[] = [
   {
     id: "vendor",
-    title: "Buyer",
-    description: "Street-food vendor",
+    title: "Vendor",
+    description: "Street-food vendor, restaurant",
     icon: Store,
     color: "from-orange-500/20 to-yellow-500/20",
     emoji: "🍜",
   },
   {
     id: "supplier",
-    title: "Wholesaler",
-    description: "Distribution network",
+    title: "Supplier",
+    description: "Wholesale distribution network",
     icon: Package,
     color: "from-blue-500/20 to-cyan-500/20",
     emoji: "📦",
   },
-    {
+  {
     id: "farmer",
-    title: "Producer",
-    description: "Farmer/Supplier",
+    title: "Farmer",
+    description: "Agricultural producer",
     icon: Wheat,
     color: "from-green-500/20 to-emerald-500/20",
     emoji: "🌾",
   },
-]
+  {
+    id: "lead-farmer",
+    title: "Lead Farmer",
+    description: "Community farming leader",
+    icon: Leaf,
+    color: "from-lime-500/20 to-green-500/20",
+    emoji: "🌿",
+  },
+];
+
 
 const appFeatures = [
   {

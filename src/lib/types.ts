@@ -47,7 +47,7 @@ export type Alert = AiEnhancedAlertOutput & {
 };
 
 
-export type Role = 'vendor' | 'supplier' | 'farmer';
+export type Role = 'vendor' | 'supplier' | 'farmer' | 'lead-farmer';
 
 export interface User {
   uid: string;
