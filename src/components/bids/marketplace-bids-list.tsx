@@ -229,7 +229,7 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
                   )}
                 </div>
                 <div className="flex items-center gap-2 self-end sm:self-center">
-                {isBidOwner && bid.status === 'active' && (
+                {isBidOwner && bid.status === 'active' && proposal.status !== 'accepted' &&(
                   <>
                     <NegotiationDialog bid={bid} proposal={proposal} user={user}>
                         <Button variant="outline" size="sm" disabled={isAccepting !== null}>
