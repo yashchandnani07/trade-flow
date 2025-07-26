@@ -123,7 +123,7 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
                        Accept Bid
                    </Button>
                 ) : (
-                    <Badge variant={proposal.status === 'accepted' ? 'default' : proposal.status === 'rejected' ? 'destructive' : 'outline'} className="capitalize">{proposal.status}</Badge>
+                    <Badge variant={proposal.status === 'accepted' ? 'default' : proposal.status === 'rejected' ? 'destructive' : 'outline'} className="capitalize">{proposal.status || 'pending'}</Badge>
                 )}
               </div>
             )
