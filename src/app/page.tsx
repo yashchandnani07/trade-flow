@@ -15,8 +15,10 @@ export default function Home() {
         <SidebarInset>
           <AppHeader />
           <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-8 bg-transparent">
-            <OverviewCards />
-            <div className="grid gap-8 lg:grid-cols-3">
+            <section id="overview">
+              <OverviewCards />
+            </section>
+            <div className="grid gap-8 lg:grid-cols-3" id="tracking">
               <div className="lg:col-span-2">
                 <OrderTracking />
               </div>
@@ -24,11 +26,11 @@ export default function Home() {
                 <AlertsSection />
               </div>
             </div>
-            <div className="grid gap-8 lg:grid-cols-5">
+            <div className="grid gap-8 lg:grid-cols-5" id="history">
               <div className="lg:col-span-3">
                 <OrderHistory />
               </div>
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2" id="reviews">
                 <SupplierReviews />
               </div>
             </div>

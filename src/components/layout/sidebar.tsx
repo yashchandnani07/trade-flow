@@ -24,6 +24,7 @@ import {
   Settings,
   Star,
   Users,
+  Truck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -50,31 +51,31 @@ export function AppSidebar() {
               isActive
               tooltip={{ children: "Dashboard" }}
             >
-              <Link href="#">
+              <Link href="/">
                 <Home />
                 <span>Dashboard</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={{ children: "Orders" }}>
-              <Link href="#">
-                <Package />
-                <span>Orders</span>
+            <SidebarMenuButton asChild tooltip={{ children: "Tracking" }}>
+              <Link href="/#tracking">
+                <Truck />
+                <span>Tracking</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={{ children: "Bidding" }}>
-              <Link href="#">
-                <Gavel />
-                <span>Bidding</span>
+           <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip={{ children: "History" }}>
+              <Link href="/#history">
+                <Package />
+                <span>Order History</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip={{ children: "Suppliers" }}>
-              <Link href="#">
+              <Link href="/supplier">
                 <Users />
                 <span>Suppliers</span>
               </Link>
@@ -82,7 +83,7 @@ export function AppSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip={{ children: "Reviews" }}>
-              <Link href="#">
+              <Link href="/#reviews">
                 <Star />
                 <span>Reviews</span>
               </Link>
