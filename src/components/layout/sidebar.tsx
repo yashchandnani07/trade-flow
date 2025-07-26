@@ -41,7 +41,6 @@ export function AppSidebar() {
             TradeFlow
           </span>
         </div>
-        <SidebarTrigger className="ml-auto group-data-[collapsible=icon]:hidden" />
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
