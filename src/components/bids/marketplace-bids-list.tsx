@@ -275,11 +275,10 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
   );
 }
 
-function PlaceBidDialog({ bid, user }: { bid: Bid; user: any; }) {
+function PlaceBidDialog({ bid, user, open, onOpenChange }: { bid: Bid | null; user: any; open: boolean; onOpenChange: (open: boolean) => void; }) {
     const [bidAmount, setBidAmount] = useState<number | ''>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
-    const [isOpen, setIsOpen] = useState(false);
 
     const handleBidSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -318,7 +317,7 @@ function PlaceBidDialog({ bid, user }: { bid: Bid; user: any; }) {
                 title: 'Bid Placed Successfully!',
                 description: `Your bid of ₹${bidAmount} for ${bid.item} has been submitted.`,
             });
-            setIsOpen(false);
+            onOpenChange(false);
             setBidAmount('');
         } catch (error) {
              console.error('Error placing bid:', error);
@@ -333,13 +332,10 @@ function PlaceBidDialog({ bid, user }: { bid: Bid; user: any; }) {
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                 <Button size="lg">Place Bid</Button>
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md bg-glass">
                 <DialogHeader>
-                    <DialogTitle className="text-xl">Place a Bid for {bid.item}</DialogTitle>
+                    <DialogTitle className="text-xl">Place a Bid for {bid?.item}</DialogTitle>
                     <DialogDescription>
                         Submit your best offer for this requirement. The vendor will be notified of your bid.
                     </DialogDescription>
@@ -362,7 +358,7 @@ function PlaceBidDialog({ bid, user }: { bid: Bid; user: any; }) {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="button" variant="secondary" size="lg" onClick={() => setIsOpen(false)}>Cancel</Button>
+                        <Button type="button" variant="secondary" size="lg" onClick={() => onOpenChange(false)}>Cancel</Button>
                         <Button type="submit" size="lg" disabled={isSubmitting}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Submit Bid
@@ -376,12 +372,20 @@ function PlaceBidDialog({ bid, user }: { bid: Bid; user: any; }) {
 
 export function MarketplaceBidsList() {
     const { user } = useAuth();
+    const [selectedBid, setSelectedBid] = useState<Bid | null>(null);
+    const [isPlaceBidDialogOpen, setIsPlaceBidDialogOpen] = useState(false);
+
     const bidsCollection = useMemo(() => collection(db, 'bids'), []);
     const bidsQuery = useMemo(() => {
         return query(bidsCollection, where("status", "in", ["active", "awarded", "closed"]), orderBy("createdAt", "desc"));
     }, [bidsCollection]);
 
     const [bids, loading, error] = useCollectionData(bidsQuery, { idField: 'id' });
+
+    const handlePlaceBidClick = (bid: Bid) => {
+        setSelectedBid(bid);
+        setIsPlaceBidDialogOpen(true);
+    };
 
     if (loading) {
         return (
@@ -406,60 +410,68 @@ export function MarketplaceBidsList() {
     }
 
     return (
-        <Card className="bg-glass mt-8 border-0 shadow-none">
-            <CardHeader className="px-0">
-                <CardTitle className="text-3xl">Active Marketplace Requirements</CardTitle>
-                <CardDescription className="text-base">Browse active requirements from all vendors and place your bids.</CardDescription>
-            </CardHeader>
-            <CardContent className="px-0">
-                <div className="space-y-6">
-                    {bids && bids.length > 0 ? (
-                        bids.map(bidData => {
-                            const bid = bidData as Bid;
-                            const createdAt = bid.createdAt instanceof Timestamp 
-                                ? formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true }) 
-                                : 'just now';
-                            const isSupplier = user?.role === 'supplier';
-                            const isVendorOwner = user?.uid === bid.vendorId;
+        <>
+            <Card className="bg-glass mt-8 border-0 shadow-none">
+                <CardHeader className="px-0">
+                    <CardTitle className="text-3xl">Active Marketplace Requirements</CardTitle>
+                    <CardDescription className="text-base">Browse active requirements from all vendors and place your bids.</CardDescription>
+                </CardHeader>
+                <CardContent className="px-0">
+                    <div className="space-y-6">
+                        {bids && bids.length > 0 ? (
+                            bids.map(bidData => {
+                                const bid = bidData as Bid;
+                                const createdAt = bid.createdAt instanceof Timestamp 
+                                    ? formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true }) 
+                                    : 'just now';
+                                const isSupplier = user?.role === 'supplier';
+                                const isVendorOwner = user?.uid === bid.vendorId;
 
-                            return (
-                                <Card key={bid.id} className="p-6 rounded-xl bg-background/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-2">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-4 mb-2">
-                                            <h3 className="font-semibold text-2xl">{bid.item}</h3>
-                                            <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize text-sm h-7">{bid.status}</Badge>
+                                return (
+                                    <Card key={bid.id} className="p-6 rounded-xl bg-background/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-2">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-4 mb-2">
+                                                <h3 className="font-semibold text-2xl">{bid.item}</h3>
+                                                <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize text-sm h-7">{bid.status}</Badge>
+                                            </div>
+                                            <p className="text-lg text-muted-foreground">
+                                                {bid.quantity} kg | Target Price: ₹{bid.targetPrice.toLocaleString()}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground mt-2">
+                                                Posted by {bid.vendorName} • {createdAt}
+                                            </p>
                                         </div>
-                                        <p className="text-lg text-muted-foreground">
-                                            {bid.quantity} kg | Target Price: ₹{bid.targetPrice.toLocaleString()}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground mt-2">
-                                            Posted by {bid.vendorName} • {createdAt}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline" size="lg">View Proposals</Button>
-                                            </DialogTrigger>
-                                            <ProposalsDialog bid={bid} user={user} />
-                                        </Dialog>
+                                        <div className="flex items-center gap-4">
+                                            
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <Button variant="outline" size="lg">View Proposals</Button>
+                                                </DialogTrigger>
+                                                <ProposalsDialog bid={bid} user={user} />
+                                            </Dialog>
 
-                                        {isSupplier && !isVendorOwner && bid.status === 'active' && (
-                                            <PlaceBidDialog bid={bid} user={user} />
-                                        )}
-                                    </div>
-                                </Card>
-                            );
-                        })
-                    ) : (
-                        <div className="text-center py-16 text-muted-foreground bg-background/30 rounded-lg">
-                            <PackageSearch className="w-20 h-20 mx-auto mb-6" />
-                            <p className="text-xl">There are no active requirements in the marketplace right now.</p>
-                        </div>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
+                                            {isSupplier && !isVendorOwner && bid.status === 'active' && (
+                                                <Button size="lg" onClick={() => handlePlaceBidClick(bid)}>Place Bid</Button>
+                                            )}
+                                        </div>
+                                    </Card>
+                                );
+                            })
+                        ) : (
+                            <div className="text-center py-16 text-muted-foreground bg-background/30 rounded-lg">
+                                <PackageSearch className="w-20 h-20 mx-auto mb-6" />
+                                <p className="text-xl">There are no active requirements in the marketplace right now.</p>
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+            <PlaceBidDialog 
+                bid={selectedBid} 
+                user={user} 
+                open={isPlaceBidDialogOpen} 
+                onOpenChange={setIsPlaceBidDialogOpen} 
+            />
+        </>
     )
 }
