@@ -245,7 +245,6 @@ export default function SupplyChainConnect() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-hidden">
-      <div id="recaptcha-container"></div>
       <div className="fixed inset-0 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700">
           <div className="absolute inset-0 opacity-5">

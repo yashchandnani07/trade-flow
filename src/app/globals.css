@@ -21,7 +21,7 @@ html {
     --secondary-foreground: 210 20% 98%;
     --muted: 210 10% 25%;
     --muted-foreground: 210 10% 65%;
-    --accent: 240 60% 60%;
+    --accent: 210 60% 60%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
@@ -52,6 +52,23 @@ html {
     --input: 210 10% 25%;
     --ring: 210 70% 50%;
   }
+
+  /* Light theme override for glassmorphism */
+  .light {
+    --background: 220 30% 95%; /* A very light grey for content background */
+    --foreground: 220 20% 10%; /* Dark text for readability */
+    --card: 255 100% 100% / 0.08; /* Glass effect for cards */
+    --card-foreground: 210 20% 98%;
+    --border: 255 100% 100% / 0.1; /* Subtle border for glass */
+    --primary: 212 96% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 255 100% 100% / 0.12;
+    --secondary-foreground: 0 0% 100%;
+    --accent: 255 100% 100% / 0.15;
+    --accent-foreground: 0 0% 100%;
+    --muted: 255 100% 100% / 0.1;
+    --muted-foreground: 255 100% 100% / 0.8;
+  }
 }
 
 @layer base {
@@ -63,9 +80,18 @@ html {
     font-feature-settings: 'rlig' 1, 'calt' 1;
     font-family: var(--font-inter), sans-serif;
   }
+  .light body {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+  }
 }
 
-/* Remove default button styling for custom gradient buttons */
-.btn-primary {
-  background-image: linear-gradient(to right, theme('colors.blue.500'), theme('colors.purple.600'));
+@layer utilities {
+  .glassmorphic {
+    background-color: hsl(var(--card));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-width: 1px;
+    border-color: hsl(var(--border));
+  }
 }

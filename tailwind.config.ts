@@ -53,6 +53,12 @@ const config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        glass: {
+            DEFAULT: 'rgba(255, 255, 255, 0.08)',
+            border: 'rgba(255, 255, 255, 0.1)',
+            hover: 'rgba(255, 255, 255, 0.12)',
+            active: 'rgba(255, 255, 255, 0.15)',
+        }
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -65,7 +71,7 @@ const config = {
           to: { height: 'var(--radix-accordion-content-height)' },
         },
         'accordion-up': {
-          from: { height: 'var(--radix-accordion-content-height)' },
+          from: { height: '0' },
           to: { height: '0' },
         },
       },
@@ -82,5 +88,3 @@ const config = {
 } satisfies Config;
 
 export default config;
-
-    

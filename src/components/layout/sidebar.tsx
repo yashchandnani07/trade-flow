@@ -2,14 +2,16 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
-  Sidebar,
+  Sidebar as BaseSidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/icons/logo";
@@ -23,20 +25,62 @@ import {
   Users,
   Truck,
   Gavel,
+  ChevronLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils";
+
+const vendorNavItems = [
+    { href: "/dashboard", icon: Home, label: "Dashboard" },
+    { href: "/bidding", icon: Gavel, label: "Bidding" },
+    { href: "/dashboard#tracking", icon: Truck, label: "Tracking" },
+    { href: "/dashboard#history", icon: Package, label: "Order History" },
+    { href: "/supplier", icon: Users, label: "Suppliers" },
+    { href: "/dashboard#reviews", icon: Star, label: "Reviews" },
+];
+
+const supplierNavItems = [
+    { href: "/supplier-dashboard", icon: Home, label: "Dashboard" },
+    { href: "/supplier-dashboard#bids", icon: Gavel, label: "Bids" },
+];
+
+const commonNavItems = [
+    { href: "#", icon: BarChart2, label: "Reports" },
+];
+
 
 export function AppSidebar() {
     const { user, logout } = useAuth();
+    const pathname = usePathname();
+    const { state, toggleSidebar } = useSidebar();
+
+    const navItems = user?.role === 'supplier' ? supplierNavItems : vendorNavItems;
 
   return (
-    <Sidebar>
+    <BaseSidebar
+      className={cn(
+        "border-r-0 dark:bg-card dark:border-r",
+        "light:bg-glass/8 light:border-glass-border light:text-white",
+        "backdrop-blur-2xl transition-all duration-300"
+      )}
+      collapsible="icon"
+    >
+       <Button 
+            variant="ghost"
+            size="icon"
+            className="absolute top-6 -right-4 z-50 bg-glass/15 border border-glass-border backdrop-blur-md rounded-full text-white hover:bg-glass/25 transition-all duration-300 group-data-[collapsible=icon]:left-14 group-data-[collapsible=icon]:-right-auto"
+            onClick={toggleSidebar}
+        >
+            <ChevronLeft className={cn("transition-transform", state === "collapsed" && "rotate-180")} />
+        </Button>
       <SidebarHeader>
-        <div className="flex items-center gap-2">
-          <Logo />
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500">
+             <Logo className="h-5 w-5 text-white" />
+          </div>
           <span
-            className="font-bold text-lg group-data-[collapsible=icon]:hidden duration-300"
+            className="font-bold text-lg group-data-[collapsible=icon]:opacity-0 transition-opacity duration-300"
             data-testid="brand-name"
           >
             TradeFlow
@@ -45,118 +89,72 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive
-              tooltip={{ children: "Dashboard" }}
-            >
-              <Link href={user?.role === 'supplier' ? "/supplier-dashboard" : "/dashboard"}>
-                <Home />
-                <span>Dashboard</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          {user?.role === 'supplier' && (
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={{ children: "Bids" }}>
-                <Link href="/supplier-dashboard#bids">
-                  <Gavel />
-                  <span>Bids</span>
+          {navItems.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === item.href}
+                tooltip={{ children: item.label, className:"dark:bg-popover dark:text-popover-foreground" }}
+                className="light:text-white/80 light:hover:bg-glass-hover light:hover:text-white light:data-[active=true]:bg-glass-active light:data-[active=true]:text-white transition-all transform hover:translate-x-1"
+              >
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.label}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          )}
-
-          {user?.role !== 'supplier' && (
-            <>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Bidding" }}>
-                  <Link href="/bidding">
-                    <Gavel />
-                    <span>Bidding</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Tracking" }}>
-                  <Link href="/dashboard#tracking">
-                    <Truck />
-                    <span>Tracking</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "History" }}>
-                  <Link href="/dashboard#history">
-                    <Package />
-                    <span>Order History</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Suppliers" }}>
-                  <Link href="/supplier">
-                    <Users />
-                    <span>Suppliers</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Reviews" }}>
-                  <Link href="/dashboard#reviews">
-                    <Star />
-                    <span>Reviews</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </>
-          )}
-
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={{ children: "Reports" }}>
-              <Link href="#">
-                <BarChart2 />
-                <span>Reports</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          ))}
+            <div className="my-2 border-t border-glass-border group-data-[collapsible=icon]:mx-2" />
+           {commonNavItems.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === item.href}
+                tooltip={{ children: item.label, className:"dark:bg-popover dark:text-popover-foreground" }}
+                className="light:text-white/80 light:hover:bg-glass-hover light:hover:text-white light:data-[active=true]:bg-glass-active light:data-[active=true]:text-white transition-all transform hover:translate-x-1"
+              >
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={{ children: "Settings" }}>
-              <Link href="#">
-                <Settings />
-                <span>Settings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Settings", className:"dark:bg-popover dark:text-popover-foreground" }} className="light:text-white/80 light:hover:bg-glass-hover light:hover:text-white">
+                <Link href="#">
+                    <Settings />
+                    <span>Settings</span>
+                </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
         </SidebarMenu>
-        <div className="border-t border-sidebar-border -mx-2 my-2" />
-        <div className="flex items-center gap-3 p-2 rounded-lg">
+        <div className="border-t border-glass-border -mx-2 my-2" />
+        <div className={cn("flex items-center gap-3 p-2 rounded-lg transition-all", "light:bg-glass/8 light:border light:border-glass-border", "group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center")}>
           <Avatar>
             <AvatarImage src={`https://placehold.co/40x40?text=${user?.businessName?.[0].toUpperCase()}`} data-ai-hint="person portrait" alt="User" />
             <AvatarFallback>{user?.businessName?.[0].toUpperCase()}</AvatarFallback>
           </Avatar>
-          <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
+          <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0 transition-opacity duration-300">
             <p className="font-semibold text-sm truncate">{user?.businessName || user?.phoneNumber}</p>
-            <p className="text-xs text-muted-foreground truncate">
+            <p className="text-xs text-muted-foreground truncate light:text-white/70">
               {user?.role}
             </p>
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="w-8 h-8 ml-auto group-data-[collapsible=icon]:hidden"
+            className="w-8 h-8 ml-auto group-data-[collapsible=icon]:hidden light:text-white/70 hover:light:bg-glass-hover hover:light:text-white"
             onClick={logout}
           >
             <LogOut className="w-4 h-4" />
           </Button>
         </div>
       </SidebarFooter>
-    </Sidebar>
+    </BaseSidebar>
   );
 }
