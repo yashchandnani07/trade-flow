@@ -24,9 +24,9 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+  // This allows requests from the development environment's domain.
+  allowedDevOrigins: ["*.cloudworkstations.dev"],
   experimental: {
-    // This allows requests from the development environment's domain.
-    allowedDevOrigins: ["*.cloudworkstations.dev"],
   },
 };
 
