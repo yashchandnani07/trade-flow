@@ -278,7 +278,7 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
   );
 }
 
-function PlaceBidDialog({ bid, user, onOpenChange, open }: { bid: Bid | null, user: any, open: boolean, onOpenChange: (open: boolean) => void }) {
+function PlaceBidDialog({ bid, user, open, onOpenChange }: { bid: Bid; user: any; open: boolean; onOpenChange: (open: boolean) => void; }) {
     const [bidAmount, setBidAmount] = useState(bid?.targetPrice || 0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
@@ -293,9 +293,10 @@ function PlaceBidDialog({ bid, user, onOpenChange, open }: { bid: Bid | null, us
         e.preventDefault();
 
         if (!user || !bid) {
-            toast({ variant: 'destructive', title: 'Cannot place bid. Bid information is missing' });
+            toast({ variant: 'destructive', title: 'Error', description: 'Cannot place bid. Bid information is missing.' });
             return;
         }
+
         setIsSubmitting(true);
         try {
             const proposalsCollection = collection(db, 'bids', bid.id, 'proposals');
@@ -308,6 +309,7 @@ function PlaceBidDialog({ bid, user, onOpenChange, open }: { bid: Bid | null, us
                 createdAt: serverTimestamp(),
                 status: 'pending',
             });
+
             toast({
                 title: 'Bid Placed Successfully!',
                 description: `Your bid of ?${bidAmount} for ${bid.item} has been submitted.`,
@@ -325,20 +327,16 @@ function PlaceBidDialog({ bid, user, onOpenChange, open }: { bid: Bid | null, us
         setBidAmount(prev => Math.max(0, prev + adjustment));
     }
 
-    const handleMatchAndAccept = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        if (bid) {
-            setBidAmount(bid.targetPrice);
-            // This is a bit of a hack to submit the form from another button.
-            // A better way would be to lift the submit logic out.
-            const form = (e.target as HTMLElement).closest('form');
-            if (form) {
-                // We need to manually trigger form submission, but this is complex.
-                // For now, we just update the state and let the user click the main submit button.
-                // A better implementation would share the submit logic.
-                handleBidSubmit(new Event('submit') as any as FormEvent<HTMLFormElement>);
-            }
-        }
+    const handleMatchAndAccept = () => {
+      if (bid) {
+          setBidAmount(bid.targetPrice);
+          // Manually trigger submission by creating a synthetic event
+          const syntheticEvent = new Event('submit', { bubbles: true, cancelable: true });
+          const form = document.getElementById(`bid-form-${bid.id}`);
+          if (form) {
+            handleBidSubmit(syntheticEvent as any);
+          }
+      }
     };
 
 
@@ -351,7 +349,7 @@ function PlaceBidDialog({ bid, user, onOpenChange, open }: { bid: Bid | null, us
                         The vendor's target price is ?{bid?.targetPrice.toLocaleString()}. You can match it or submit your own offer.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleBidSubmit}>
+                <form id={`bid-form-${bid.id}`} onSubmit={handleBidSubmit}>
                     <div className="py-4 space-y-4">
                         <Label className="text-sm font-semibold mb-2 block">Your Offer</Label>
                         <div className="flex items-center gap-2">
@@ -476,16 +474,20 @@ export function MarketplaceBidsList() {
                     </div>
                 </CardContent>
             </Card>
-            <PlaceBidDialog 
-                bid={selectedBid} 
-                user={user} 
-                open={selectedBid !== null} 
-                onOpenChange={(isOpen) => {
-                    if (!isOpen) {
-                        setSelectedBid(null);
-                    }
-                }} 
-            />
+            {selectedBid && user && (
+              <PlaceBidDialog 
+                  bid={selectedBid} 
+                  user={user} 
+                  open={selectedBid !== null} 
+                  onOpenChange={(isOpen) => {
+                      if (!isOpen) {
+                          setSelectedBid(null);
+                      }
+                  }} 
+              />
+            )}
         </>
     )
 }
+
+    
