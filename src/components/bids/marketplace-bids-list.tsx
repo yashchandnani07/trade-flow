@@ -36,8 +36,17 @@ const statusVariantMap = {
 function ProposalsDialog({ bid }: { bid: Bid }) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const proposalsCollection = useMemo(() => collection(db, 'bids', bid.id, 'proposals'), [bid.id]);
-  const proposalsQuery = useMemo(() => query(proposalsCollection, orderBy("createdAt", "asc")), [proposalsCollection]);
+  
+  const proposalsCollection = useMemo(() => {
+    if (!bid.id) return null;
+    return collection(db, 'bids', bid.id, 'proposals');
+  }, [bid.id]);
+
+  const proposalsQuery = useMemo(() => {
+    if (!proposalsCollection) return null;
+    return query(proposalsCollection, orderBy("createdAt", "asc"));
+  }, [proposalsCollection]);
+
   const [proposals, loading, error, proposalsSnapshot] = useCollectionData(proposalsQuery, { idField: 'id' });
   const [isAccepting, setIsAccepting] = useState<string | null>(null);
   
@@ -78,6 +87,16 @@ function ProposalsDialog({ bid }: { bid: Bid }) {
   }
 
   const isBidOwner = user?.uid === bid.vendorId;
+
+  if (!proposalsQuery) {
+    return (
+        <DialogContent className="sm:max-w-2xl bg-glass">
+            <DialogHeader>
+                <DialogTitle>Loading Proposals...</DialogTitle>
+            </DialogHeader>
+        </DialogContent>
+    )
+  }
 
   return (
     <DialogContent className="sm:max-w-2xl bg-glass">
