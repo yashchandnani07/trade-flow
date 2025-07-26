@@ -21,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "../ui/sidebar";
 import { ThemeToggle } from "../theme-toggle";
+import { DashboardToggle } from "../dashboard/dashboard-toggle";
 
 export function AppHeader() {
   return (
@@ -33,13 +34,14 @@ export function AppHeader() {
         <ChevronRight className="h-4 w-4" />
         <span className="font-semibold text-foreground">Dashboard</span>
       </div>
-      <div className="relative ml-auto flex-1 md:grow-0">
+      <div className="relative ml-auto flex items-center gap-4 md:grow-0">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           type="search"
           placeholder="Search..."
           className="w-full rounded-lg bg-secondary pl-8 md:w-[200px] lg:w-[320px]"
         />
+        <DashboardToggle />
       </div>
       <ThemeToggle />
       <DropdownMenu>

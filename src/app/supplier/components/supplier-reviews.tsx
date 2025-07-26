@@ -55,15 +55,19 @@ const SupplierReviews = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (newComment.trim() && newRating > 0) {
-            await addDoc(collection(db, "reviews"), {
-                author: "Anonymous Vendor",
-                avatar: "AV",
-                date: serverTimestamp(),
-                rating: newRating,
-                comment: newComment,
-            });
-            setNewComment("");
-            setNewRating(0);
+            try {
+                await addDoc(collection(db, "reviews"), {
+                    author: "Anonymous Vendor",
+                    avatar: "AV",
+                    date: serverTimestamp(),
+                    rating: newRating,
+                    comment: newComment,
+                });
+                setNewComment("");
+                setNewRating(0);
+            } catch (e) {
+                console.error("Error adding document: ", e);
+            }
         }
     };
 
@@ -88,7 +92,7 @@ const SupplierReviews = () => {
                 ))}
             </div>
         )}
-        {error && <p className="text-destructive text-sm">Error: Could not load reviews. Ensure Firestore is set up correctly.</p>}
+        {error && <p className="text-destructive text-sm">Error: Could not load reviews. Ensure Firestore is set up correctly and security rules allow reads.</p>}
         {!loading && !error && reviews.map((review) => (
           <div key={review.id} className="flex items-start space-x-4">
               <Avatar>
