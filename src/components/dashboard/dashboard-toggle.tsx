@@ -12,12 +12,16 @@ export function DashboardToggle() {
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
 
+  // Considers both /supplier and /supplier/[id] as the supplier view
   const isSupplierView = pathname.startsWith('/supplier');
 
   const handleToggle = (checked: boolean) => {
     startTransition(() => {
       if (checked) {
-        router.push('/supplier');
+        // If not already in a supplier path, go to the list
+        if (!isSupplierView) {
+            router.push('/supplier');
+        }
       } else {
         router.push('/');
       }
@@ -28,7 +32,7 @@ export function DashboardToggle() {
     <div className="flex items-center space-x-2 bg-glass p-2 rounded-lg">
       <Label
         htmlFor="dashboard-toggle"
-        className="flex items-center gap-1 cursor-pointer"
+        className={cn("flex items-center gap-1 cursor-pointer", !isSupplierView && "text-primary font-bold")}
       >
         <LayoutDashboard className="h-4 w-4" />
         <span className="text-xs font-medium">Vendor</span>
@@ -47,7 +51,7 @@ export function DashboardToggle() {
       </div>
       <Label
         htmlFor="dashboard-toggle"
-        className="flex items-center gap-1 cursor-pointer"
+        className={cn("flex items-center gap-1 cursor-pointer", isSupplierView && "text-primary font-bold")}
       >
         <Users className="h-4 w-4" />
         <span className="text-xs font-medium">Supplier</span>

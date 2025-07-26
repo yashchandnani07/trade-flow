@@ -1,29 +1,93 @@
-import KeyMetrics from './components/key-metrics';
-import TrustBadges from './components/trust-badges';
-import OrderManagement from './components/order-management';
-import BiddingDashboard from './components/bidding-dashboard';
-import FactoryDiary from './components/factory-diary';
-import ComplianceStatus from './components/compliance-status';
-import SupplierReviews from './components/supplier-reviews';
 
-export default function SupplierPage() {
+'use client';
+import { useMemo } from 'react';
+import { collection, query } from 'firebase/firestore';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { db } from '@/lib/firebase';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Star } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { type Supplier } from '@/lib/types';
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
+
+function StarRating({ rating, className }: { rating: number; className?: string }) {
   return (
-    <div className="p-6 space-y-6">
-      <h2 className="text-2xl font-bold">
-        Supplier Dashboard
-      </h2>
-      <KeyMetrics />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <TrustBadges />
-          <OrderManagement />
+    <div className={cn("flex items-center gap-0.5", className)}>
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          className={cn(
+            "w-4 h-4",
+            i < Math.round(rating) ? "text-primary fill-primary" : "text-muted-foreground/50"
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
+const SupplierCard = ({ supplier }: { supplier: Supplier }) => (
+  <Card className="bg-glass hover:shadow-lg transition-shadow duration-300">
+    <CardHeader>
+        <div className="flex items-start gap-4">
+            <Avatar className="w-16 h-16 border">
+                <AvatarImage src={`https://placehold.co/64x64?text=${supplier.avatar}`} data-ai-hint="company logo" />
+                <AvatarFallback>{supplier.avatar}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+                 <CardTitle>{supplier.name}</CardTitle>
+                 <div className="flex items-center gap-2 mt-1">
+                    <StarRating rating={supplier.rating} />
+                    <span className="text-sm text-muted-foreground">({supplier.reviewCount} reviews)</span>
+                </div>
+            </div>
         </div>
-        <div className="space-y-6">
-          <BiddingDashboard />
-          <FactoryDiary />
-          <ComplianceStatus />
-          <SupplierReviews />
-        </div>
+    </CardHeader>
+    <CardContent>
+      <p className="text-muted-foreground text-sm mb-4 h-10 overflow-hidden">{supplier.description}</p>
+      <Button asChild className="w-full">
+        <Link href={`/supplier/${supplier.id}`}>View Profile</Link>
+      </Button>
+    </CardContent>
+  </Card>
+);
+
+export default function SupplierListPage() {
+    const suppliersCollection = useMemo(() => collection(db, 'suppliers'), []);
+    const q = useMemo(() => query(suppliersCollection), [suppliersCollection]);
+    const [suppliers, loading, error] = useCollectionData(q);
+
+  return (
+    <div className="p-4 md:p-6 lg:p-8 space-y-6">
+      <h2 className="text-3xl font-bold tracking-tight">Browse Suppliers</h2>
+       {error && (
+         <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Error Loading Suppliers</AlertTitle>
+            <AlertDescription>
+                Could not load suppliers. Please ensure your Firestore database is set up correctly and your security rules allow reads on the 'suppliers' collection.
+                <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
+            </AlertDescription>
+        </Alert>
+       )}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {loading && [...Array(8)].map((_, i) => <Skeleton key={i} className="h-[250px] w-full" />)}
+        {!loading && suppliers?.map(supplier => (
+            <SupplierCard key={supplier.id} supplier={supplier as Supplier} />
+        ))}
+        {!loading && suppliers?.length === 0 && (
+             <Card className="col-span-full bg-glass">
+                <CardContent className="p-6 text-center text-muted-foreground">
+                    <p>No suppliers found in the database.</p>
+                    <p className="text-sm mt-2">Try seeding the database from the main dashboard to add some sample suppliers.</p>
+                </CardContent>
+            </Card>
+        )}
       </div>
     </div>
   );

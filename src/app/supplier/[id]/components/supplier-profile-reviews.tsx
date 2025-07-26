@@ -1,25 +1,29 @@
+
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, FormEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { collection, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
-import { useCollection } from 'react-firebase-hooks/firestore';
+import { collection, addDoc, serverTimestamp, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { Review } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 
 
-const Rating = ({ rating, onRate, readOnly = false }: { rating: number, onRate?: (rating: number) => void, readOnly?: boolean }) => (
+const RatingInput = ({ rating, onRate, readOnly = false }: { rating: number, onRate?: (rating: number) => void, readOnly?: boolean }) => (
   <div className="flex items-center">
     {[...Array(5)].map((_, i) => (
       <Star
         key={i}
         className={cn(
-            "w-4 h-4",
+            "w-5 h-5",
             i < rating ? 'text-primary fill-primary' : 'text-muted-foreground/50',
             !readOnly && "cursor-pointer"
         )}
@@ -29,35 +33,37 @@ const Rating = ({ rating, onRate, readOnly = false }: { rating: number, onRate?:
   </div>
 );
 
-const SupplierReviews = () => {
+const SupplierProfileReviews = ({ supplierId }: { supplierId: string }) => {
+    const { toast } = useToast();
     const [newComment, setNewComment] = useState("");
     const [newRating, setNewRating] = useState(0);
 
     const reviewsCollection = useMemo(() => collection(db, 'reviews'), []);
-    const reviewsQuery = useMemo(() => query(reviewsCollection, orderBy("date", "desc")), [reviewsCollection]);
-    const [reviewsSnapshot, loading, error] = useCollection(reviewsQuery);
+    const reviewsQuery = useMemo(() => query(reviewsCollection, where("supplierId", "==", supplierId), orderBy("date", "desc")), [reviewsCollection, supplierId]);
+    const [reviewsSnapshot, loading, error] = useCollectionData(reviewsQuery, {
+      idField: 'id'
+    });
 
     const reviews: Review[] = useMemo(() => {
         if (!reviewsSnapshot) return [];
-        return reviewsSnapshot.docs.map(doc => {
-            const data = doc.data();
+        return reviewsSnapshot.map(doc => {
+            const data = doc as Omit<Review, 'id'>;
+            const date = data.date as Timestamp;
             return {
                 id: doc.id,
-                author: data.author,
-                avatar: data.avatar,
-                date: data.date ? new Date(data.date.seconds * 1000).toLocaleDateString('en-CA') : 'Date not available',
-                rating: data.rating,
-                comment: data.comment,
+                ...data,
+                date: date?.toDate ? date.toDate().toLocaleDateString('en-CA') : 'Date not available',
             };
         });
     }, [reviewsSnapshot]);
     
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (newComment.trim() && newRating > 0) {
             try {
                 await addDoc(collection(db, "reviews"), {
-                    author: "Anonymous Vendor",
+                    supplierId,
+                    author: "Anonymous Vendor", // In a real app, this would be the logged-in user
                     avatar: "AV",
                     date: serverTimestamp(),
                     rating: newRating,
@@ -65,8 +71,17 @@ const SupplierReviews = () => {
                 });
                 setNewComment("");
                 setNewRating(0);
+                 toast({
+                    title: "Review Submitted!",
+                    description: "Thank you for your feedback.",
+                });
             } catch (e) {
                 console.error("Error adding document: ", e);
+                 toast({
+                    variant: "destructive",
+                    title: "Submission Failed",
+                    description: "Could not submit your review. Please try again.",
+                });
             }
         }
     };
@@ -74,8 +89,8 @@ const SupplierReviews = () => {
   return (
     <Card className="bg-glass">
       <CardHeader>
-        <CardTitle>Supplier Reviews</CardTitle>
-        <CardDescription>Feedback from recent transactions</CardDescription>
+        <CardTitle>Reviews</CardTitle>
+        <CardDescription>Feedback from other vendors for this supplier</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
@@ -92,32 +107,47 @@ const SupplierReviews = () => {
                 ))}
             </div>
         )}
-        {error && <p className="text-destructive text-sm">Error: Could not load reviews. Ensure Firestore is set up correctly and security rules allow reads.</p>}
+        {error && (
+            <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Error Loading Reviews</AlertTitle>
+                <AlertDescription>
+                    Could not load reviews. Please ensure your Firestore security rules allow reads on the 'reviews' collection.
+                     <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
+                </AlertDescription>
+            </Alert>
+        )}
+        {!loading && !error && reviews.length === 0 && (
+            <p className="text-muted-foreground text-center py-4">No reviews yet. Be the first to leave one!</p>
+        )}
         {!loading && !error && reviews.map((review) => (
           <div key={review.id} className="flex items-start space-x-4">
               <Avatar>
-                <AvatarImage src={`https://placehold.co/40x40?text=${review.avatar}`} />
+                <AvatarImage src={`https://placehold.co/40x40?text=${review.avatar}`} data-ai-hint="person portrait" />
                 <AvatarFallback>{review.avatar}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="font-semibold">{review.author}</p>
-                    <p className="text-xs text-muted-foreground">{review.date}</p>
+                    <p className="text-xs text-muted-foreground">{String(review.date)}</p>
                   </div>
-                  <Rating rating={review.rating} readOnly />
+                  <RatingInput rating={review.rating} readOnly />
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">{review.comment}</p>
               </div>
             </div>
           ))}
         </div>
-        <div className="mt-6 pt-4 border-t border-border">
-          <p className="font-semibold">Leave a review</p>
-          <form onSubmit={handleSubmit} className="space-y-2 mt-2">
-            <Rating rating={newRating} onRate={setNewRating} />
+        <div className="mt-6 pt-6 border-t border-border">
+          <p className="font-semibold text-lg">Leave a review</p>
+          <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+            <div>
+                <p className="text-sm font-medium mb-2">Your Rating</p>
+                <RatingInput rating={newRating} onRate={setNewRating} />
+            </div>
             <Textarea 
-                placeholder="Share your experience..." 
+                placeholder="Share your experience with this supplier..." 
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 rows={3}
@@ -130,4 +160,4 @@ const SupplierReviews = () => {
   );
 };
 
-export default SupplierReviews;
+export default SupplierProfileReviews;

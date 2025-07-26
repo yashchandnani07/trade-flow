@@ -1,4 +1,4 @@
-import type { Order, Review } from "@/lib/types";
+import type { Order, Review, Supplier } from "@/lib/types";
 
 export const mockOrders: Order[] = [
   { id: "ORD001", product: "Organic Cotton T-Shirts", customer: "EcoThreads Inc.", date: "2024-05-15", amount: "$2,500.00", status: "Delivered" },
@@ -9,9 +9,59 @@ export const mockOrders: Order[] = [
   { id: "ORD006", product: "Custom Circuit Boards", customer: "Tech Innovators", date: "2024-05-23", amount: "$15,000.00", status: "Pending" },
 ];
 
+export const mockSuppliers: Supplier[] = [
+    {
+        id: "stellar-solutions",
+        name: "Stellar Solutions",
+        description: "Leading provider of eco-friendly packaging materials. Committed to sustainability and quality.",
+        rating: 4.8,
+        reviewCount: 152,
+        contact: {
+            phone: "123-456-7890",
+            email: "contact@stellarsolutions.com"
+        },
+        location: "San Francisco, CA",
+        offerings: ["Biodegradable plastics", "Recycled cardboard", "Compostable containers"],
+        hours: "Mon-Fri, 9am - 5pm PST",
+        avatar: "SS"
+    },
+    {
+        id: "apex-logistics",
+        name: "Apex Logistics",
+        description: "Global logistics and supply chain management. Fast, reliable, and efficient.",
+        rating: 4.5,
+        reviewCount: 210,
+        contact: {
+            phone: "987-654-3210",
+            email: "support@apexlogistics.com"
+        },
+        location: "New York, NY",
+        offerings: ["International Shipping", "Warehousing", "Freight Forwarding"],
+        hours: "24/7 Support",
+        avatar: "AL"
+    },
+    {
+        id: "quantum-supplies",
+        name: "Quantum Supplies",
+        description: "High-quality raw materials for manufacturing and construction.",
+        rating: 4.9,
+        reviewCount: 320,
+        contact: {
+            phone: "555-123-4567",
+            email: "sales@quantumsupplies.com"
+        },
+        location: "Houston, TX",
+        offerings: ["Steel", "Lumber", "Industrial Chemicals"],
+        hours: "Mon-Sat, 8am - 6pm CST",
+        avatar: "QS"
+    }
+];
+
+
 export const mockReviews: Review[] = [
     {
         id: "1",
+        supplierId: "stellar-solutions",
         author: "Sarah Johnson",
         avatar: "SJ",
         date: "2024-05-20",
@@ -20,6 +70,7 @@ export const mockReviews: Review[] = [
     },
     {
         id: "2",
+        supplierId: "stellar-solutions",
         author: "Michael Chen",
         avatar: "MC",
         date: "2024-05-18",
@@ -28,6 +79,7 @@ export const mockReviews: Review[] = [
     },
     {
         id: "3",
+        supplierId: "apex-logistics",
         author: "David Garcia",
         avatar: "DG",
         date: "2024-05-12",
