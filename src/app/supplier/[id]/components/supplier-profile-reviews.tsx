@@ -15,6 +15,7 @@ import type { Review } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 
 const RatingInput = ({ rating, onRate, readOnly = false }: { rating: number, onRate?: (rating: number) => void, readOnly?: boolean }) => (
@@ -35,6 +36,7 @@ const RatingInput = ({ rating, onRate, readOnly = false }: { rating: number, onR
 
 const SupplierProfileReviews = ({ supplierId }: { supplierId: string }) => {
     const { toast } = useToast();
+    const { user } = useAuth();
     const [newComment, setNewComment] = useState("");
     const [newRating, setNewRating] = useState(0);
 
@@ -47,27 +49,27 @@ const SupplierProfileReviews = ({ supplierId }: { supplierId: string }) => {
     const reviews: Review[] = useMemo(() => {
         if (!reviewsSnapshot) return [];
         return reviewsSnapshot.map(doc => {
-            const data = doc as Omit<Review, 'id'>;
-            const date = data.date as Timestamp;
+            const data = doc as Omit<Review, 'id' | 'date'> & { date: Timestamp };
             return {
                 id: doc.id,
                 ...data,
-                date: date?.toDate ? date.toDate().toLocaleDateString('en-CA') : 'Date not available',
+                date: data.date?.toDate ? data.date.toDate().toLocaleDateString('en-CA') : 'Date not available',
             };
         });
     }, [reviewsSnapshot]);
     
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        if (newComment.trim() && newRating > 0) {
+        if (newComment.trim() && newRating > 0 && user) {
             try {
                 await addDoc(collection(db, "reviews"), {
                     supplierId,
-                    author: "Anonymous Vendor", // In a real app, this would be the logged-in user
-                    avatar: "AV",
+                    author: user.businessName || "Anonymous Vendor",
+                    avatar: user.businessName?.[0] || "A",
                     date: serverTimestamp(),
                     rating: newRating,
                     comment: newComment,
+                    userId: user.uid,
                 });
                 setNewComment("");
                 setNewRating(0);
@@ -108,11 +110,11 @@ const SupplierProfileReviews = ({ supplierId }: { supplierId: string }) => {
             </div>
         )}
         {error && (
-            <Alert variant="destructive">
+             <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Error Loading Reviews</AlertTitle>
                 <AlertDescription>
-                    Could not load reviews. Please ensure your Firestore security rules allow reads on the 'reviews' collection.
+                    There was a problem fetching reviews. This is often due to Firestore security rules. Please check the `firestore.rules` file and update your project's rules in the Firebase console.
                      <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
                 </AlertDescription>
             </Alert>
@@ -120,7 +122,7 @@ const SupplierProfileReviews = ({ supplierId }: { supplierId: string }) => {
         {!loading && !error && reviews.length === 0 && (
             <p className="text-muted-foreground text-center py-4">No reviews yet. Be the first to leave one!</p>
         )}
-        {!loading && !error && reviews.map((review) => (
+        {reviews.map((review) => (
           <div key={review.id} className="flex items-start space-x-4">
               <Avatar>
                 <AvatarImage src={`https://placehold.co/40x40?text=${review.avatar}`} data-ai-hint="person portrait" />
@@ -152,7 +154,7 @@ const SupplierProfileReviews = ({ supplierId }: { supplierId: string }) => {
                 onChange={(e) => setNewComment(e.target.value)}
                 rows={3}
             />
-            <Button type="submit" size="sm" disabled={!newComment.trim() || newRating === 0}>Submit Review</Button>
+            <Button type="submit" size="sm" disabled={!newComment.trim() || newRating === 0 || !user}>Submit Review</Button>
           </form>
         </div>
       </CardContent>

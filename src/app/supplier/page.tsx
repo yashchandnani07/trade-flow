@@ -77,7 +77,7 @@ export default function SupplierListPage() {
        )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {loading && [...Array(8)].map((_, i) => <Skeleton key={i} className="h-[250px] w-full" />)}
-        {!loading && suppliers?.map(supplier => (
+        {suppliers?.map(supplier => (
             <SupplierCard key={supplier.id} supplier={supplier as Supplier} />
         ))}
         {!loading && !error && (!suppliers || suppliers.length === 0) && (
