@@ -275,7 +275,7 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
   );
 }
 
-function PlaceBidDialog({ bid, user, children }: { bid: Bid; user: any; children: ReactNode }) {
+function PlaceBidDialog({ bid, user }: { bid: Bid; user: any; }) {
     const [bidAmount, setBidAmount] = useState<number | ''>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
@@ -335,7 +335,7 @@ function PlaceBidDialog({ bid, user, children }: { bid: Bid; user: any; children
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                {children}
+                 <Button size="lg">Place Bid</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md bg-glass">
                 <DialogHeader>
@@ -446,9 +446,7 @@ export function MarketplaceBidsList() {
                                         </Dialog>
 
                                         {isSupplier && !isVendorOwner && bid.status === 'active' && (
-                                            <PlaceBidDialog bid={bid} user={user}>
-                                                <Button size="lg">Place Bid</Button>
-                                            </PlaceBidDialog>
+                                            <PlaceBidDialog bid={bid} user={user} />
                                         )}
                                     </div>
                                 </Card>
