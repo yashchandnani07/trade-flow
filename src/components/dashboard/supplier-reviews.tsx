@@ -8,11 +8,12 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription }
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Star, MessageSquare } from "lucide-react";
+import { Star, MessageSquare, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Review } from "@/lib/types";
 import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 function StarRating({ rating, className }: { rating: number, className?: string }) {
   return (
@@ -52,18 +53,15 @@ export function SupplierReviews() {
                 date: data.date ? new Date(data.date.seconds * 1000).toLocaleDateString('en-CA') : 'Date not available',
                 rating: data.rating,
                 comment: data.comment,
-            };
+            } as Review;
         });
     }, [reviewsSnapshot]);
 
     useEffect(() => {
-      if (!loading && !error) {
-        console.log("Fetched reviews from Firestore:", reviews);
-      }
       if(error) {
         console.error("Error fetching reviews:", error);
       }
-    }, [reviews, loading, error]);
+    }, [error]);
 
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -107,7 +105,16 @@ export function SupplierReviews() {
                 ))}
             </div>
         )}
-        {error && <p className="text-destructive">Error: Your Firestore rules might be incorrect. Please set them to test mode. {error.message}</p>}
+        {error && (
+            <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Error Loading Reviews</AlertTitle>
+                <AlertDescription>
+                    There was a problem fetching reviews. This is often due to Firestore security rules. Please ensure your rules allow reads on the 'reviews' collection.
+                    <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
+                </AlertDescription>
+            </Alert>
+        )}
         {!loading && !error && reviews.map((review) => (
           <div key={review.id} className="flex gap-4">
             <Avatar>

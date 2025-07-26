@@ -71,7 +71,7 @@ export default function SupplierListPage() {
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Error Loading Suppliers</AlertTitle>
             <AlertDescription>
-                Could not load suppliers. Please ensure your Firestore database is set up correctly and your security rules allow reads on the 'suppliers' collection.
+                There was a problem fetching suppliers. This is often due to Firestore security rules. Please ensure your rules allow reads on the 'suppliers' collection.
                 <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
             </AlertDescription>
         </Alert>

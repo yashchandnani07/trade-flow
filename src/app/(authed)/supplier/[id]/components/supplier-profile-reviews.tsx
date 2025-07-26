@@ -77,7 +77,7 @@ const SupplierProfileReviews = ({ supplierId }: { supplierId: string }) => {
                     title: "Review Submitted!",
                     description: "Thank you for your feedback.",
                 });
-            } catch (e) => {
+            } catch (e) {
                 console.error("Error adding document: ", e);
                  toast({
                     variant: "destructive",
@@ -114,7 +114,7 @@ const SupplierProfileReviews = ({ supplierId }: { supplierId: string }) => {
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Error Loading Reviews</AlertTitle>
                 <AlertDescription>
-                    Could not load reviews. Please ensure your Firestore security rules allow reads on the 'reviews' collection.
+                    There was a problem fetching reviews. This is often due to Firestore security rules. Please ensure your rules allow reads on the 'reviews' collection.
                      <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
                 </AlertDescription>
             </Alert>
