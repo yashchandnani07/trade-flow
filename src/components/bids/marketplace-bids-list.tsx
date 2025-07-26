@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, AlertTriangle, PackageSearch, Handshake, Inbox, Gavel } from 'lucide-react';
+import { Loader2, AlertTriangle, PackageSearch, Handshake, Inbox } from 'lucide-react';
 import { type Bid, type Proposal } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
@@ -78,8 +78,6 @@ function ProposalsDialog({ bid }: { bid: Bid }) {
   }
 
   const isBidOwner = user?.uid === bid.vendorId;
-  const isSupplier = user?.role === 'supplier';
-
 
   return (
     <DialogContent className="sm:max-w-2xl bg-glass">
@@ -214,8 +212,6 @@ function PlaceBidDialog({ bid, onBidPlaced }: { bid: Bid; onBidPlaced: () => voi
 
 function BidCard({ bid }: { bid: Bid }) {
     const { user } = useAuth();
-    const [isPlaceBidOpen, setPlaceBidOpen] = useState(false);
-    const [isProposalsOpen, setProposalsOpen] = useState(false);
     
     const createdAt = bid.createdAt instanceof Timestamp 
         ? formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true }) 
@@ -238,7 +234,7 @@ function BidCard({ bid }: { bid: Bid }) {
             <div className="flex items-center gap-2">
                 <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize">{bid.status}</Badge>
                 
-                <Dialog open={isProposalsOpen} onOpenChange={setProposalsOpen}>
+                <Dialog>
                     <DialogTrigger asChild>
                         <Button variant="outline" size="sm">View Proposals</Button>
                     </DialogTrigger>
@@ -246,11 +242,11 @@ function BidCard({ bid }: { bid: Bid }) {
                 </Dialog>
 
                 {isSupplier && bid.status === 'active' && (
-                    <Dialog open={isPlaceBidOpen} onOpenChange={setPlaceBidOpen}>
+                    <Dialog>
                         <DialogTrigger asChild>
                             <Button size="sm">Place Bid</Button>
                         </DialogTrigger>
-                        <PlaceBidDialog bid={bid} onBidPlaced={() => setPlaceBidOpen(false)} />
+                        <PlaceBidDialog bid={bid} onBidPlaced={() => {}} />
                     </Dialog>
                 )}
             </div>
