@@ -1,70 +1,58 @@
 'use client';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel';
-import { ShieldCheck, Trophy, Truck, Award } from 'lucide-react';
+import { Award, Rocket, Star, Package } from 'lucide-react';
 
 const badges = [
   {
-    icon: <ShieldCheck className="w-8 h-8 text-blue-500" />,
-    title: 'FSSAI Certified',
-    date: 'Achieved: May 2023',
-    borderColor: 'border-blue-500',
+    icon: <Award className="w-8 h-8 text-yellow-400" />,
+    title: 'Quality',
+    bgColor: 'bg-yellow-400/10',
+    glowColor: 'shadow-yellow-400/20',
   },
   {
-    icon: <Truck className="w-8 h-8 text-green-500" />,
-    title: 'On-Time Hero',
-    date: 'Achieved: Jan 2024',
-    borderColor: 'border-green-500',
+    icon: <Rocket className="w-8 h-8 text-white" />,
+    title: 'Speed Demon',
+    bgColor: 'bg-white/10',
+    glowColor: 'shadow-white/20',
   },
   {
-    icon: <Trophy className="w-8 h-8 text-yellow-500" />,
-    title: 'Super Supplier',
-    date: 'Achieved: Mar 2024',
-    borderColor: 'border-yellow-500',
+    icon: <Star className="w-8 h-8 text-orange-400" />,
+    title: '5-Star Rating',
+    bgColor: 'bg-orange-400/10',
+    glowColor: 'shadow-orange-400/20',
   },
   {
-    icon: <Award className="w-8 h-8 text-teal-500" />,
-    title: 'Clean Kitchen',
-    date: 'Achieved: Apr 2024',
-    borderColor: 'border-teal-500',
+    icon: <Package className="w-8 h-8 text-teal-400" />,
+    title: 'First Order',
+    bgColor: 'bg-teal-400/10',
+    glowColor: 'shadow-teal-400/20',
   },
 ];
+
+const BadgeCard = ({ badge }: { badge: (typeof badges)[0] }) => (
+    <div className="flex flex-col items-center justify-center space-y-2">
+         <div className={`relative flex items-center justify-center w-16 h-16 rounded-full ${badge.bgColor}`}>
+            <div className={`absolute inset-0 rounded-full shadow-lg ${badge.glowColor} animate-pulse`}></div>
+            {badge.icon}
+        </div>
+        <p className="text-sm font-medium text-muted-foreground">{badge.title}</p>
+    </div>
+);
+
 
 const TrustBadges = () => {
   return (
     <div>
       <h3 className="text-lg font-semibold mb-4">Trust Badges</h3>
-      <Carousel
-        opts={{
-          align: 'start',
-          loop: true,
-        }}
-        className="w-full"
-      >
-        <CarouselContent>
-          {badges.map((badge, index) => (
-            <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
-              <div className="p-1">
-                <Card className={`bg-secondary border-2 ${badge.borderColor} shadow-md transition-transform hover:scale-105`}>
-                  <CardContent className="flex flex-col items-center justify-center p-6 space-y-2">
-                    {badge.icon}
-                    <p className="font-semibold">{badge.title}</p>
-                    <p className="text-xs text-muted-foreground">{badge.date}</p>
-                  </CardContent>
-                </Card>
-              </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious className="hidden sm:flex" />
-        <CarouselNext className="hidden sm:flex" />
-      </Carousel>
+      <Card className="bg-card-gradient">
+        <CardContent className="p-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {badges.map((badge, index) => (
+                    <BadgeCard key={index} badge={badge} />
+                ))}
+            </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
