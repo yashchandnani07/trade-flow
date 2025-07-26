@@ -1,3 +1,4 @@
+
 import type { Config } from 'tailwindcss';
 
 const config = {
@@ -75,12 +76,11 @@ const config = {
       fontFamily: {
         sans: ['var(--font-inter)'],
       },
-      backdropBlur: {
-        lg: '16px',
-      }
     },
   },
   plugins: [require('tailwindcss-animate')],
 } satisfies Config;
 
 export default config;
+
+    

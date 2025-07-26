@@ -19,7 +19,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.variable}>
+      <body className={`${inter.variable} font-sans`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
@@ -35,3 +35,5 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     </html>
   );
 }
+
+    
