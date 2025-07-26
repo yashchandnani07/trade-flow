@@ -12,7 +12,7 @@ body {
 
 @layer base {
   :root {
-    --background: 210 20% 95%;
+    --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -37,11 +37,11 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --sidebar-background: hsl(0 0% 100% / 0.8);
+    --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222.2 84% 4.9%;
     --sidebar-primary: 180 100% 50%;
     --sidebar-primary-foreground: 180 100% 10%;
-    --sidebar-accent: hsl(180 5% 95% / 0.9);
+    --sidebar-accent: 180 95% 95%;
     --sidebar-accent-foreground: 222.2 84% 4.9%;
     --sidebar-border: 180 5% 90%;
     --sidebar-ring: 180 100% 50%;
@@ -71,7 +71,7 @@ body {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: hsl(0 0% 0% / 0.8);
+    --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 210 70% 50%;
     --sidebar-primary-foreground: 221 39% 11%;
