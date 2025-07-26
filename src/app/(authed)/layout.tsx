@@ -32,7 +32,7 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
     }
   }, [user, loading, router]);
 
-  if (loading) {
+  if (loading || !user) { // Also show loader if user is briefly null during redirect
     return (
         <div className="flex items-center justify-center min-h-screen bg-background light:bg-transparent">
             <div className="space-y-4 text-center flex flex-col items-center">
