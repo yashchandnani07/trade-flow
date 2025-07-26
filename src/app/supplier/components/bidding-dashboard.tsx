@@ -2,12 +2,14 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Gavel } from 'lucide-react';
 
 const BiddingDashboard = () => {
   return (
     <Card className="bg-glass">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Bidding Dashboard</CardTitle>
+        <Gavel className="w-5 h-5 text-muted-foreground" />
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

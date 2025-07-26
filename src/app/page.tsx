@@ -67,7 +67,7 @@ const Header = ({
   <header className="flex items-center justify-between p-4 border-b border-border">
     <div className="flex items-center gap-4">
       <h1 className="text-xl font-semibold">Trade Flow</h1>
-      <div className="flex items-center bg-card p-1 rounded-full">
+      <div className="flex items-center bg-glass p-1 rounded-full">
         <Button
           variant={view === 'vendor' ? 'secondary' : 'ghost'}
           size="sm"
@@ -254,7 +254,7 @@ export default function App() {
   const [view, setView] = useState<View>('supplier');
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground bg-gradient-to-br from-indigo-900 via-blue-900 to-purple-900">
+    <div className="flex min-h-screen bg-background text-foreground">
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Header view={view} setView={setView} />

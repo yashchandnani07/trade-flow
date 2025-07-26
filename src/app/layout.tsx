@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           enableSystem
           disableTransitionOnChange
         >
-          <div className="bg-gradient-to-br from-indigo-900 via-blue-900 to-purple-900">
+          <div className="bg-gradient-to-br from-indigo-900 via-blue-900 to-purple-900 min-h-screen">
             {children}
           </div>
           <Toaster />
