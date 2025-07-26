@@ -4,6 +4,7 @@ import OrderManagement from './components/order-management';
 import BiddingDashboard from './components/bidding-dashboard';
 import FactoryDiary from './components/factory-diary';
 import ComplianceStatus from './components/compliance-status';
+import SupplierReviews from './components/supplier-reviews';
 
 export default function SupplierPage() {
   return (
@@ -21,6 +22,7 @@ export default function SupplierPage() {
           <BiddingDashboard />
           <FactoryDiary />
           <ComplianceStatus />
+          <SupplierReviews />
         </div>
       </div>
     </div>
