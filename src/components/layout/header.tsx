@@ -25,7 +25,7 @@ import { DashboardToggle } from "../dashboard/dashboard-toggle";
 
 export function AppHeader() {
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-transparent px-4 sm:static sm:h-auto sm:border-0 sm:px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-transparent px-4 sm:static sm:h-auto sm:border-0 sm:px-6 backdrop-blur-lg">
       <SidebarTrigger />
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Link href="#" className="hover:text-foreground">
