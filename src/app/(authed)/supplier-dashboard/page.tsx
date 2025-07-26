@@ -4,7 +4,7 @@ import KeyMetrics from '@/app/supplier/components/key-metrics';
 import OrderManagement from '@/app/supplier/components/order-management';
 import FactoryDiary from '@/app/supplier/components/factory-diary';
 import ComplianceStatus from '@/app/supplier/components/compliance-status';
-import BiddingDashboard from '@/app/supplier/components/bidding-dashboard';
+import { MarketplaceBidsList } from '@/components/bids/marketplace-bids-list';
 import TrustBadges from '@/app/supplier/components/trust-badges';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -32,7 +32,7 @@ export default function SupplierDashboardPage() {
             </div>
         </div>
         <section id="bids">
-            <BiddingDashboard />
+            <MarketplaceBidsList />
         </section>
     </main>
   );
