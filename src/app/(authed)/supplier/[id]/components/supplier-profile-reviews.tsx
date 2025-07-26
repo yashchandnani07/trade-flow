@@ -110,11 +110,11 @@ const SupplierProfileReviews = ({ supplierId }: { supplierId: string }) => {
             </div>
         )}
         {error && (
-            <Alert variant="destructive">
+             <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Error Loading Reviews</AlertTitle>
                 <AlertDescription>
-                    There was a problem fetching reviews. This is often due to Firestore security rules. Please ensure your rules allow reads on the 'reviews' collection.
+                    There was a problem fetching reviews. This is often due to Firestore security rules. Please check the `firestore.rules` file and update your project's rules in the Firebase console.
                      <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
                 </AlertDescription>
             </Alert>
