@@ -48,7 +48,7 @@ function ProposalsDialog({ bid }: { bid: Bid }) {
   const { toast } = useToast();
   const proposalsCollection = useMemo(() => collection(db, 'bids', bid.id, 'proposals'), [bid.id]);
   const proposalsQuery = useMemo(() => query(proposalsCollection, orderBy("createdAt", "asc")), [proposalsCollection]);
-  const [proposals, loading, error] = useCollectionData(proposalsQuery, { idField: 'id' });
+  const [proposals, loading, error, proposalsSnapshot] = useCollectionData(proposalsQuery, { idField: 'id' });
   const [isAccepting, setIsAccepting] = useState<string | null>(null);
   
   const handleAcceptProposal = async (proposal: Proposal) => {
@@ -65,12 +65,14 @@ function ProposalsDialog({ bid }: { bid: Bid }) {
         batch.update(acceptedProposalRef, { status: 'accepted' });
 
         // 3. Update all other proposals to 'rejected'
-        const allProposalsSnapshot = await getDocs(proposalsQuery);
-        allProposalsSnapshot.forEach(proposalDoc => {
-            if (proposalDoc.id !== proposal.id) {
-                batch.update(proposalDoc.ref, { status: 'rejected' });
-            }
-        });
+        if(proposalsSnapshot) {
+            proposalsSnapshot.docs.forEach(proposalDoc => {
+                if (proposalDoc.id !== proposal.id) {
+                    batch.update(proposalDoc.ref, { status: 'rejected' });
+                }
+            });
+        }
+        
 
         await batch.commit();
 
