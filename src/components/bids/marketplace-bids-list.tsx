@@ -123,7 +123,7 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
                        Accept Bid
                    </Button>
                 ) : (
-                    <Badge variant={proposal.status === 'accepted' ? 'default' : 'outline'} className="capitalize">{proposal.status}</Badge>
+                    <Badge variant={proposal.status === 'accepted' ? 'default' : proposal.status === 'rejected' ? 'destructive' : 'outline'} className="capitalize">{proposal.status}</Badge>
                 )}
               </div>
             )
@@ -294,15 +294,13 @@ export function MarketplaceBidsList() {
                                         <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize">{bid.status}</Badge>
                                         
                                         <Dialog>
-                                            {(isVendorOwner || user?.role === 'supplier') && (
-                                                <DialogTrigger asChild>
-                                                    <Button variant="outline" size="sm">View Proposals</Button>
-                                                </DialogTrigger>
-                                            )}
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" size="sm">View Proposals</Button>
+                                            </DialogTrigger>
                                             <ProposalsDialog bid={bid} user={user} />
                                         </Dialog>
 
-                                        {isSupplier && bid.status === 'active' && (
+                                        {isSupplier && !isVendorOwner && bid.status === 'active' && (
                                             <PlaceBidDialog bid={bid} user={user}>
                                                 <Button size="sm">Place Bid</Button>
                                             </PlaceBidDialog>
