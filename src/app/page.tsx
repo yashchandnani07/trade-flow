@@ -9,7 +9,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function Home() {
   return (
-    <div className="bg-gradient-to-br from-indigo-900 via-blue-900 to-purple-900 min-h-screen">
+    <div className="min-h-screen">
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
