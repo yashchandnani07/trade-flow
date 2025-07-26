@@ -45,7 +45,7 @@ export function OrderHistory({ className }: React.HTMLAttributes<HTMLDivElement>
   });
 
   return (
-    <Card className={cn(className)}>
+    <Card className={cn("glassmorphic", className)}>
       <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
             <CardTitle>Order History</CardTitle>

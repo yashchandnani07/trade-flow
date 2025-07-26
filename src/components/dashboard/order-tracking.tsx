@@ -32,7 +32,7 @@ const trackingSteps = [
 
 export function OrderTracking() {
   return (
-    <Card className="h-full">
+    <Card className="h-full glassmorphic">
       <CardHeader>
         <CardTitle>Order Tracking</CardTitle>
         <CardDescription>

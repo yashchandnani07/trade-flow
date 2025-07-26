@@ -22,6 +22,8 @@ import {
   FileText,
   MessageSquare,
   LogOut,
+  Gavel,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -65,7 +67,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip={{ children: "Bidding" }}>
               <Link href="#">
-                <FileText />
+                <Gavel />
                 <span>Bidding</span>
               </Link>
             </SidebarMenuButton>
@@ -81,7 +83,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip={{ children: "Reviews" }}>
               <Link href="#">
-                <MessageSquare />
+                <Star />
                 <span>Reviews</span>
               </Link>
             </SidebarMenuButton>
