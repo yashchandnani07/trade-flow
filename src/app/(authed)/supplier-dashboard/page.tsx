@@ -31,7 +31,7 @@ export default function SupplierDashboardPage() {
                 <ComplianceStatus />
             </div>
         </div>
-        <section>
+        <section id="bids">
             <BiddingDashboard />
         </section>
     </main>

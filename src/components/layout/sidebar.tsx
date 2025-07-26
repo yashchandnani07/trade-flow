@@ -21,7 +21,8 @@ import {
   Settings,
   Star,
   Users,
-  Truck
+  Truck,
+  Gavel,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -50,44 +51,61 @@ export function AppSidebar() {
               isActive
               tooltip={{ children: "Dashboard" }}
             >
-              <Link href="/dashboard">
+              <Link href={user?.role === 'supplier' ? "/supplier-dashboard" : "/dashboard"}>
                 <Home />
                 <span>Dashboard</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={{ children: "Tracking" }}>
-              <Link href="/dashboard#tracking">
-                <Truck />
-                <span>Tracking</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={{ children: "History" }}>
-              <Link href="/dashboard#history">
-                <Package />
-                <span>Order History</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={{ children: "Suppliers" }}>
-              <Link href="/supplier">
-                <Users />
-                <span>Suppliers</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={{ children: "Reviews" }}>
-              <Link href="/dashboard#reviews">
-                <Star />
-                <span>Reviews</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          
+          {user?.role === 'supplier' && (
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip={{ children: "Bids" }}>
+                <Link href="/supplier-dashboard#bids">
+                  <Gavel />
+                  <span>Bids</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
+
+          {user?.role !== 'supplier' && (
+            <>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Tracking" }}>
+                  <Link href="/dashboard#tracking">
+                    <Truck />
+                    <span>Tracking</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "History" }}>
+                  <Link href="/dashboard#history">
+                    <Package />
+                    <span>Order History</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Suppliers" }}>
+                  <Link href="/supplier">
+                    <Users />
+                    <span>Suppliers</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Reviews" }}>
+                  <Link href="/dashboard#reviews">
+                    <Star />
+                    <span>Reviews</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </>
+          )}
+
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip={{ children: "Reports" }}>
               <Link href="#">
