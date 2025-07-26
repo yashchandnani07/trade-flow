@@ -33,12 +33,13 @@ const statusVariantMap = {
     awarded: "default"
 } as const;
 
-const proposalStatusVariantMap = {
+const proposalStatusVariantMap: Record<Proposal['status'], "default" | "secondary" | "destructive" | "outline"> = {
     pending: "outline",
     accepted: "default",
     rejected: "destructive",
     negotiating: "default",
 } as const;
+
 
 function NegotiationDialog({ bid, proposal, user, children }: { bid: Bid, proposal: Proposal, user: any, children: ReactNode }) {
     const [counterAmount, setCounterAmount] = useState<number | ''>('');
@@ -145,10 +146,11 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
      try {
         const batch = writeBatch(db);
         const bidRef = doc(db, 'bids', bid.id);
-        batch.update(bidRef, { status: 'awarded', awardedTo: proposal.supplierId });
         
-        const finalAmount = proposal.status === 'negotiating' && proposal.counterOffer?.from === 'vendor' ? proposal.counterOffer.amount : proposal.bidAmount;
+        const finalAmount = proposal.status === 'negotiating' && proposal.counterOffer ? proposal.counterOffer.amount : proposal.bidAmount;
 
+        batch.update(bidRef, { status: 'awarded', awardedTo: proposal.supplierId, finalAmount });
+        
         const acceptedProposalRef = doc(db, 'bids', bid.id, 'proposals', proposal.id);
         batch.update(acceptedProposalRef, { status: 'accepted', finalAmount });
 
@@ -221,7 +223,7 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
                         <CardContent className="p-3 text-sm">
                            <p className="font-semibold text-primary flex items-center gap-1">
                                 <CornerDownLeft className="w-4 h-4"/>
-                                Counter-offer: ₹{proposal.counterOffer.amount.toLocaleString()}
+                                Counter-offer from {proposal.counterOffer.from}: ₹{proposal.counterOffer.amount.toLocaleString()}
                            </p>
                            {proposal.counterOffer.message && <p className="text-muted-foreground mt-1 italic">"{proposal.counterOffer.message}"</p>}
                         </CardContent>
@@ -242,7 +244,7 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
                    </Button>
                   </>
                 )}
-                {isSupplier && isMyProposal && proposal.status === 'negotiating' && bid.status === 'active' &&(
+                {isSupplier && isMyProposal && proposal.status === 'negotiating' && bid.status === 'active' && proposal.counterOffer?.from === 'vendor' &&(
                     <>
                         <Button variant="outline" size="sm" disabled={isAccepting !== null}>
                            <CornerDownLeft className="mr-2 h-4 w-4" /> Revise Bid
