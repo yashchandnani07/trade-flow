@@ -14,20 +14,11 @@ import {
   signOut,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp, GeoPoint } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { app, db, auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import type { User, Role } from '@/lib/types';
 
-type Role = 'vendor' | 'supplier' | 'farmer';
-
-interface User {
-  uid: string;
-  email: string | null;
-  role: Role;
-  businessName: string;
-  fssaiStatus: 'pending' | 'verified';
-  location: GeoPoint | null;
-}
 
 interface AuthContextType {
   user: User | null;
@@ -47,8 +38,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
-        // User is signed in, see docs for a list of available properties
-        // https://firebase.google.com/docs/reference/js/firebase.User
         const userDocRef = doc(db, "users", firebaseUser.uid);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
@@ -60,13 +49,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
         } else {
             // This case might happen if user document creation fails after signup
-            // Or if a user exists in auth but not firestore.
-            // For now we log them out.
             await signOut(auth);
             setUser(null);
         }
       } else {
-        // User is signed out
         setUser(null);
       }
       setLoading(false);
@@ -85,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       ...additionalData,
       email,
       fssaiStatus: 'pending',
-      location: null, // or get user's location
+      location: null,
       createdAt: serverTimestamp()
     });
   };
@@ -107,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
