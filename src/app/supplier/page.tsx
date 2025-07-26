@@ -14,6 +14,9 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
+import { AppHeader } from '@/components/layout/header';
+import { AppSidebar } from '@/components/layout/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 function StarRating({ rating, className }: { rating: number; className?: string }) {
   return (
@@ -60,7 +63,7 @@ const SupplierCard = ({ supplier }: { supplier: Supplier }) => (
 export default function SupplierListPage() {
     const suppliersCollection = useMemo(() => collection(db, 'suppliers'), []);
     const q = useMemo(() => query(suppliersCollection), [suppliersCollection]);
-    const [suppliers, loading, error] = useCollectionData(q);
+    const [suppliers, loading, error] = useCollectionData(q, { idField: 'id' });
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6">

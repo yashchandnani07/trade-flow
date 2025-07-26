@@ -55,7 +55,7 @@ export async function seedDatabase() {
     const reviewsSnapshot = await getDocs(reviewsCollection);
     if (reviewsSnapshot.empty) {
         mockReviews.forEach(review => {
-            const docRef = doc(reviewsCollection); // Auto-generate ID for new reviews
+            const docRef = doc(reviewsCollection, review.id); 
             batch.set(docRef, review);
         });
         console.log('Seeding reviews...');

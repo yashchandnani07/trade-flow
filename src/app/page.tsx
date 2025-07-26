@@ -11,9 +11,13 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { seedDatabase } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
+import SupplierListPage from "./supplier/page";
+import { usePathname } from "next/navigation";
+import RootLayout from "./layout";
 
 export default function Home() {
   const { toast } = useToast();
+  const pathname = usePathname();
 
   const handleSeed = async () => {
     const result = await seedDatabase();
@@ -31,37 +35,43 @@ export default function Home() {
     }
   };
 
+  const isSupplierPage = pathname.startsWith('/supplier');
+
   return (
     <div className="min-h-screen">
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
           <AppHeader />
-          <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-8 bg-transparent">
-             <section className="flex justify-between items-center" id="overview">
-              <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-               <Button onClick={handleSeed} variant="outline">Seed Database</Button>
-            </section>
-            <section>
-              <OverviewCards />
-            </section>
-            <div className="grid gap-8 lg:grid-cols-3" id="tracking">
-              <div className="lg:col-span-2">
-                <OrderTracking />
+          {isSupplierPage ? (
+            <SupplierListPage />
+          ) : (
+            <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-8 bg-transparent">
+              <section className="flex justify-between items-center" id="overview">
+                <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+                <Button onClick={handleSeed} variant="outline">Seed Database</Button>
+              </section>
+              <section>
+                <OverviewCards />
+              </section>
+              <div className="grid gap-8 lg:grid-cols-3" id="tracking">
+                <div className="lg:col-span-2">
+                  <OrderTracking />
+                </div>
+                <div>
+                  <AlertsSection />
+                </div>
               </div>
-              <div>
-                <AlertsSection />
+              <div className="grid gap-8 lg:grid-cols-5" id="history">
+                <div className="lg:col-span-3">
+                  <OrderHistory />
+                </div>
+                <div className="lg:col-span-2" id="reviews">
+                  <SupplierReviews />
+                </div>
               </div>
-            </div>
-            <div className="grid gap-8 lg:grid-cols-5" id="history">
-              <div className="lg:col-span-3">
-                <OrderHistory />
-              </div>
-              <div className="lg:col-span-2" id="reviews">
-                <SupplierReviews />
-              </div>
-            </div>
-          </main>
+            </main>
+          )}
         </SidebarInset>
       </SidebarProvider>
     </div>
