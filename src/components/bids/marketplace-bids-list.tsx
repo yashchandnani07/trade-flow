@@ -1,7 +1,7 @@
 
 'use client';
 import { useMemo, useState } from 'react';
-import { collection, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, Timestamp, addDoc, serverTimestamp, doc, writeBatch } from 'firebase/firestore';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -31,6 +31,7 @@ const statusVariantMap = {
     closed: "outline",
     awarded: "default"
 } as const;
+
 
 function ProposalsDialog({ bid }: { bid: Bid }) {
   const { user } = useAuth();
@@ -125,6 +126,134 @@ function ProposalsDialog({ bid }: { bid: Bid }) {
   );
 }
 
+function PlaceBidDialog({ bid, onBidPlaced }: { bid: Bid; onBidPlaced: () => void }) {
+    const [bidAmount, setBidAmount] = useState<number | ''>('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { toast } = useToast();
+    const { user } = useAuth();
+
+    const handleBidSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user || bidAmount === '' || bidAmount <= 0) {
+             toast({
+                variant: 'destructive',
+                title: 'Invalid Bid',
+                description: 'Please enter a valid bid amount.',
+            });
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const proposalsCollection = collection(db, 'bids', bid.id, 'proposals');
+            await addDoc(proposalsCollection, {
+                supplierId: user.uid,
+                supplierName: user.businessName,
+                bidAmount: Number(bidAmount),
+                createdAt: serverTimestamp(),
+                status: 'pending',
+            });
+            toast({
+                title: 'Bid Placed Successfully!',
+                description: `Your bid of ₹${bidAmount} for ${bid.item} has been submitted.`,
+            });
+            onBidPlaced();
+            setBidAmount('');
+        } catch (error) {
+             console.error('Error placing bid:', error);
+             toast({
+                variant: 'destructive',
+                title: 'Failed to Place Bid',
+                description: 'There was an error submitting your bid. Please try again.',
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <DialogContent className="sm:max-w-[425px] bg-glass">
+            <DialogHeader>
+                <DialogTitle>Place a Bid for {bid.item}</DialogTitle>
+                <DialogDescription>
+                    Submit your best offer for this requirement. The vendor will be notified of your bid.
+                </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleBidSubmit}>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="amount" className="text-right">
+                            Your Bid (₹)
+                        </Label>
+                        <Input
+                            id="amount"
+                            type="number"
+                            value={bidAmount}
+                            onChange={(e) => setBidAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                            className="col-span-3"
+                            placeholder="e.g., 9500"
+                            required
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary">Cancel</Button>
+                    </DialogClose>
+                    <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Submit Bid
+                    </Button>
+                </DialogFooter>
+            </form>
+        </DialogContent>
+    );
+}
+
+function BidCard({ bid }: { bid: Bid }) {
+    const { user } = useAuth();
+    const [isPlaceBidOpen, setPlaceBidOpen] = useState(false);
+    
+    const createdAt = bid.createdAt instanceof Timestamp 
+        ? formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true }) 
+        : 'just now';
+
+    const isSupplier = user?.role === 'supplier';
+    const isVendorOwner = user?.uid === bid.vendorId;
+
+    return (
+        <Dialog onOpenChange={(open) => !open && setPlaceBidOpen(false)}>
+            <div className="border p-4 rounded-lg bg-background/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <div>
+                    <h3 className="font-semibold text-lg">{bid.item}</h3>
+                    <p className="text-sm text-muted-foreground">
+                        {bid.quantity} kg | Target Price: ₹{bid.targetPrice.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        Posted by {bid.vendorName} • {createdAt}
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize">{bid.status}</Badge>
+                    
+                    <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">View Proposals</Button>
+                    </DialogTrigger>
+
+                    {isSupplier && bid.status === 'active' && (
+                        <Dialog open={isPlaceBidOpen} onOpenChange={setPlaceBidOpen}>
+                            <DialogTrigger asChild>
+                                <Button size="sm">Place Bid</Button>
+                            </DialogTrigger>
+                            <PlaceBidDialog bid={bid} onBidPlaced={() => setPlaceBidOpen(false)} />
+                        </Dialog>
+                    )}
+                </div>
+            </div>
+             <ProposalsDialog bid={bid} />
+        </Dialog>
+    )
+}
 
 export function MarketplaceBidsList() {
     const bidsCollection = useMemo(() => collection(db, 'bids'), []);
@@ -149,7 +278,7 @@ export function MarketplaceBidsList() {
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Error Loading Bids</AlertTitle>
                 <AlertDescription>
-                    Could not load bids. Please try again later.
+                    Could not load bids. Please try again later. Ensure your firestore.rules are set up correctly.
                     <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
                 </AlertDescription>
             </Alert>
@@ -160,44 +289,16 @@ export function MarketplaceBidsList() {
         <Card className="bg-glass mt-8">
             <CardHeader>
                 <CardTitle>Active Marketplace Requirements</CardTitle>
-                <CardDescription>Browse active requirements from all vendors and manage your proposals.</CardDescription>
+                <CardDescription>Browse active requirements from all vendors and place your bids.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
                     {bids && bids.length > 0 ? (
-                        bids.map(bid => {
-                            const typedBid = bid as Bid;
-                            const createdAt = typedBid.createdAt instanceof Timestamp 
-                                ? formatDistanceToNow(typedBid.createdAt.toDate(), { addSuffix: true }) 
-                                : 'just now';
-                            return (
-                                <Dialog key={typedBid.id}>
-                                    <div className="border p-4 rounded-lg bg-background/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                                        <div>
-                                            <h3 className="font-semibold text-lg">{typedBid.item}</h3>
-                                            <p className="text-sm text-muted-foreground">
-                                                {typedBid.quantity} kg | Target Price: ₹{typedBid.targetPrice.toLocaleString()}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                Posted by {typedBid.vendorName} • {createdAt}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <Badge variant={statusVariantMap[typedBid.status] || 'outline'} className="capitalize">{typedBid.status}</Badge>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline" size="sm">View Proposals</Button>
-                                            </DialogTrigger>
-                                        </div>
-                                    </div>
-                                    <ProposalsDialog bid={typedBid} />
-                                </Dialog>
-                            )
-                        })
+                        bids.map(bid => <BidCard key={bid.id} bid={bid as Bid} />)
                     ) : (
                         <div className="text-center py-10 text-muted-foreground">
                             <PackageSearch className="w-12 h-12 mx-auto mb-4" />
                             <p>There are no active requirements in the marketplace right now.</p>
-                            <p className="text-sm">Use the form above to post a new one.</p>
                         </div>
                     )}
                 </div>
