@@ -336,14 +336,14 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
         setBidAmount(prev => Math.max(0, prev + adjustment));
     };
 
-    const onFormSubmit = (e: React.FormEvent) => {
+    const onFormSubmit = (e: React.FormEvent, theBid: Bid) => {
         e.preventDefault();
-        handleBidSubmit(bid, bidAmount);
+        handleBidSubmit(theBid, bidAmount);
     }
     
-    const onMatchAndAccept = () => {
-        setBidAmount(bid.targetPrice);
-        handleBidSubmit(bid, bid.targetPrice);
+    const onMatchAndAccept = (theBid: Bid) => {
+        setBidAmount(theBid.targetPrice);
+        handleBidSubmit(theBid, theBid.targetPrice);
     }
 
 
@@ -371,7 +371,7 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
 
                 {isSupplier && !isVendorOwner && bid.status === 'active' && (
                     <Card className="bg-glass p-4">
-                        <form onSubmit={onFormSubmit}>
+                        <form onSubmit={(e) => onFormSubmit(e, bid)}>
                             <Label className="text-sm font-semibold mb-2 block">Your Offer (?)</Label>
                             <div className="flex items-center gap-2 mb-4">
                                 <Button type="button" variant="outline" size="icon" onClick={() => adjustBid(-100)} disabled={isSubmitting}><Minus className="h-4 w-4" /></Button>
@@ -388,7 +388,7 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
                                 <Button type="submit" className="flex-1" disabled={isSubmitting}>
                                     {isSubmitting ? <Loader2 className="animate-spin" /> : "Submit Offer"}
                                 </Button>
-                                <Button type="button" onClick={onMatchAndAccept} className="flex-1" variant="outline" disabled={isSubmitting}>
+                                <Button type="button" onClick={() => onMatchAndAccept(bid)} className="flex-1" variant="outline" disabled={isSubmitting}>
                                     {isSubmitting ? <Loader2 className="animate-spin" /> : <><Handshake className="mr-2 h-4 w-4" /> Match & Accept</>}
                                 </Button>
                             </div>
@@ -456,5 +456,3 @@ export function MarketplaceBidsList() {
         </Card>
     )
 }
-
-    
