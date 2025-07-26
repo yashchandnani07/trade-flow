@@ -275,7 +275,7 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
   );
 }
 
-function PlaceBidDialog({ bid, user, open, onOpenChange }: { bid: Bid | null; user: any; open: boolean; onOpenChange: (open: boolean) => void; }) {
+function PlaceBidDialog({ bid, user, open, onOpenChange }: { bid: Bid; user: any; open: boolean; onOpenChange: (open: boolean) => void; }) {
     const [bidAmount, setBidAmount] = useState<number | ''>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
@@ -464,12 +464,14 @@ export function MarketplaceBidsList() {
                     </div>
                 </CardContent>
             </Card>
-            <PlaceBidDialog 
-                bid={selectedBid} 
-                user={user} 
-                open={isPlaceBidDialogOpen} 
-                onOpenChange={setIsPlaceBidDialogOpen} 
-            />
+            {selectedBid && (
+                <PlaceBidDialog 
+                    bid={selectedBid} 
+                    user={user} 
+                    open={isPlaceBidDialogOpen} 
+                    onOpenChange={setIsPlaceBidDialogOpen} 
+                />
+            )}
         </>
     )
 }
