@@ -292,6 +292,16 @@ function PlaceBidDialog({ bid, user, children }: { bid: Bid; user: any; children
             return;
         }
 
+        if (!bid || !bid.id) {
+            console.error("Bid object or bid ID is missing.");
+             toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Cannot place bid. Bid information is missing.',
+            });
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             const proposalsCollection = collection(db, 'bids', bid.id, 'proposals');
