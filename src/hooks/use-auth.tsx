@@ -81,7 +81,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email,
           fssaiStatus: 'pending',
           location: null,
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
+          points: 0,
         });
 
         // Manually set user after signup to trigger redirect
@@ -92,11 +93,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 email: firebaseUser.email,
                 ...userData
             });
-            if (userData.role === 'supplier') {
-              router.push('/supplier-dashboard');
-            } else {
-              router.push('/dashboard');
-            }
         }
     } catch(error) {
         if (error instanceof FirebaseError) {
@@ -122,24 +118,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 businessName: 'New User', // Default business name
                 fssaiStatus: 'pending',
                 location: null,
-                createdAt: serverTimestamp()
+                createdAt: serverTimestamp(),
+                points: 0,
             };
             await setDoc(doc(db, "users", firebaseUser.uid), defaultData);
             userData = defaultData;
         }
-
-        setUser({
+        
+        const fullUser = {
             uid: firebaseUser.uid,
             email: firebaseUser.email,
             ...userData
-        });
-        
-        if (userData.role === 'supplier') {
-          router.push('/supplier-dashboard');
-        } else {
-          router.push('/dashboard');
-        }
-        
+        };
+
+        setUser(fullUser as User);
+
     } catch (error) {
         console.error("Login Error in AuthProvider:", error);
         if (error instanceof FirebaseError) {

@@ -55,4 +55,5 @@ export interface User {
   businessName: string;
   fssaiStatus: 'pending' | 'verified';
   location: GeoPoint | null;
+  points: number;
 }

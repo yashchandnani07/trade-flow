@@ -35,7 +35,11 @@ export default function LandingPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.push('/dashboard');
+      if (user.role === 'supplier') {
+        router.replace('/supplier-dashboard');
+      } else {
+        router.replace('/dashboard');
+      }
     }
   }, [user, loading, router]);
 
@@ -49,19 +53,21 @@ export default function LandingPage() {
 
   // If not loading and no user, show the landing page.
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="px-4 lg:px-6 h-14 flex items-center">
+    <div className="flex flex-col min-h-screen bg-background">
+      <header className="px-4 lg:px-6 h-14 flex items-center bg-glass fixed top-0 left-0 right-0 z-50">
         <Link className="flex items-center justify-center" href="#">
-          <Truck className="h-6 w-6" />
-          <span className="sr-only">TradeFlow</span>
+          <Truck className="h-6 w-6 text-primary" />
+          <span className="ml-2 font-bold text-xl">TradeFlow</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link
-            className="text-sm font-medium hover:underline underline-offset-4"
-            href="/login"
-          >
-            Login
-          </Link>
+          <Button variant="ghost" asChild>
+            <Link
+              className="text-sm font-medium hover:underline underline-offset-4"
+              href="/login"
+            >
+              Login
+            </Link>
+          </Button>
           <Button asChild>
             <Link href="/signup">Get Started</Link>
           </Button>
@@ -86,7 +92,7 @@ export default function LandingPage() {
         <section id="roles" className="w-full py-12 md:py-24 lg:py-32 bg-background">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
-              <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
+              <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm text-primary">
                 Choose Your Role
               </div>
               <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">
@@ -98,15 +104,15 @@ export default function LandingPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {roles.map((role) => (
-                <Card key={role.name} className="glassmorphic p-4 rounded-[8px] hover:shadow-primary/20 hover:shadow-2xl transition-shadow duration-300">
-                  <CardHeader className="items-center">
+                <Card key={role.name} className="bg-glass p-4 rounded-xl hover:shadow-primary/20 hover:shadow-2xl transition-shadow duration-300 flex flex-col">
+                  <CardHeader className="items-center text-center">
                     {role.icon}
                     <CardTitle className="mt-4">{role.name}</CardTitle>
                   </CardHeader>
-                  <CardContent className="text-center">
+                  <CardContent className="text-center flex-grow">
                     <CardDescription>{role.description}</CardDescription>
                   </CardContent>
-                  <div className="flex justify-center p-4">
+                  <div className="flex justify-center p-4 mt-auto">
                      <Button asChild className="w-full">
                         <Link href={role.href}>Sign up as a {role.name}</Link>
                      </Button>
