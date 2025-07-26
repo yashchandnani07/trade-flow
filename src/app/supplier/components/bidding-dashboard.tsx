@@ -1,37 +1,135 @@
 
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Gavel, AlertTriangle, Loader2 } from 'lucide-react';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { collection, query, where, orderBy, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
 import type { Bid } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { formatDistanceToNow } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 const BidCard = ({ bid }: { bid: Bid }) => {
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [bidAmount, setBidAmount] = useState<number | ''>('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { toast } = useToast();
+    const { user } = useAuth();
+    
     const createdAt = bid.createdAt?.toDate ? formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true }) : 'just now';
+
+    const handleBidSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user || bidAmount === '' || bidAmount <= 0) {
+             toast({
+                variant: 'destructive',
+                title: 'Invalid Bid',
+                description: 'Please enter a valid bid amount.',
+            });
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const proposalsCollection = collection(db, 'bids', bid.id, 'proposals');
+            await addDoc(proposalsCollection, {
+                supplierId: user.uid,
+                supplierName: user.businessName,
+                bidAmount: Number(bidAmount),
+                createdAt: serverTimestamp(),
+                status: 'pending',
+            });
+            toast({
+                title: 'Bid Placed Successfully!',
+                description: `Your bid of ₹${bidAmount} for ${bid.item} has been submitted.`,
+            });
+            setIsDialogOpen(false);
+            setBidAmount('');
+        } catch (error) {
+             console.error('Error placing bid:', error);
+             toast({
+                variant: 'destructive',
+                title: 'Failed to Place Bid',
+                description: 'There was an error submitting your bid. Please try again.',
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+
     return (
-        <Card className="bg-secondary/50 p-4">
-             <div className="flex flex-col sm:flex-row justify-between sm:items-center">
-                <div>
-                    <p className="font-semibold text-lg">{bid.item}</p>
-                    <p className="text-sm text-muted-foreground">
-                        {bid.quantity} kg required by {bid.vendorName}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                        Target Price: <span className="font-medium text-foreground">₹{bid.targetPrice.toLocaleString()}</span>
-                    </p>
+        <>
+            <Card className="bg-secondary/50 p-4">
+                 <div className="flex flex-col sm:flex-row justify-between sm:items-center">
+                    <div>
+                        <p className="font-semibold text-lg">{bid.item}</p>
+                        <p className="text-sm text-muted-foreground">
+                            {bid.quantity} kg required by {bid.vendorName}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            Target Price: <span className="font-medium text-foreground">₹{bid.targetPrice.toLocaleString()}</span>
+                        </p>
+                    </div>
+                    <div className="mt-2 sm:mt-0 flex flex-col items-start sm:items-end gap-2">
+                         <p className="text-xs text-muted-foreground">{createdAt}</p>
+                        <Button size="sm" onClick={() => setIsDialogOpen(true)}>Place Bid</Button>
+                    </div>
                 </div>
-                <div className="mt-2 sm:mt-0 flex flex-col items-start sm:items-end gap-2">
-                     <p className="text-xs text-muted-foreground">{createdAt}</p>
-                    <Button size="sm">Place Bid</Button>
-                </div>
-            </div>
-        </Card>
+            </Card>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent className="sm:max-w-[425px] bg-glass">
+                    <DialogHeader>
+                    <DialogTitle>Place a Bid for {bid.item}</DialogTitle>
+                    <DialogDescription>
+                        Submit your best offer for this requirement. The vendor will be notified of your bid.
+                    </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleBidSubmit}>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="amount" className="text-right">
+                                    Your Bid (₹)
+                                </Label>
+                                <Input
+                                    id="amount"
+                                    type="number"
+                                    value={bidAmount}
+                                    onChange={(e) => setBidAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                                    className="col-span-3"
+                                    placeholder="e.g., 9500"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button type="button" variant="secondary">Cancel</Button>
+                            </DialogClose>
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Submit Bid
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+        </>
     )
 };
 

@@ -68,3 +68,12 @@ export type Bid = {
   status: 'active' | 'closed' | 'awarded';
   createdAt: Timestamp;
 };
+
+export type Proposal = {
+  id: string;
+  supplierId: string;
+  supplierName: string;
+  bidAmount: number;
+  createdAt: Timestamp;
+  status: 'pending' | 'accepted' | 'rejected';
+};
