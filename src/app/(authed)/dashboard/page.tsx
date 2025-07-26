@@ -2,11 +2,10 @@
 'use client';
 import { AlertsSection } from "@/components/dashboard/alerts-section";
 import { OrderHistory } from "@/components/dashboard/order-history";
-import { OrderTracking } from "@/components/dashboard/order-tracking";
 import { OverviewCards } from "@/components/dashboard/overview-cards";
 import { SupplierReviews } from "@/components/dashboard/supplier-reviews";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { seedDatabase } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
