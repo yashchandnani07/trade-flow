@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -218,6 +219,7 @@ const Sidebar = React.forwardRef<
         className={cn(
           "group peer hidden md:flex flex-col text-sidebar-foreground transition-all duration-300 ease-in-out",
           "data-[collapsible=icon]:w-[var(--sidebar-width-icon)] w-[var(--sidebar-width)]",
+          state === 'collapsed' ? "data-[collapsible=icon]:w-[var(--sidebar-width-icon)]" : "w-[var(--sidebar-width)]",
           className
           )}
         data-state={state}
