@@ -77,7 +77,7 @@ const SupplierProfileReviews = ({ supplierId }: { supplierId: string }) => {
                     title: "Review Submitted!",
                     description: "Thank you for your feedback.",
                 });
-            } catch (e) {
+            } catch (e) => {
                 console.error("Error adding document: ", e);
                  toast({
                     variant: "destructive",
