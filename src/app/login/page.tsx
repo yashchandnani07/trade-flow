@@ -28,13 +28,12 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast({ title: 'Login successful!' });
-      // No longer need to manually push, the useEffect will handle it.
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: error.message || 'An unexpected error occurred.',
+        description: 'Invalid email or password. Please try again.',
       });
     }
   };

@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
+import { FirebaseError } from 'firebase/app';
 
 type Role = 'vendor' | 'supplier' | 'farmer';
 
@@ -20,7 +21,7 @@ export default function SignupPage() {
   const [role, setRole] = useState<Role | ''>('');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signup } = useAuth();
+  const { signup, user, loading } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -29,6 +30,13 @@ export default function SignupPage() {
       setRole(roleFromQuery as Role);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
+
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,13 +54,14 @@ export default function SignupPage() {
         businessName,
       });
       toast({ title: 'Signup successful!' });
-      router.push('/dashboard');
+      // The useEffect above will handle the redirect to dashboard
     } catch (error: any) {
       console.error('Signup error:', error);
       let description = 'An unexpected error occurred.';
-      if (error.code === 'auth/email-already-in-use') {
+      // Specifically handle the email-already-in-use error
+      if (error instanceof FirebaseError && error.code === 'auth/email-already-in-use') {
         description = 'This email address is already registered. Please try logging in instead.';
-      } else {
+      } else if (error.message) {
         description = error.message;
       }
       toast({
