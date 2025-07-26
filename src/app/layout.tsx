@@ -13,16 +13,16 @@ const inter = Inter({
 
 export const metadata = {
   title: 'TradeFlow',
-  description: 'Streamlining Supply Chains',
+  description: 'Secure, Fast, Fair. Revolutionizing Street-Food Supply.',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans`}>
+      <body className={`${inter.variable} font-sans bg-slate-900`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
@@ -35,5 +35,3 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     </html>
   );
 }
-
-    

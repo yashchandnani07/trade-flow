@@ -9,24 +9,24 @@ html {
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 210 10% 23%;
-    --card: 210 20% 98%;
-    --card-foreground: 210 10% 23%;
-    --popover: 210 20% 98%;
-    --popover-foreground: 210 10% 23%;
+    --background: 210 10% 15%;
+    --foreground: 210 20% 98%;
+    --card: 210 10% 15%;
+    --card-foreground: 210 20% 98%;
+    --popover: 210 10% 15%;
+    --popover-foreground: 210 20% 98%;
     --primary: 210 70% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 20% 92%;
-    --secondary-foreground: 210 10% 9%;
-    --muted: 210 20% 92%;
-    --muted-foreground: 210 10% 45%;
+    --secondary: 210 10% 25%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 210 10% 25%;
+    --muted-foreground: 210 10% 65%;
     --accent: 240 60% 60%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
-    --border: 210 20% 88%;
-    --input: 210 20% 88%;
+    --border: 210 10% 25%;
+    --input: 210 10% 25%;
     --ring: 210 70% 50%;
     --radius: 0.5rem;
   }
@@ -65,4 +65,7 @@ html {
   }
 }
 
-    
+/* Remove default button styling for custom gradient buttons */
+.btn-primary {
+  background-image: linear-gradient(to right, theme('colors.blue.500'), theme('colors.purple.600'));
+}

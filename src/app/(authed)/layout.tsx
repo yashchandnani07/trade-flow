@@ -7,6 +7,7 @@ import { AppSidebar } from '@/components/layout/sidebar';
 import { AppHeader } from '@/components/layout/header';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Loader2 } from 'lucide-react';
 
 export default function AuthedLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -15,7 +16,7 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace('/login');
+      router.replace('/');
       return;
     }
 
@@ -30,31 +31,29 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
     }
   }, [user, loading, router, pathname]);
 
-  if (loading) {
+  if (loading || !user) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-background">
-            <div className="space-y-4 text-center">
+            <div className="space-y-4 text-center flex flex-col items-center">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
                 <p className="text-muted-foreground mt-2">Loading your experience...</p>
             </div>
         </div>
     );
   }
 
-  if (user) {
-    return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-background">
-          <AppSidebar />
-          <div className="flex flex-col flex-1">
-            <AppHeader />
-            <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8" style={{ scrollBehavior: 'smooth' }}>
-              {children}
-            </main>
-          </div>
-        </div>
-      </SidebarProvider>
-    );
-  }
   
-  return null;
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <AppSidebar />
+        <div className="flex flex-col flex-1">
+          <AppHeader />
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8" style={{ scrollBehavior: 'smooth' }}>
+            {children}
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
 }
