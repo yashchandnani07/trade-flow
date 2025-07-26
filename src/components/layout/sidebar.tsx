@@ -1,29 +1,29 @@
+
 "use client";
 
 import Link from "next/link";
 import {
   Sidebar,
-  SidebarHeader,
   SidebarContent,
   SidebarFooter,
+  SidebarHeader,
   SidebarMenu,
-  SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/icons/logo";
 import {
-  Home,
-  Package,
-  Users,
   BarChart2,
-  Settings,
-  FileText,
-  MessageSquare,
-  LogOut,
   Gavel,
+  Home,
+  LogOut,
+  Package,
+  Settings,
   Star,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -41,6 +41,7 @@ export function AppSidebar() {
             TradeFlow
           </span>
         </div>
+        <SidebarTrigger className="ml-auto group-data-[collapsible=icon]:hidden" />
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
