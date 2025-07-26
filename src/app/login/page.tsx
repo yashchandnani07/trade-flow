@@ -19,7 +19,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace('/dashboard');
+      if (user.role === 'supplier') {
+        router.replace('/supplier-dashboard');
+      } else {
+        router.replace('/dashboard');
+      }
     }
   }, [user, loading, router]);
 
@@ -28,20 +32,19 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast({ title: 'Login successful!' });
-      // The redirect is now handled by the useEffect hook when the user state updates.
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: 'Invalid email or password. Please try again.',
+        description: error.message || 'Invalid email or password. Please try again.',
       });
     }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="mx-auto max-w-sm">
+      <Card className="mx-auto max-w-sm bg-glass">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>Enter your email below to login to your account</CardDescription>

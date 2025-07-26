@@ -32,7 +32,11 @@ export default function SignupPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace('/dashboard');
+      if (user.role === 'supplier') {
+        router.replace('/supplier-dashboard');
+      } else {
+        router.replace('/dashboard');
+      }
     }
   }, [user, loading, router]);
 
@@ -53,7 +57,6 @@ export default function SignupPage() {
         businessName,
       });
       toast({ title: 'Signup successful!' });
-      // The useEffect hook will handle redirecting to the dashboard
     } catch (error: any) {
       console.error('Signup error:', error);
       toast({
@@ -66,7 +69,7 @@ export default function SignupPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="mx-auto max-w-sm">
+      <Card className="mx-auto max-w-sm bg-glass">
         <CardHeader>
           <CardTitle className="text-xl">Sign Up</CardTitle>
           <CardDescription>Enter your information to create an account</CardDescription>

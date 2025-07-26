@@ -63,14 +63,14 @@ export default function SupplierListPage() {
     const [suppliers, loading, error] = useCollectionData(q, { idField: 'id' });
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 space-y-6">
+    <main className="p-4 md:p-6 lg:p-8 space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">Browse Suppliers</h2>
        {error && (
          <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Error Loading Suppliers</AlertTitle>
             <AlertDescription>
-                Could not load suppliers. Please ensure your Firestore database is set up correctly and your security rules allow reads on the 'suppliers' collection.
+                 There was a problem fetching suppliers. This is often due to Firestore security rules. Please check the `firestore.rules` file and update your project's rules in the Firebase console.
                 <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
             </AlertDescription>
         </Alert>
@@ -89,6 +89,6 @@ export default function SupplierListPage() {
             </Card>
         )}
       </div>
-    </div>
+    </main>
   );
 }

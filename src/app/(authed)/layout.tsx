@@ -1,7 +1,7 @@
 
 'use client';
 import { ReactNode, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/sidebar';
 import { AppHeader } from '@/components/layout/header';
@@ -11,15 +11,27 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function AuthedLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    // If loading is finished and there's no user, redirect to login.
     if (!loading && !user) {
       router.replace('/login');
+      return;
     }
-  }, [user, loading, router]);
 
-  // While loading, show a loading skeleton.
+    if (!loading && user) {
+        // Redirect logic based on role
+        const isSupplierPath = pathname.startsWith('/supplier-dashboard');
+        const isVendorPath = pathname.startsWith('/dashboard');
+
+        if (user.role === 'supplier' && !isSupplierPath) {
+            router.replace('/supplier-dashboard');
+        } else if (user.role !== 'supplier' && !isVendorPath) {
+            router.replace('/dashboard');
+        }
+    }
+  }, [user, loading, router, pathname]);
+
   if (loading) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-background">
@@ -27,28 +39,25 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
                 <Skeleton className="h-24 w-24 rounded-full mx-auto" />
                 <Skeleton className="h-6 w-48 mx-auto" />
                 <Skeleton className="h-4 w-64 mx-auto" />
-                <p className="text-muted-foreground mt-2">Loading your dashboard...</p>
+                <p className="text-muted-foreground mt-2">Loading your experience...</p>
             </div>
         </div>
     );
   }
 
-  // If loading is finished and there is a user, show the authed layout.
   if (user) {
     return (
       <SidebarProvider>
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-background">
           <AppSidebar />
           <SidebarInset>
             <AppHeader />
-            <main>{children}</main>
+            {children}
           </SidebarInset>
         </div>
       </SidebarProvider>
     );
   }
   
-  // If not loading and no user, this will be handled by the useEffect redirect,
-  // but we can return null to avoid a brief flash of content.
   return null;
 }

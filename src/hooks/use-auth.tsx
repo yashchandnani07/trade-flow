@@ -58,8 +58,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
             // This case might happen if user document creation fails after signup
             // or if the user exists in Auth but not in Firestore.
-            // We can try to create a default document here or sign them out.
-            // For now, we sign them out to maintain a consistent state.
             await signOut(auth);
             setUser(null);
         }
@@ -94,10 +92,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 email: firebaseUser.email,
                 ...userData
             });
+            if (userData.role === 'supplier') {
+              router.push('/supplier-dashboard');
+            } else {
+              router.push('/dashboard');
+            }
         }
     } catch(error) {
-        if (error instanceof FirebaseError && error.code === 'auth/email-already-in-use') {
-            throw new Error('This email address is already registered. Please try logging in instead.');
+        if (error instanceof FirebaseError) {
+          if (error.code === 'auth/email-already-in-use') {
+            throw new Error('This email address is already in use. Please try logging in instead.');
+          }
         }
         throw new Error('An unexpected error occurred during signup.');
     }
@@ -109,7 +114,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const firebaseUser = userCredential.user;
         let userData = await fetchUserDocument(firebaseUser.uid);
 
-        // If user document doesn't exist, create one with default values
         if (!userData) {
             console.warn("User document not found for UID:", firebaseUser.uid, "- Creating a default document.");
             const defaultData = {
@@ -130,6 +134,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             ...userData
         });
         
+        if (userData.role === 'supplier') {
+          router.push('/supplier-dashboard');
+        } else {
+          router.push('/dashboard');
+        }
+        
     } catch (error) {
         console.error("Login Error in AuthProvider:", error);
         if (error instanceof FirebaseError) {
@@ -137,7 +147,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 throw new Error('Invalid email or password.');
             }
         }
-        // Re-throw other errors to be handled by the component
         throw error;
     }
   };
