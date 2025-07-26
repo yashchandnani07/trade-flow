@@ -336,9 +336,9 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
         setBidAmount(prev => Math.max(0, prev + adjustment));
     };
 
-    const onFormSubmit = (e: React.FormEvent, theBid: Bid) => {
+    const onFormSubmit = (e: React.FormEvent, theBid: Bid, amount: number) => {
         e.preventDefault();
-        handleBidSubmit(theBid, bidAmount);
+        handleBidSubmit(theBid, amount);
     }
     
     const onMatchAndAccept = (theBid: Bid) => {
@@ -371,7 +371,7 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
 
                 {isSupplier && !isVendorOwner && bid.status === 'active' && (
                     <Card className="bg-glass p-4">
-                        <form onSubmit={(e) => onFormSubmit(e, bid)}>
+                        <form onSubmit={(e) => onFormSubmit(e, bid, bidAmount)}>
                             <Label className="text-sm font-semibold mb-2 block">Your Offer (?)</Label>
                             <div className="flex items-center gap-2 mb-4">
                                 <Button type="button" variant="outline" size="icon" onClick={() => adjustBid(-100)} disabled={isSubmitting}><Minus className="h-4 w-4" /></Button>
