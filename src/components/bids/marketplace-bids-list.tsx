@@ -295,7 +295,11 @@ export function MarketplaceBidsList() {
             <CardContent>
                 <div className="space-y-4">
                     {bids && bids.length > 0 ? (
-                        bids.map(bid => <BidCard key={bid.id} bid={bid as Bid} />)
+                        bids.map(bid => (
+                            <div key={bid.id}>
+                                <BidCard bid={bid as Bid} />
+                            </div>
+                        ))
                     ) : (
                         <div className="text-center py-10 text-muted-foreground">
                             <PackageSearch className="w-12 h-12 mx-auto mb-4" />
