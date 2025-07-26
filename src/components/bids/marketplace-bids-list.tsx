@@ -33,8 +33,7 @@ const statusVariantMap = {
 } as const;
 
 
-function ProposalsDialog({ bid }: { bid: Bid }) {
-  const { user } = useAuth();
+function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
   const { toast } = useToast();
   
   const proposalsCollection = useMemo(() => {
@@ -145,11 +144,10 @@ function ProposalsDialog({ bid }: { bid: Bid }) {
   );
 }
 
-function PlaceBidDialog({ bid, onBidPlaced, children }: { bid: Bid; onBidPlaced: () => void, children: React.ReactNode }) {
+function PlaceBidDialog({ bid, user, children, onBidPlaced }: { bid: Bid; user: any; children: React.ReactNode, onBidPlaced: () => void }) {
     const [bidAmount, setBidAmount] = useState<number | ''>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
-    const { user } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
 
     const handleBidSubmit = async (e: React.FormEvent) => {
@@ -234,50 +232,9 @@ function PlaceBidDialog({ bid, onBidPlaced, children }: { bid: Bid; onBidPlaced:
     );
 }
 
-function BidCard({ bid }: { bid: Bid }) {
-    const { user } = useAuth();
-    
-    const createdAt = bid.createdAt instanceof Timestamp 
-        ? formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true }) 
-        : 'just now';
-
-    const isSupplier = user?.role === 'supplier';
-    const isVendorOwner = user?.uid === bid.vendorId;
-
-    return (
-        <Dialog>
-            <Card className="p-4 rounded-lg bg-glass flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                <div>
-                    <h3 className="font-semibold text-lg">{bid.item}</h3>
-                    <p className="text-sm text-muted-foreground">
-                        {bid.quantity} kg | Target Price: ₹{bid.targetPrice.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        Posted by {bid.vendorName} • {createdAt}
-                    </p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize">{bid.status}</Badge>
-                    
-                    {(isVendorOwner || user?.role === 'supplier') && (
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">View Proposals</Button>
-                        </DialogTrigger>
-                    )}
-
-                    {isSupplier && bid.status === 'active' && (
-                        <PlaceBidDialog bid={bid} onBidPlaced={() => {}}>
-                            <Button size="sm">Place Bid</Button>
-                        </PlaceBidDialog>
-                    )}
-                </div>
-            </Card>
-            <ProposalsDialog bid={bid} />
-        </Dialog>
-    )
-}
 
 export function MarketplaceBidsList() {
+    const { user } = useAuth();
     const bidsCollection = useMemo(() => collection(db, 'bids'), []);
     const bidsQuery = useMemo(() => {
         return query(bidsCollection, where("status", "==", "active"), orderBy("createdAt", "desc"));
@@ -316,11 +273,46 @@ export function MarketplaceBidsList() {
             <CardContent>
                 <div className="space-y-4">
                     {bids && bids.length > 0 ? (
-                        bids.map(bid => (
-                           <div key={bid.id}>
-                                <BidCard bid={bid as Bid} />
-                           </div>
-                        ))
+                        bids.map(bidData => {
+                            const bid = bidData as Bid;
+                            const createdAt = bid.createdAt instanceof Timestamp 
+                                ? formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true }) 
+                                : 'just now';
+                            const isSupplier = user?.role === 'supplier';
+                            const isVendorOwner = user?.uid === bid.vendorId;
+
+                            return (
+                                <Dialog key={bid.id}>
+                                    <Card className="p-4 rounded-lg bg-background/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                        <div>
+                                            <h3 className="font-semibold text-lg">{bid.item}</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                {bid.quantity} kg | Target Price: ₹{bid.targetPrice.toLocaleString()}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                Posted by {bid.vendorName} • {createdAt}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize">{bid.status}</Badge>
+                                            
+                                            {(isVendorOwner || user?.role === 'supplier') && (
+                                                <DialogTrigger asChild>
+                                                    <Button variant="outline" size="sm">View Proposals</Button>
+                                                </DialogTrigger>
+                                            )}
+
+                                            {isSupplier && bid.status === 'active' && (
+                                                <PlaceBidDialog bid={bid} user={user} onBidPlaced={() => {}}>
+                                                    <Button size="sm">Place Bid</Button>
+                                                </PlaceBidDialog>
+                                            )}
+                                        </div>
+                                    </Card>
+                                    <ProposalsDialog bid={bid} user={user} />
+                                </Dialog>
+                            );
+                        })
                     ) : (
                         <div className="text-center py-10 text-muted-foreground">
                             <PackageSearch className="w-12 h-12 mx-auto mb-4" />
