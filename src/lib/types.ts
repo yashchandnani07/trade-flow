@@ -50,7 +50,7 @@ export type Role = 'vendor' | 'supplier' | 'farmer';
 
 export interface User {
   uid: string;
-  email: string | null;
+  phoneNumber: string | null;
   role: Role;
   businessName: string;
   fssaiStatus: 'pending' | 'verified';

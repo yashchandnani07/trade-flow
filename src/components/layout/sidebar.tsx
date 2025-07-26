@@ -138,11 +138,11 @@ export function AppSidebar() {
         <div className="border-t border-sidebar-border -mx-2 my-2" />
         <div className="flex items-center gap-3 p-2 rounded-lg">
           <Avatar>
-            <AvatarImage src={`https://placehold.co/40x40?text=${user?.email?.[0].toUpperCase()}`} alt="User" />
-            <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
+            <AvatarImage src={`https://placehold.co/40x40?text=${user?.businessName?.[0].toUpperCase()}`} data-ai-hint="person portrait" alt="User" />
+            <AvatarFallback>{user?.businessName?.[0].toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
-            <p className="font-semibold text-sm truncate">{user?.businessName || user?.email}</p>
+            <p className="font-semibold text-sm truncate">{user?.businessName || user?.phoneNumber}</p>
             <p className="text-xs text-muted-foreground truncate">
               {user?.role}
             </p>

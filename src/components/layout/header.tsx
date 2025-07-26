@@ -70,8 +70,8 @@ export function AppHeader() {
             className="overflow-hidden rounded-full"
           >
             <Avatar>
-              <AvatarImage src={`https://placehold.co/40x40?text=${user?.email?.[0].toUpperCase()}`} alt="User Avatar" />
-              <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
+              <AvatarImage src={`https://placehold.co/40x40?text=${user?.businessName?.[0].toUpperCase()}`} data-ai-hint="person portrait" alt="User Avatar" />
+              <AvatarFallback>{user?.businessName?.[0].toUpperCase()}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
