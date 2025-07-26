@@ -45,6 +45,7 @@ const statusVariantMap = {
 } as const;
 
 function ProposalsDialog({ bid }: { bid: Bid }) {
+  const { user } = useAuth();
   const { toast } = useToast();
   const proposalsCollection = useMemo(() => collection(db, 'bids', bid.id, 'proposals'), [bid.id]);
   const proposalsQuery = useMemo(() => query(proposalsCollection, orderBy("createdAt", "asc")), [proposalsCollection]);
@@ -73,7 +74,6 @@ function ProposalsDialog({ bid }: { bid: Bid }) {
             });
         }
         
-
         await batch.commit();
 
         toast({
@@ -92,6 +92,9 @@ function ProposalsDialog({ bid }: { bid: Bid }) {
         setIsAccepting(null);
     }
   }
+
+  // A vendor can only accept proposals for their own bids
+  const isBidOwner = user?.uid === bid.vendorId;
 
   return (
     <DialogContent className="sm:max-w-2xl bg-glass">
@@ -113,7 +116,7 @@ function ProposalsDialog({ bid }: { bid: Bid }) {
                   <p className="font-semibold">{proposal.supplierName}</p>
                   <p className="text-2xl font-bold text-primary">₹{proposal.bidAmount.toLocaleString()}</p>
                 </div>
-                {bid.status === 'active' ? (
+                {isBidOwner && bid.status === 'active' ? (
                    <Button size="sm" onClick={() => handleAcceptProposal(proposal)} disabled={isAccepting !== null}>
                        {isAccepting === proposal.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Handshake className="mr-2 h-4 w-4" />}
                        Accept Bid
@@ -141,24 +144,22 @@ function ProposalsDialog({ bid }: { bid: Bid }) {
 }
 
 
-function MyBidsList() {
+function MarketplaceBidsList() {
     const { user } = useAuth();
     
     const bidsCollection = useMemo(() => collection(db, 'bids'), []);
+    // Query for all active bids, ordered by creation date
     const bidsQuery = useMemo(() => {
-        if (!user) return null;
-        return query(bidsCollection, where("vendorId", "==", user.uid), orderBy("createdAt", "desc"));
-    }, [bidsCollection, user]);
+        return query(bidsCollection, where("status", "==", "active"), orderBy("createdAt", "desc"));
+    }, [bidsCollection]);
 
     const [bids, loading, error] = useCollectionData(bidsQuery, { idField: 'id' });
-
-    if (!user) return null;
 
     if (loading) {
         return (
             <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <p className="ml-2">Loading your bids...</p>
+                <p className="ml-2">Loading marketplace requirements...</p>
             </div>
         );
     }
@@ -169,7 +170,7 @@ function MyBidsList() {
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Error Loading Bids</AlertTitle>
                 <AlertDescription>
-                    Could not load your bids. Please try again later.
+                    Could not load bids. Please try again later.
                     <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
                 </AlertDescription>
             </Alert>
@@ -179,8 +180,8 @@ function MyBidsList() {
     return (
         <Card className="bg-glass mt-8">
             <CardHeader>
-                <CardTitle>My Posted Requirements</CardTitle>
-                <CardDescription>Track the status of your active and past bids.</CardDescription>
+                <CardTitle>Active Marketplace Requirements</CardTitle>
+                <CardDescription>Browse active requirements from all vendors and manage your proposals.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
@@ -198,7 +199,9 @@ function MyBidsList() {
                                             <p className="text-sm text-muted-foreground">
                                                 {typedBid.quantity} kg | Target Price: ₹{typedBid.targetPrice.toLocaleString()}
                                             </p>
-                                            <p className="text-xs text-muted-foreground mt-1">{createdAt}</p>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                Posted by {typedBid.vendorName} • {createdAt}
+                                            </p>
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <Badge variant={statusVariantMap[typedBid.status] || 'outline'} className="capitalize">{typedBid.status}</Badge>
@@ -214,8 +217,8 @@ function MyBidsList() {
                     ) : (
                         <div className="text-center py-10 text-muted-foreground">
                             <PackageSearch className="w-12 h-12 mx-auto mb-4" />
-                            <p>You haven't posted any requirements yet.</p>
-                            <p className="text-sm">Use the form above to get started.</p>
+                            <p>There are no active requirements in the marketplace right now.</p>
+                            <p className="text-sm">Use the form above to post a new one.</p>
                         </div>
                     )}
                 </div>
@@ -325,7 +328,7 @@ export default function BiddingPage() {
         </CardContent>
       </Card>
       
-      <MyBidsList />
+      <MarketplaceBidsList />
 
     </div>
   );
