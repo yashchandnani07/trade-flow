@@ -278,21 +278,26 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
   );
 }
 
-function PlaceBidDialog({ bid, user, open, onOpenChange }: { bid: Bid | null; user: any; open: boolean; onOpenChange: (open: boolean) => void; }) {
-    const [bidAmount, setBidAmount] = useState(0);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
     const { toast } = useToast();
+    const [bidAmount, setBidAmount] = useState(bid.targetPrice);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    React.useEffect(() => {
-        if (bid) {
-            setBidAmount(bid.targetPrice);
-        }
-    }, [bid]);
+    const createdAt = bid.createdAt instanceof Timestamp 
+        ? formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true }) 
+        : 'just now';
 
-    const handleBidSubmit = async (e: FormEvent) => {
+    const isSupplier = user?.role === 'supplier';
+    const isVendorOwner = user?.uid === bid.vendorId;
+
+    const handleBidSubmit = async (e: FormEvent, amount: number) => {
         e.preventDefault();
 
-        if (!user || !bid) {
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Not Authenticated', description: 'You must be logged in to place a bid.' });
+            return;
+        }
+        if (!bid || !bid.id) {
             toast({ variant: 'destructive', title: 'Error', description: 'Cannot place bid. Bid information is missing.' });
             return;
         }
@@ -305,16 +310,15 @@ function PlaceBidDialog({ bid, user, open, onOpenChange }: { bid: Bid | null; us
             await addDoc(proposalsCollection, {
                 supplierId: user.uid,
                 supplierName: businessName,
-                bidAmount: Number(bidAmount),
+                bidAmount: Number(amount),
                 createdAt: serverTimestamp(),
                 status: 'pending',
             });
 
             toast({
                 title: 'Bid Placed Successfully!',
-                description: `Your bid of ?${bidAmount} for ${bid.item} has been submitted.`,
+                description: `Your bid of ?${amount} for ${bid.item} has been submitted.`,
             });
-            onOpenChange(false);
         } catch (error) {
             console.error('Error placing bid:', error);
             toast({ variant: 'destructive', title: 'Failed to Place Bid', description: 'There was an error submitting your bid.' });
@@ -325,63 +329,69 @@ function PlaceBidDialog({ bid, user, open, onOpenChange }: { bid: Bid | null; us
     
     const adjustBid = (adjustment: number) => {
         setBidAmount(prev => Math.max(0, prev + adjustment));
-    }
-
-    const handleMatchAndAccept = () => {
-      if (bid) {
-          setBidAmount(bid.targetPrice);
-          // Directly submit the form
-          const form = document.getElementById(`bid-form-${bid.id}`);
-          if (form) {
-            form.requestSubmit();
-          }
-      }
     };
 
-    if (!bid) return null;
+    const handleMatchAndAccept = (e: React.MouseEvent<HTMLButtonElement>) => {
+        setBidAmount(bid.targetPrice);
+        handleBidSubmit(e, bid.targetPrice);
+    };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md bg-glass">
-                 <DialogHeader>
-                    <DialogTitle>Place a Bid for {bid?.item}</DialogTitle>
-                    <DialogDescription>
-                        The vendor's target price is ?{bid?.targetPrice.toLocaleString()}. You can match it or submit your own offer.
-                    </DialogDescription>
-                </DialogHeader>
-                <form id={`bid-form-${bid.id}`} onSubmit={handleBidSubmit}>
-                    <div className="py-4 space-y-4">
-                        <Label className="text-sm font-semibold mb-2 block">Your Offer</Label>
-                        <div className="flex items-center gap-2">
-                            <Button type="button" variant="outline" size="icon" onClick={() => adjustBid(-10)} disabled={isSubmitting}><Minus className="h-4 w-4" /></Button>
-                            <Input
-                                type="number"
-                                value={bidAmount}
-                                onChange={(e) => setBidAmount(Number(e.target.value))}
-                                className="text-center font-bold text-lg"
-                                disabled={isSubmitting}
-                            />
-                            <Button type="button" variant="outline" size="icon" onClick={() => adjustBid(10)} disabled={isSubmitting}><Plus className="h-4 w-4" /></Button>
-                        </div>
-                    </div>
-                     <DialogFooter className="gap-2 sm:gap-0">
-                        <Button type="button" onClick={handleMatchAndAccept} className="flex-1" variant="outline" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="animate-spin" /> : <><Handshake className="mr-2 h-4 w-4" /> Match & Accept</>}
-                        </Button>
-                        <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="animate-spin" /> : "Submit Offer"}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-    )
-}
+        <Card className="p-6 rounded-xl bg-background/50 flex flex-col justify-between gap-6 border-2">
+            <div>
+                <div className="flex flex-wrap items-center gap-4 mb-2">
+                    <h3 className="font-semibold text-2xl">{bid.item}</h3>
+                    <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize text-sm h-7">{bid.status}</Badge>
+                </div>
+                <p className="text-lg text-muted-foreground">
+                    {bid.quantity} kg | Target Price: ?{bid.targetPrice.toLocaleString()}
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                    Posted by {bid.vendorName} ? {createdAt}
+                </p>
+            </div>
+            <div className="flex flex-col gap-4">
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" size="lg" className="w-full">View Proposals</Button>
+                    </DialogTrigger>
+                    <ProposalsDialog bid={bid} user={user} />
+                </Dialog>
+
+                {isSupplier && !isVendorOwner && bid.status === 'active' && (
+                    <Card className="bg-glass p-4">
+                        <form onSubmit={(e) => handleBidSubmit(e, bidAmount)}>
+                            <Label className="text-sm font-semibold mb-2 block">Your Offer (?)</Label>
+                            <div className="flex items-center gap-2 mb-4">
+                                <Button type="button" variant="outline" size="icon" onClick={() => adjustBid(-100)} disabled={isSubmitting}><Minus className="h-4 w-4" /></Button>
+                                <Input
+                                    type="number"
+                                    value={bidAmount}
+                                    onChange={(e) => setBidAmount(Number(e.target.value))}
+                                    className="text-center font-bold text-lg"
+                                    disabled={isSubmitting}
+                                />
+                                <Button type="button" variant="outline" size="icon" onClick={() => adjustBid(100)} disabled={isSubmitting}><Plus className="h-4 w-4" /></Button>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                                    {isSubmitting ? <Loader2 className="animate-spin" /> : "Submit Offer"}
+                                </Button>
+                                <Button type="button" onClick={handleMatchAndAccept} className="flex-1" variant="outline" disabled={isSubmitting}>
+                                    {isSubmitting ? <Loader2 className="animate-spin" /> : <><Handshake className="mr-2 h-4 w-4" /> Match & Accept</>}
+                                </Button>
+                            </div>
+                        </form>
+                    </Card>
+                )}
+            </div>
+        </Card>
+    );
+};
+
 
 export function MarketplaceBidsList() {
     const { user } = useAuth();
-    const [selectedBid, setSelectedBid] = useState<Bid | null>(null);
-    const [isPlaceBidOpen, setIsPlaceBidOpen] = useState(false);
     
     const bidsCollection = useMemo(() => collection(db, 'bids'), []);
     const bidsQuery = useMemo(() => {
@@ -389,11 +399,6 @@ export function MarketplaceBidsList() {
     }, [bidsCollection]);
 
     const [bids, loading, error] = useCollectionData(bidsQuery, { idField: 'id' });
-
-    const handlePlaceBidClick = (bid: Bid) => {
-        setSelectedBid(bid);
-        setIsPlaceBidOpen(true);
-    }
 
     if (loading) {
         return (
@@ -418,75 +423,25 @@ export function MarketplaceBidsList() {
     }
 
     return (
-        <>
-            <Card className="bg-glass mt-8 border-0 shadow-none">
-                <CardHeader className="px-0">
-                    <CardTitle className="text-3xl">Active Marketplace Requirements</CardTitle>
-                    <CardDescription className="text-base">Browse active requirements from all vendors and place your bids.</CardDescription>
-                </CardHeader>
-                <CardContent className="px-0">
-                    <div className="space-y-6">
-                        {bids && bids.length > 0 ? (
-                            bids.map(bidData => {
-                                const bid = bidData as Bid;
-                                const createdAt = bid.createdAt instanceof Timestamp 
-                                    ? formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true }) 
-                                    : 'just now';
-                                const isSupplier = user?.role === 'supplier';
-                                const isVendorOwner = user?.uid === bid.vendorId;
-
-                                return (
-                                    <Card key={bid.id} className="p-6 rounded-xl bg-background/50 flex flex-col justify-between gap-4 border-2">
-                                       <div>
-                                            <div className="flex flex-wrap items-center gap-4 mb-2">
-                                                <h3 className="font-semibold text-2xl">{bid.item}</h3>
-                                                <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize text-sm h-7">{bid.status}</Badge>
-                                            </div>
-                                            <p className="text-lg text-muted-foreground">
-                                                {bid.quantity} kg | Target Price: ?{bid.targetPrice.toLocaleString()}
-                                            </p>
-                                            <p className="text-sm text-muted-foreground mt-2">
-                                                Posted by {bid.vendorName} ? {createdAt}
-                                            </p>
-                                        </div>
-                                        <div className="flex flex-col sm:flex-row items-center gap-4">
-                                            
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <Button variant="outline" size="lg" className="w-full sm:w-auto">View Proposals</Button>
-                                                </DialogTrigger>
-                                                <ProposalsDialog bid={bid} user={user} />
-                                            </Dialog>
-
-                                            {isSupplier && !isVendorOwner && bid.status === 'active' && (
-                                                <Button size="lg" className="w-full sm:w-auto" onClick={() => handlePlaceBidClick(bid)}>
-                                                    Place Bid
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </Card>
-                                );
-                            })
-                        ) : (
-                            <div className="text-center py-16 text-muted-foreground bg-background/30 rounded-lg">
-                                <PackageSearch className="w-20 h-20 mx-auto mb-6" />
-                                <p className="text-xl">There are no active requirements in the marketplace right now.</p>
-                            </div>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
-            <PlaceBidDialog 
-                bid={selectedBid} 
-                user={user} 
-                open={isPlaceBidOpen} 
-                onOpenChange={(isOpen) => {
-                    if (!isOpen) {
-                        setSelectedBid(null);
-                    }
-                    setIsPlaceBidOpen(isOpen);
-                }} 
-            />
-        </>
+        <Card className="bg-glass mt-8 border-0 shadow-none">
+            <CardHeader className="px-0">
+                <CardTitle className="text-3xl">Active Marketplace Requirements</CardTitle>
+                <CardDescription className="text-base">Browse active requirements from all vendors and place your bids.</CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+                <div className="space-y-6">
+                    {bids && bids.length > 0 ? (
+                        bids.map(bidData => (
+                            <BidCard key={bidData.id} bid={bidData as Bid} user={user} />
+                        ))
+                    ) : (
+                        <div className="text-center py-16 text-muted-foreground bg-background/30 rounded-lg">
+                            <PackageSearch className="w-20 h-20 mx-auto mb-6" />
+                            <p className="text-xl">There are no active requirements in the marketplace right now.</p>
+                        </div>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
     )
 }
