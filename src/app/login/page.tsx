@@ -19,7 +19,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.push('/dashboard');
+      router.replace('/dashboard');
     }
   }, [user, loading, router]);
 
@@ -28,7 +28,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast({ title: 'Login successful!' });
-      router.push('/dashboard');
+      // The redirect is now handled by the useEffect hook when the user state updates.
     } catch (error: any) {
       console.error('Login error:', error);
       toast({

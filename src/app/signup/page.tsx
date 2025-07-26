@@ -10,7 +10,6 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
-import { FirebaseError } from 'firebase/app';
 
 type Role = 'vendor' | 'supplier' | 'farmer';
 
@@ -33,7 +32,7 @@ export default function SignupPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.push('/dashboard');
+      router.replace('/dashboard');
     }
   }, [user, loading, router]);
 
@@ -54,20 +53,13 @@ export default function SignupPage() {
         businessName,
       });
       toast({ title: 'Signup successful!' });
-      // The useEffect above will handle the redirect to dashboard
+      // The useEffect hook will handle redirecting to the dashboard
     } catch (error: any) {
       console.error('Signup error:', error);
-      let description = 'An unexpected error occurred.';
-      // Specifically handle the email-already-in-use error
-      if (error instanceof FirebaseError && error.code === 'auth/email-already-in-use') {
-        description = 'This email address is already registered. Please try logging in instead.';
-      } else if (error.message) {
-        description = error.message;
-      }
       toast({
         variant: 'destructive',
         title: 'Signup Failed',
-        description: description,
+        description: error.message || 'An unexpected error occurred.',
       });
     }
   };

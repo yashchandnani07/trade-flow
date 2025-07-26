@@ -19,8 +19,8 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
     }
   }, [user, loading, router]);
 
-  // While loading, or if there's no user yet, show a loading skeleton.
-  if (loading || !user) {
+  // While loading, show a loading skeleton.
+  if (loading) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-background">
             <div className="space-y-4 text-center">
@@ -34,15 +34,21 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
   }
 
   // If loading is finished and there is a user, show the authed layout.
-  return (
-    <SidebarProvider>
-      <div className="min-h-screen">
-        <AppSidebar />
-        <SidebarInset>
-          <AppHeader />
-          <main>{children}</main>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
-  );
+  if (user) {
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen">
+          <AppSidebar />
+          <SidebarInset>
+            <AppHeader />
+            <main>{children}</main>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
+    );
+  }
+  
+  // If not loading and no user, this will be handled by the useEffect redirect,
+  // but we can return null to avoid a brief flash of content.
+  return null;
 }
