@@ -226,35 +226,35 @@ function BidCard({ bid }: { bid: Bid }) {
     const isVendorOwner = user?.uid === bid.vendorId;
 
     return (
-        <Card className="p-4 rounded-lg bg-glass flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-            <div>
-                <h3 className="font-semibold text-lg">{bid.item}</h3>
-                <p className="text-sm text-muted-foreground">
-                    {bid.quantity} kg | Target Price: ₹{bid.targetPrice.toLocaleString()}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                    Posted by {bid.vendorName} • {createdAt}
-                </p>
-            </div>
-            <div className="flex items-center gap-2">
-                <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize">{bid.status}</Badge>
-                
-                {(isVendorOwner || user?.role === 'supplier') && (
-                    <Dialog>
+        <Dialog>
+            <Card className="p-4 rounded-lg bg-glass flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <div>
+                    <h3 className="font-semibold text-lg">{bid.item}</h3>
+                    <p className="text-sm text-muted-foreground">
+                        {bid.quantity} kg | Target Price: ₹{bid.targetPrice.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        Posted by {bid.vendorName} • {createdAt}
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize">{bid.status}</Badge>
+                    
+                    {(isVendorOwner || user?.role === 'supplier') && (
                         <DialogTrigger asChild>
                             <Button variant="outline" size="sm">View Proposals</Button>
                         </DialogTrigger>
-                        <ProposalsDialog bid={bid} />
-                    </Dialog>
-                )}
+                    )}
 
-                {isSupplier && bid.status === 'active' && (
+                    {isSupplier && bid.status === 'active' && (
                         <PlaceBidDialog bid={bid} onBidPlaced={() => {}}>
                             <Button size="sm">Place Bid</Button>
                         </PlaceBidDialog>
-                )}
-            </div>
-        </Card>
+                    )}
+                </div>
+            </Card>
+            <ProposalsDialog bid={bid} />
+        </Dialog>
     )
 }
 
