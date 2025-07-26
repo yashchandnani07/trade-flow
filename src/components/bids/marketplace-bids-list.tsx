@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
-const statusVariantMap = {
+const statusVariantMap: Record<Bid['status'], 'success' | 'outline' | 'default'> = {
     active: "success",
     closed: "outline",
     awarded: "default"
@@ -278,7 +278,7 @@ function ProposalsDialog({ bid, user }: { bid: Bid, user: any }) {
   );
 }
 
-function PlaceBidDialog({ bid, user, open, onOpenChange }: { bid: Bid; user: any; open: boolean; onOpenChange: (open: boolean) => void; }) {
+function PlaceBidDialog({ bid, user, open, onOpenChange }: { bid: Bid | null; user: any; open: boolean; onOpenChange: (open: boolean) => void; }) {
     const [bidAmount, setBidAmount] = useState(bid?.targetPrice || 0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
@@ -330,15 +330,14 @@ function PlaceBidDialog({ bid, user, open, onOpenChange }: { bid: Bid; user: any
     const handleMatchAndAccept = () => {
       if (bid) {
           setBidAmount(bid.targetPrice);
-          // Manually trigger submission by creating a synthetic event
-          const syntheticEvent = new Event('submit', { bubbles: true, cancelable: true });
           const form = document.getElementById(`bid-form-${bid.id}`);
           if (form) {
-            handleBidSubmit(syntheticEvent as any);
+            form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
           }
       }
     };
 
+    if (!bid) return null;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -381,6 +380,7 @@ function PlaceBidDialog({ bid, user, open, onOpenChange }: { bid: Bid; user: any
 export function MarketplaceBidsList() {
     const { user } = useAuth();
     const [selectedBid, setSelectedBid] = useState<Bid | null>(null);
+    const [isPlaceBidOpen, setIsPlaceBidOpen] = useState(false);
     
     const bidsCollection = useMemo(() => collection(db, 'bids'), []);
     const bidsQuery = useMemo(() => {
@@ -391,6 +391,7 @@ export function MarketplaceBidsList() {
 
     const handlePlaceBidClick = (bid: Bid) => {
         setSelectedBid(bid);
+        setIsPlaceBidOpen(true);
     }
 
     if (loading) {
@@ -474,18 +475,17 @@ export function MarketplaceBidsList() {
                     </div>
                 </CardContent>
             </Card>
-            {selectedBid && user && (
-              <PlaceBidDialog 
-                  bid={selectedBid} 
-                  user={user} 
-                  open={selectedBid !== null} 
-                  onOpenChange={(isOpen) => {
-                      if (!isOpen) {
-                          setSelectedBid(null);
-                      }
-                  }} 
-              />
-            )}
+            <PlaceBidDialog 
+                bid={selectedBid} 
+                user={user} 
+                open={isPlaceBidOpen} 
+                onOpenChange={(isOpen) => {
+                    if (!isOpen) {
+                        setSelectedBid(null);
+                    }
+                    setIsPlaceBidOpen(isOpen);
+                }} 
+            />
         </>
     )
 }
