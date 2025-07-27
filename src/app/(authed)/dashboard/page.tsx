@@ -1,6 +1,5 @@
 
 'use client';
-import { OrderHistory } from "@/components/dashboard/order-history";
 import { OverviewCards } from "@/components/dashboard/overview-cards";
 import { SupplierReviews } from "@/components/dashboard/supplier-reviews";
 import { Button } from "@/components/ui/button";
@@ -57,9 +56,9 @@ export default function DashboardPage() {
             <AlertsSection />
         </section>
 
-        <div className="grid gap-8 lg:grid-cols-5" id="history">
+        <div className="grid gap-8 lg:grid-cols-5">
             <div className="lg:col-span-3">
-                <OrderHistory />
+                 <SupplierReviews />
             </div>
             <div className="lg:col-span-2" id="reviews">
                 <SupplierReviews />

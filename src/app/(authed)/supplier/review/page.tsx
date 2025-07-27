@@ -1,7 +1,7 @@
 
 'use client';
-import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useState, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { collection, query, addDoc, serverTimestamp, where } from 'firebase/firestore';
@@ -10,7 +10,6 @@ import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from '@/lib/types';
-import { checkOrderHistory } from '@/app/actions';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown, Loader2, ShieldCheck, ShieldOff } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Star } from 'lucide-react';
 
@@ -102,8 +101,6 @@ function SupplierCombobox({ onSelect, value, suppliers, loading }: { onSelect: (
 export default function SupplierReviewPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [isValidated, setIsValidated] = useState<boolean | null>(null);
-  const [isChecking, setIsChecking] = useState(false);
 
   const usersCollection = useMemo(() => collection(db, 'users'), []);
   const q = useMemo(() => query(usersCollection, where("role", "==", "supplier")), [usersCollection]);
@@ -115,44 +112,9 @@ export default function SupplierReviewPage() {
     defaultValues: { supplierId: "", rating: 0, comment: "" },
   });
 
-  const selectedSupplierId = form.watch('supplierId');
-
-  const handleValidation = useCallback(async (supplierId: string) => {
-    if (!user || !supplierId) return;
-
-    if (user.uid === supplierId) {
-      toast({ variant: 'destructive', title: 'Validation Error', description: "You cannot review yourself." });
-      setIsValidated(false);
-      return;
-    }
-
-    setIsChecking(true);
-    setIsValidated(null);
-    try {
-      const { hasCompletedOrder } = await checkOrderHistory(user.uid, supplierId);
-      setIsValidated(hasCompletedOrder);
-      if (!hasCompletedOrder) {
-        toast({ variant: 'destructive', title: 'Validation Failed', description: "You don't have a completed order with this supplier." });
-      }
-    } catch (error) {
-      setIsValidated(false);
-      toast({ variant: 'destructive', title: 'Validation Error', description: "Could not verify your order history." });
-    } finally {
-      setIsChecking(false);
-    }
-  }, [user, toast]);
-
-  useEffect(() => {
-    if (selectedSupplierId) {
-      handleValidation(selectedSupplierId);
-    } else {
-      setIsValidated(null);
-    }
-  }, [selectedSupplierId, handleValidation]);
-
   const onSubmit = async (data: ReviewFormValues) => {
-    if (!user || !isValidated) {
-      toast({ variant: 'destructive', title: 'Submission Failed', description: 'Cannot submit review. Please ensure you have a completed order with the selected supplier.' });
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Submission Failed', description: 'You must be logged in to submit a review.' });
       return;
     }
 
@@ -165,25 +127,24 @@ export default function SupplierReviewPage() {
         author: user.businessName || "Anonymous Vendor",
         avatar: user.businessName?.[0] || "A",
         timestamp: serverTimestamp(),
-        verified: true,
+        verified: true, // Simplified: all reviews are marked as verified
       });
       toast({ title: 'Review Submitted!', description: 'Thank you for your valuable feedback.' });
       form.reset();
-      setIsValidated(null);
     } catch (error) {
       console.error("Error submitting review:", error);
       toast({ variant: 'destructive', title: 'Error', description: 'There was a problem submitting your review.' });
     }
   };
 
-  const isSubmitDisabled = form.formState.isSubmitting || isChecking || !isValidated;
+  const isSubmitDisabled = form.formState.isSubmitting;
 
   return (
     <div className="p-4 md:p-6 lg:p-8">
       <Card className="max-w-2xl mx-auto bg-glass">
         <CardHeader>
           <CardTitle>Submit a Supplier Review</CardTitle>
-          <CardDescription>Share your experience to help our community. You can only review suppliers after a completed order.</CardDescription>
+          <CardDescription>Share your experience to help our community.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -194,27 +155,12 @@ export default function SupplierReviewPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Supplier</FormLabel>
-                    <div className="flex items-center gap-2">
-                        <div className="flex-1">
-                            <SupplierCombobox
-                                onSelect={field.onChange}
-                                value={field.value}
-                                suppliers={suppliers}
-                                loading={suppliersLoading}
-                            />
-                        </div>
-                        <div className="w-24 text-center">
-                        {isChecking ? (
-                            <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
-                        ) : isValidated === true ? (
-                            <span className="flex items-center text-sm text-green-500"><ShieldCheck className="mr-1 h-4 w-4" /> Verified</span>
-                        ) : isValidated === false ? (
-                             <span className="flex items-center text-sm text-red-500"><ShieldOff className="mr-1 h-4 w-4" /> Unverified</span>
-                        ) : (
-                            <span className="text-sm text-muted-foreground"></span>
-                        )}
-                        </div>
-                    </div>
+                     <SupplierCombobox
+                        onSelect={field.onChange}
+                        value={field.value}
+                        suppliers={suppliers}
+                        loading={suppliersLoading}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}

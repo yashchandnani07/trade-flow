@@ -108,26 +108,3 @@ export async function seedDatabase() {
     return { success: false, message: `Error seeding database: ${errorMessage}` };
   }
 }
-
-
-export async function checkOrderHistory(vendorId: string, supplierId: string): Promise<{ hasCompletedOrder: boolean }> {
-  try {
-    const ordersRef = collection(db, 'orders');
-    const q = query(
-      ordersRef,
-      where('vendorId', '==', vendorId),
-      where('supplierId', '==', supplierId),
-      where('status', '==', 'Received'),
-      limit(1)
-    );
-    
-    const querySnapshot = await getDocs(q);
-    
-    return { hasCompletedOrder: !querySnapshot.empty };
-
-  } catch (error) {
-    console.error("Error checking order history:", error);
-    // In case of error, default to false to be safe.
-    return { hasCompletedOrder: false };
-  }
-}
