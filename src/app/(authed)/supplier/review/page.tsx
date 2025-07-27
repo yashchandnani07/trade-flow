@@ -140,7 +140,6 @@ export default function SupplierReviewPage() {
   const isSubmitDisabled = form.formState.isSubmitting;
 
   return (
-    <div className="p-4 md:p-6 lg:p-8">
       <Card className="max-w-2xl mx-auto bg-glass">
         <CardHeader>
           <CardTitle>Submit a Supplier Review</CardTitle>
@@ -206,6 +205,5 @@ export default function SupplierReviewPage() {
           </Form>
         </CardContent>
       </Card>
-    </div>
   );
 }

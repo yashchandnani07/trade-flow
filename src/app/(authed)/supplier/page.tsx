@@ -6,7 +6,6 @@ import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Star, Mail, Phone, MapPin, ShieldCheck } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { type User } from '@/lib/types';
@@ -15,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import SupplierReviewPage from './review/page';
 
 function StarRating({ rating, className }: { rating: number; className?: string }) {
   return (
@@ -87,9 +87,6 @@ export default function SupplierListPage() {
     <div className="p-4 md:p-6 lg:p-8 space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold tracking-tight">Browse Suppliers</h2>
-        <Button asChild>
-            <Link href="/supplier/review">Leave a Review</Link>
-        </Button>
       </div>
        {error && (
          <Alert variant="destructive">
@@ -114,6 +111,10 @@ export default function SupplierListPage() {
                 </CardContent>
             </Card>
         )}
+      </div>
+
+      <div className="mt-8">
+        <SupplierReviewPage />
       </div>
     </div>
   );
