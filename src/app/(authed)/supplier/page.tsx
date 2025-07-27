@@ -112,10 +112,6 @@ export default function SupplierListPage() {
             </Card>
         )}
       </div>
-
-      <div className="mt-8">
-        <SupplierReviewPage />
-      </div>
     </div>
   );
 }
