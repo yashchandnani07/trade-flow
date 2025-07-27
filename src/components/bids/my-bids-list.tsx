@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { List, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Timestamp } from 'firebase/firestore';
 
 
 export function MyBidsList() {
@@ -21,8 +22,8 @@ export function MyBidsList() {
         return proposals
             .filter(p => p.supplierId === user.uid)
             .sort((a, b) => {
-                const dateA = new Date(a.createdAt);
-                const dateB = new Date(b.createdAt);
+                 const dateA = a.createdAt ? (a.createdAt as Timestamp).toDate() : new Date();
+                 const dateB = b.createdAt ? (b.createdAt as Timestamp).toDate() : new Date();
                 return dateB.getTime() - dateA.getTime();
             });
     }, [proposals, user]);
@@ -64,11 +65,13 @@ export function MyBidsList() {
                         ))}
                         
                         {!loading && myProposals.length > 0 ? (
-                            myProposals.map(proposal => (
+                            myProposals.map(proposal => {
+                                const createdAtDate = proposal.createdAt ? (proposal.createdAt as Timestamp).toDate() : new Date();
+                                return (
                                 <TableRow key={proposal.id}>
                                     <TableCell className="font-bold">${proposal.price.toFixed(2)}</TableCell>
                                     <TableCell>
-                                        {format(new Date(proposal.createdAt), 'PPP')}
+                                        {format(createdAtDate, 'PPP')}
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant={proposal.status === 'accepted' ? 'success' : 'secondary'} className="capitalize">
@@ -76,7 +79,8 @@ export function MyBidsList() {
                                         </Badge>
                                     </TableCell>
                                 </TableRow>
-                            ))
+                                )
+                            })
                         ) : (
                             !loading && !error && (
                                 <TableRow>

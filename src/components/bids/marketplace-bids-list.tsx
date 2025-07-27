@@ -16,6 +16,7 @@ import { Gavel, Loader2, Plus, AlertTriangle, CheckCircle, Trash2, Handshake, Me
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
+import { Timestamp } from 'firebase/firestore';
 
 
 function CreateBidDialog() {
@@ -44,7 +45,7 @@ function CreateBidDialog() {
             setIsOpen(false);
             setItem(''); setQuantity(''); setTargetPrice('');
         } catch (error) {
-             toast({ variant: 'destructive', title: 'Error', description: 'Could not post your requirement.' });
+             // Error toast is handled in the hook
         } finally {
             setIsSubmitting(false);
         }
@@ -102,9 +103,9 @@ function ProposalsList({ bidId }: { bidId: string}) {
         setIsAccepting(proposalId);
         try {
             await acceptProposal(bidId, proposalId);
-            toast({ title: 'Proposal Accepted!', description: 'The supplier has been notified.' });
+            toast({ title: 'Proposal Accepted!', description: 'An order has been created.' });
         } catch (error) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not accept proposal.' });
+            // Error toast handled in hook
         } finally {
             setIsAccepting(null);
         }
@@ -190,7 +191,7 @@ function BidCard({ bid }: { bid: Bid }) {
             setPrice('');
             setShowNegotiateForm(false);
         } catch (error) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not submit your offer.' });
+            // Error toast handled in hook
         } finally {
             setIsSubmitting(false);
         }
@@ -215,15 +216,17 @@ function BidCard({ bid }: { bid: Bid }) {
             await deleteBid(bid.id);
             toast({ title: 'Bid Deleted', description: 'Your requirement has been removed from the marketplace.' });
         } catch (error) {
-            console.log(error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the bid.' });
+            // Error toast handled in hook
         } finally {
             setIsDeleting(false);
         }
     };
     
     const showBidActions = user?.role === 'supplier' && bid.status === 'open';
-    const createdAtDate = useMemo(() => new Date(bid.createdAt), [bid.createdAt]);
+    const createdAtDate = useMemo(() => {
+        if (!bid.createdAt) return new Date();
+        return (bid.createdAt as Timestamp).toDate();
+    }, [bid.createdAt]);
 
     return (
         <Card className="flex flex-col bg-glass">

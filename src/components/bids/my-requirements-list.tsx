@@ -13,6 +13,8 @@ import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { Timestamp } from 'firebase/firestore';
 
 
 function AcceptedProposalInfo({ bid }: { bid: Bid }) {
@@ -44,9 +46,9 @@ function ProposalsList({ bidId }: { bidId: string}) {
         setIsAccepting(proposalId);
         try {
             await acceptProposal(bidId, proposalId);
-            toast({ title: 'Proposal Accepted!', description: 'The supplier has been notified.' });
+            toast({ title: 'Proposal Accepted!', description: 'The supplier has been notified and an order has been created.' });
         } catch (error) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not accept proposal.' });
+             toast({ variant: 'destructive', title: 'Error', description: 'Could not accept proposal.' });
         } finally {
             setIsAccepting(null);
         }
@@ -102,7 +104,10 @@ function RequirementCard({ bid }: { bid: Bid }) {
         }
     };
     
-    const createdAtDate = useMemo(() => new Date(bid.createdAt), [bid.createdAt]);
+    const createdAtDate = useMemo(() => {
+        if (!bid.createdAt) return new Date();
+        return (bid.createdAt as Timestamp).toDate()
+    }, [bid.createdAt]);
 
     return (
         <Card className="flex flex-col bg-glass">
@@ -151,8 +156,8 @@ export function MyRequirementsList() {
         return bids
             .filter(b => b.vendorId === user.uid)
             .sort((a, b) => {
-                const dateA = new Date(a.createdAt);
-                const dateB = new Date(b.createdAt);
+                const dateA = a.createdAt ? (a.createdAt as Timestamp).toDate() : new Date();
+                const dateB = b.createdAt ? (b.createdAt as Timestamp).toDate() : new Date();
                 return dateB.getTime() - dateA.getTime();
             });
     }, [bids, user]);
