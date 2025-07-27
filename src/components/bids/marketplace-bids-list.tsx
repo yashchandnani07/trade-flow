@@ -298,12 +298,14 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
     const isVendorOwner = user?.uid === bid.vendorId;
 
     const handleBidSubmit = async (theBid: Bid, amount: number) => {
+        console.log("Submitting bid for:", theBid);
         if (!user) {
             toast({ variant: 'destructive', title: 'Not Authenticated', description: 'You must be logged in to place a bid.' });
             return;
         }
         if (!theBid || !theBid.id) {
             toast({ variant: 'destructive', title: 'Error', description: 'Cannot place bid. Bid information is missing.' });
+            console.error("Bid information is missing. Received:", theBid);
             return;
         }
 
@@ -326,7 +328,7 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
             });
         } catch (error) {
             console.error('Error placing bid:', error);
-            toast({ variant: 'destructive', title: 'Failed to Place Bid', description: 'There was an error submitting your bid.' });
+            toast({ variant: 'destructive', title: 'Failed to Place Bid', description: `There was an error submitting your bid. ${error}` });
         } finally {
             setIsSubmitting(false);
         }
@@ -336,7 +338,7 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
         setBidAmount(prev => Math.max(0, prev + adjustment));
     };
 
-    const onFormSubmit = (e: React.FormEvent, theBid: Bid) => {
+    const onFormSubmit = (e: React.FormEvent<HTMLFormElement>, theBid: Bid) => {
         e.preventDefault();
         handleBidSubmit(theBid, bidAmount);
     }
