@@ -48,12 +48,10 @@ export type Supplier = {
     avatar: string;
 };
 
-
 export type Alert = AiEnhancedAlertOutput & {
   id: string;
   read: boolean;
 };
-
 
 export type Role = 'vendor' | 'supplier' | 'farmer';
 
@@ -63,7 +61,11 @@ export interface User {
   phoneNumber: string | null;
   role: Role;
   businessName: string;
-  fssaiStatus: 'pending' | 'verified';
+  fssaiStatus: 'pending' | 'verified' | 'expired';
+  fssaiLicense?: {
+    number: string;
+    expiryDate: Timestamp;
+  };
   location: GeoPoint | null;
   points: number;
 }
@@ -95,3 +97,11 @@ export type Proposal = {
   };
   finalAmount?: number;
 };
+
+export type StockItem = {
+    id: string;
+    name: string;
+    quantity: number;
+    expiryDate: Timestamp;
+    supplierId: string;
+}

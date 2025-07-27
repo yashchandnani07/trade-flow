@@ -1,12 +1,12 @@
 
 'use client';
-import KeyMetrics from '@/app/(authed)/supplier-dashboard/components/key-metrics';
-import OrderManagement from '@/app/(authed)/supplier-dashboard/components/order-management';
-import FactoryDiary from '@/app/(authed)/supplier-dashboard/components/factory-diary';
-import ComplianceStatus from '@/app/(authed)/supplier-dashboard/components/compliance-status';
+import KeyMetrics from './components/key-metrics';
+import OrderManagement from './components/order-management';
+import ComplianceStatus from './components/compliance-status';
 import { MarketplaceBidsList } from '@/components/bids/marketplace-bids-list';
-import TrustBadges from '@/app/(authed)/supplier-dashboard/components/trust-badges';
+import TrustBadges from './components/trust-badges';
 import { useAuth } from '@/hooks/use-auth';
+import StockBasket from './components/stock-basket';
 
 export default function SupplierDashboardPage() {
     const { user } = useAuth();
@@ -19,16 +19,15 @@ export default function SupplierDashboardPage() {
         <section>
             <KeyMetrics />
         </section>
-        <section>
-            <TrustBadges />
-        </section>
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-                <OrderManagement />
+            <div className="lg:col-span-2 space-y-6">
+                <TrustBadges />
+                <StockBasket />
             </div>
             <div className="space-y-6">
-                <FactoryDiary />
                 <ComplianceStatus />
+                <OrderManagement />
             </div>
         </div>
         <section id="bids">
