@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/use-auth';
 import StockBasket from './components/stock-basket';
 import FactoryDiary from './components/factory-diary';
 import { AlertsSection } from './components/alerts-section';
+import { MyBidsList } from '@/components/bids/my-bids-list';
 
 export default function SupplierDashboardPage() {
     const { user } = useAuth();
@@ -45,6 +46,11 @@ export default function SupplierDashboardPage() {
                 </section>
             </div>
         </div>
+
+        <section id="my-bids">
+            <MyBidsList />
+        </section>
+
         <section id="bids">
             <MarketplaceBidsList />
         </section>
