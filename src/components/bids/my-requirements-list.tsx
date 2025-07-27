@@ -346,8 +346,8 @@ export function MyRequirementsList() {
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Error Loading Requirements</AlertTitle>
                     <AlertDescription>
-                        There was a problem fetching your requirements from the database. Please check your network connection and try again.
-                         <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
+                        There was a problem fetching your requirements. Please check your network connection.
+                         <pre className="mt-2 p-2 bg-muted rounded-md text-xs whitespace-pre-wrap">{error.message}</pre>
                     </AlertDescription>
                 </Alert>
             )}
@@ -375,5 +375,3 @@ export function MyRequirementsList() {
         </div>
     );
 }
-
-    
