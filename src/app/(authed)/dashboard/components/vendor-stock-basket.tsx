@@ -102,7 +102,7 @@ export default function VendorStockBasket() {
                 name: itemName,
                 quantity: Number(quantity),
                 expiryDate: Timestamp.fromDate(new Date(expiryDate)),
-                ownerId: user.uid, // Explicitly include ownerId
+                ownerId: user.uid,
                 createdAt: serverTimestamp(),
             });
 
