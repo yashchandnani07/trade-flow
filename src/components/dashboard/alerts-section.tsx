@@ -38,13 +38,23 @@ export function AlertsSection() {
             stockCollection, 
             where("ownerId", "==", user.uid),
             where("expiryDate", ">=", today),
-            where("expiryDate", "<=", thirtyDaysFromNow),
-            orderBy("expiryDate", "asc")
+            where("expiryDate", "<=", thirtyDaysFromNow)
+            // Sorting is removed from the query to avoid needing the index
         );
     }, [stockCollection, user, today, thirtyDaysFromNow]);
 
     const [expiringItems, loading, error] = useCollectionData(alertsQuery, { idField: 'id' });
     
+    // Sort the items on the client-side
+    const sortedExpiringItems = useMemo(() => {
+        if (!expiringItems) return [];
+        return [...expiringItems].sort((a, b) => {
+            const dateA = (a.expiryDate as Timestamp).toDate();
+            const dateB = (b.expiryDate as Timestamp).toDate();
+            return dateA.getTime() - dateB.getTime();
+        });
+    }, [expiringItems]);
+
     const renderContent = () => {
         if (loading) {
             return <Skeleton className="h-24 w-full" />
@@ -60,7 +70,7 @@ export function AlertsSection() {
             );
         }
 
-        if (expiringItems && expiringItems.length === 0) {
+        if (sortedExpiringItems && sortedExpiringItems.length === 0) {
             return (
                 <Alert variant="default" className="bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400">
                     <CheckCircle className="h-4 w-4 text-green-500" />
@@ -71,19 +81,20 @@ export function AlertsSection() {
         }
 
         return (
-            <div className="space-y-3">
-                {expiringItems && expiringItems.map(itemData => {
+            <div className="space-y-3 max-h-48 overflow-y-auto">
+                {sortedExpiringItems && sortedExpiringItems.map(itemData => {
                     const item = itemData as StockItem;
                     const daysUntilExpiry = differenceInDays(item.expiryDate.toDate(), new Date());
                      let alertVariant: "destructive" | "warning" | "default" = "default";
                      if (daysUntilExpiry <= 7) alertVariant = "warning";
+                     if (daysUntilExpiry < 1) alertVariant = "destructive";
 
                     return (
-                        <Alert key={item.id} variant={alertVariant === 'warning' ? 'default' : alertVariant} className={cn(alertVariant === 'warning' && 'bg-yellow-500/10 border-yellow-500/20 text-yellow-700 dark:text-yellow-400')}>
+                        <Alert key={item.id} variant={alertVariant === 'warning' ? 'default' : alertVariant} className={cn(alertVariant === 'warning' && 'bg-yellow-500/10 border-yellow-500/20 text-yellow-700 dark:text-yellow-400', alertVariant === 'destructive' && 'border-destructive/50 text-destructive')}>
                             <AlertTriangle className="h-4 w-4" />
                             <AlertTitle className="font-semibold">Expiring Soon: {item.name}</AlertTitle>
                             <AlertDescription>
-                                Expires in <strong>{daysUntilExpiry} days</strong> on {format(item.expiryDate.toDate(), 'PPP')}.
+                                {daysUntilExpiry < 1 ? `This item expired today.` : `Expires in ${daysUntilExpiry} days on ${format(item.expiryDate.toDate(), 'PPP')}.`}
                             </AlertDescription>
                         </Alert>
                     )
