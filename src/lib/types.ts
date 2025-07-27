@@ -32,22 +32,6 @@ export type Review = {
   verified: boolean;
 };
 
-export type Supplier = {
-    id: string;
-    name: string;
-    description: string;
-    rating: number;
-    reviewCount: number;
-    contact: {
-        phone: string;
-        email: string;
-    };
-    location: string;
-    offerings: string[];
-    hours: string;
-    avatar: string;
-};
-
 export type Alert = AiEnhancedAlertOutput & {
   id: string;
   read: boolean;

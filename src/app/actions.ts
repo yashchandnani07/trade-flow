@@ -24,7 +24,6 @@ export async function seedDatabase() {
     }
 
     let seeded = false;
-    seeded = await seedCollection("suppliers", []) || seeded;
     seeded = await seedCollection("reviews", []) || seeded;
     seeded = await seedCollection("orders", []) || seeded;
 
