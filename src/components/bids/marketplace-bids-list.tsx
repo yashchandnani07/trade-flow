@@ -215,7 +215,7 @@ function BidCard({ bid }: { bid: Bid }) {
         try {
             await deleteBid(bid.id);
             toast({ title: 'Bid Deleted', description: 'Your requirement has been removed from the marketplace.' });
-        } catch (error) => {
+        } catch (error) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the bid.' });
         } finally {
             setIsDeleting(false);
@@ -349,7 +349,7 @@ export function MarketplaceBidsList() {
                 </div>
             )}
 
-            {!loading && bids.length === 0 && !error && (
+            {!loading && bids && bids.length === 0 && !error && (
                 <Card className="bg-glass">
                     <CardContent className="p-6 text-center text-muted-foreground">
                         No active requirements in the marketplace.
@@ -365,3 +365,5 @@ export function MarketplaceBidsList() {
         </div>
     );
 }
+
+    
