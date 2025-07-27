@@ -60,34 +60,6 @@ export interface User {
   badges?: BadgeInfo[];
 }
 
-export type Bid = {
-  id: string;
-  vendorId: string;
-  vendorName: string;
-  item: string;
-  quantity: number;
-  targetPrice: number;
-  status: 'active' | 'closed' | 'awarded';
-  createdAt: Timestamp;
-  awardedTo?: string;
-  finalAmount?: number;
-};
-
-export type Proposal = {
-  id: string;
-  supplierId: string;
-  supplierName: string;
-  bidAmount: number;
-  createdAt: Timestamp;
-  status: 'pending' | 'accepted' | 'rejected' | 'negotiating';
-  counterOffer?: {
-    amount: number;
-    message: string;
-    from: 'vendor' | 'supplier';
-  };
-  finalAmount?: number;
-};
-
 export type StockItem = {
     id: string;
     name: string;
