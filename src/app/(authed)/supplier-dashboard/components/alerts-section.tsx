@@ -7,12 +7,11 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { differenceInDays, format } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, BadgeCheck, Bell, CalendarIcon, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Bell, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { StockItem } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 
 
 export function AlertsSection() {
@@ -34,8 +33,6 @@ export function AlertsSection() {
 
     const alertsQuery = useMemo(() => {
         if (!user) return null;
-        // This query now requires a composite index on (ownerId, expiryDate) in Firestore.
-        // The error message from Firestore in the browser console will provide a direct link to create it.
         return query(
             stockCollection, 
             where("ownerId", "==", user.uid),
@@ -58,7 +55,7 @@ export function AlertsSection() {
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Error Loading Alerts</AlertTitle>
                     <AlertDescription>
-                        Could not load expiring stock alerts. This may be due to missing Firestore indexes. Please check the browser console for a link to create the required index.
+                        Could not load expiring stock alerts. This may be due to missing Firestore indexes or a permission issue. Please check the browser console.
                         <pre className="mt-2 p-2 bg-muted rounded-md text-xs whitespace-pre-wrap">{error.message}</pre>
                     </AlertDescription>
                 </Alert>

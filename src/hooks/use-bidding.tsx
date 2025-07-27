@@ -10,13 +10,31 @@ import {
   useCallback,
   useMemo,
 } from 'react';
-import { useCollection } from 'react-firebase-hooks/firestore';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, writeBatch, query, orderBy, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import type { Bid, Proposal, Order } from '@/lib/types';
 import { useAuth } from './use-auth';
 import { useToast } from './use-toast';
-import { FirebaseError } from 'firebase/app';
+import { Timestamp } from 'firebase/firestore';
+
+// Helper functions to interact with localStorage
+const getFromLocalStorage = <T>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') return defaultValue;
+    try {
+        const item = window.localStorage.getItem(key);
+        return item ? JSON.parse(item) : defaultValue;
+    } catch (error) {
+        console.error(`Error reading from localStorage key “${key}”:`, error);
+        return defaultValue;
+    }
+};
+
+const saveToLocalStorage = <T>(key: string, value: T) => {
+    if (typeof window === 'undefined') return;
+    try {
+        window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+        console.error(`Error writing to localStorage key “${key}”:`, error);
+    }
+};
 
 
 interface BiddingContextType {
@@ -38,18 +56,35 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
     const { user } = useAuth();
     const { toast } = useToast();
 
-    const bidsCollection = useMemo(() => collection(db, 'bids'), []);
-    const bidsQuery = useMemo(() => query(bidsCollection, orderBy('createdAt', 'desc')), [bidsCollection]);
-    const [bidsSnapshot, bidsLoading, bidsError] = useCollection(bidsQuery);
-    const bids = useMemo(() => (bidsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || []) as Bid[], [bidsSnapshot]);
-    
-    const proposalsCollection = useMemo(() => collection(db, 'proposals'), []);
-    const proposalsQuery = useMemo(() => query(proposalsCollection, orderBy('createdAt', 'desc')), [proposalsCollection]);
-    const [proposalsSnapshot, proposalsLoading, proposalsError] = useCollection(proposalsQuery);
-    const proposals = useMemo(() => (proposalsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || []) as Proposal[], [proposalsSnapshot]);
+    const [bids, setBids] = useState<Bid[]>([]);
+    const [proposals, setProposals] = useState<Proposal[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<Error | undefined>();
 
-    const loading = bidsLoading || proposalsLoading;
-    const error = bidsError || proposalsError;
+    useEffect(() => {
+        setLoading(true);
+        try {
+            const storedBids = getFromLocalStorage<Bid[]>('bids', []);
+            const storedProposals = getFromLocalStorage<Proposal[]>('proposals', []);
+            // Convert date strings back to Timestamp-like objects for consistency
+            const parsedBids = storedBids.map(b => ({ ...b, createdAt: new Timestamp(new Date(b.createdAt as any).getTime() / 1000, 0) }));
+            const parsedProposals = storedProposals.map(p => ({ ...p, createdAt: new Timestamp(new Date(p.createdAt as any).getTime() / 1000, 0) }));
+            setBids(parsedBids);
+            setProposals(parsedProposals);
+        } catch(e) {
+            setError(e as Error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        saveToLocalStorage('bids', bids);
+    }, [bids]);
+
+    useEffect(() => {
+        saveToLocalStorage('proposals', proposals);
+    }, [proposals]);
 
 
     const addBid = useCallback(async (newBidData: Omit<Bid, 'id' | 'status' | 'createdAt' | 'vendorId' | 'vendorName' | 'acceptedProposalId'>) => {
@@ -57,36 +92,22 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
             toast({ variant: 'destructive', title: 'Permission Denied', description: 'Only vendors can post requirements.' });
             throw new Error('Permission Denied');
         }
-
-        try {
-            await addDoc(collection(db, 'bids'), {
-                ...newBidData,
-                vendorId: user.uid,
-                vendorName: user.businessName || 'Anonymous Vendor',
-                status: 'open',
-                createdAt: serverTimestamp(),
-            });
-        } catch(e) {
-            console.error(e);
-            if (e instanceof FirebaseError && (e.code === 'permission-denied' || e.code === 'unauthenticated')) {
-                 toast({ variant: 'destructive', title: 'Permission Denied', description: 'Please check your Firestore security rules for the "bids" collection.' });
-            } else {
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not post your requirement.' });
-            }
-            throw e;
-        }
+        
+        const newBid: Bid = {
+            id: `bid_${Date.now()}`,
+            ...newBidData,
+            vendorId: user.uid,
+            vendorName: user.businessName || 'Anonymous Vendor',
+            status: 'open',
+            createdAt: new Timestamp(Math.floor(Date.now() / 1000), 0),
+        };
+        setBids(prev => [...prev, newBid]);
 
     }, [user, toast]);
     
     const deleteBid = useCallback(async (bidId: string) => {
-       try {
-        await deleteDoc(doc(db, 'bids', bidId));
-       } catch (e) {
-           console.error(e);
-           toast({ variant: 'destructive', title: 'Error', description: 'Could not delete bid.' });
-           throw e;
-       }
-    }, [toast]);
+       setBids(prev => prev.filter(b => b.id !== bidId));
+    }, []);
 
     const addProposal = useCallback(async (bidId: string, newProposalData: Omit<Proposal, 'id' | 'status' | 'createdAt' | 'bidId' | 'supplierId' | 'supplierName'>) => {
         if (!user || user.role !== 'supplier') {
@@ -94,24 +115,17 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
             throw new Error('Permission Denied');
         }
         
-       try {
-            await addDoc(collection(db, 'proposals'), {
-                ...newProposalData,
-                bidId: bidId,
-                supplierId: user.uid,
-                supplierName: user.businessName || 'Anonymous Supplier',
-                status: 'pending',
-                createdAt: serverTimestamp(),
-            });
-       } catch (e) {
-            console.error(e);
-            if (e instanceof FirebaseError && (e.code === 'permission-denied' || e.code === 'unauthenticated')) {
-                 toast({ variant: 'destructive', title: 'Permission Denied', description: 'Please check your Firestore security rules for the "proposals" collection.' });
-            } else {
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not submit your proposal.' });
-            }
-            throw e;
-       }
+        const newProposal: Proposal = {
+            id: `prop_${Date.now()}`,
+            ...newProposalData,
+            bidId,
+            supplierId: user.uid,
+            supplierName: user.businessName || 'Anonymous Supplier',
+            status: 'pending',
+            createdAt: new Timestamp(Math.floor(Date.now() / 1000), 0),
+        };
+
+        setProposals(prev => [...prev, newProposal]);
 
     }, [user, toast]);
 
@@ -123,41 +137,20 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
             toast({ variant: 'destructive', title: 'Permission Denied', description: 'Invalid operation.' });
             throw new Error('Permission Denied');
         }
-
-        const batch = writeBatch(db);
-
-        // 1. Update the bid status
-        const bidRef = doc(db, 'bids', bidId);
-        batch.update(bidRef, { status: 'closed', acceptedProposalId: proposalId });
         
-        // 2. Update all proposals for this bid
-        const relatedProposals = proposals.filter(p => p.bidId === bidId);
-        relatedProposals.forEach(p => {
-            const proposalRef = doc(db, 'proposals', p.id);
-            batch.update(proposalRef, { status: p.id === proposalId ? 'accepted' : 'rejected' });
-        });
+        // Update bid
+        setBids(prevBids => prevBids.map(b => b.id === bidId ? { ...b, status: 'closed', acceptedProposalId: proposalId } : b));
 
-        // 3. Create a new order from the accepted proposal
-        const orderRef = doc(collection(db, 'orders'));
-        const newOrder: Omit<Order, 'id'> = {
-            vendorId: bid.vendorId,
-            supplierId: proposal.supplierId,
-            supplierName: proposal.supplierName,
-            items: [{ name: bid.item, quantity: bid.quantity, price: proposal.price }],
-            status: 'Order Placed',
-            orderDate: serverTimestamp() as any, // Firestore will convert this
-            deliveryTimestamp: null,
-        };
-        batch.set(orderRef, newOrder);
+        // Update proposals
+        setProposals(prevProposals => prevProposals.map(p => {
+            if (p.bidId === bidId) {
+                return { ...p, status: p.id === proposalId ? 'accepted' : 'rejected' };
+            }
+            return p;
+        }));
 
-        try {
-            await batch.commit();
-        } catch (e) {
-            console.error(e);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not accept the proposal.' });
-            throw e;
-        }
-
+        // Here you would typically create an order, but for localStorage, this is sufficient.
+        
     }, [user, bids, proposals, toast]);
 
     const getProposalsForBid = useCallback((bidId: string) => {

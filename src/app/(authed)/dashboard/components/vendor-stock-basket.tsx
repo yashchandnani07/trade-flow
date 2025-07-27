@@ -97,10 +97,15 @@ export default function VendorStockBasket() {
         } catch (e) {
             console.error(e);
             setError(e as Error);
+            toast({
+                variant: 'destructive',
+                title: 'Failed to load stock',
+                description: 'Could not fetch stock items. This may be due to missing Firestore security rules.'
+            });
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [user, toast]);
 
     useEffect(() => {
         fetchStockItems();
@@ -124,21 +129,10 @@ export default function VendorStockBasket() {
                 createdAt: serverTimestamp(),
             };
 
-            const newDocRef = await addDoc(stockCollectionRef, newDocData);
-
-            // This is a client-side representation for immediate UI update.
-            // Note: `createdAt` will be null until the server timestamp is applied.
-            const newItem: StockItem = {
-                id: newDocRef.id,
-                name: itemName,
-                quantity: Number(quantity),
-                expiryDate: Timestamp.fromDate(new Date(expiryDate)),
-                ownerId: user.uid,
-                createdAt: new Timestamp(new Date().getTime() / 1000, 0), // Approximate client time
-            };
-
-            // Manually update state for instant feedback
-            setStockItems(prevItems => [...prevItems, newItem].sort((a,b) => a.expiryDate.toMillis() - b.expiryDate.toMillis()));
+            await addDoc(stockCollectionRef, newDocData);
+            
+            // Refetch after adding
+            await fetchStockItems();
 
             toast({ title: 'Item Added', description: `${itemName} has been added to your stock basket.` });
             setIsOpen(false);
@@ -164,7 +158,6 @@ export default function VendorStockBasket() {
         setDeletingId(itemId);
         try {
             await deleteDoc(doc(db, 'stockItems', itemId));
-            // Manually update state for instant feedback
             setStockItems(prevItems => prevItems.filter(item => item.id !== itemId));
             toast({ title: "Item Removed", description: "The stock item has been removed from your basket." });
         } catch (error) {
@@ -312,7 +305,3 @@ export default function VendorStockBasket() {
         </Card>
     );
 }
-
-    
-
-    
