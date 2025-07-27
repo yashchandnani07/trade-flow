@@ -34,12 +34,13 @@ export function AlertsSection() {
 
     const alertsQuery = useMemo(() => {
         if (!user) return null;
+        // Sorting is removed from the query to avoid needing the index.
+        // It will be sorted on the client-side.
         return query(
             stockCollection, 
             where("ownerId", "==", user.uid),
             where("expiryDate", ">=", today),
             where("expiryDate", "<=", thirtyDaysFromNow)
-            // Sorting is removed from the query to avoid needing the index
         );
     }, [stockCollection, user, today, thirtyDaysFromNow]);
 
