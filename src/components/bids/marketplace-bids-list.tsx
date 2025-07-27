@@ -27,6 +27,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { FirebaseError } from 'firebase/app';
 
 const statusVariantMap: Record<Bid['status'], 'success' | 'outline' | 'default'> = {
     active: "success",
@@ -298,13 +299,13 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
 
     const handleBidSubmit = async (theBid: Bid, amount: number) => {
         console.log("Submitting bid for:", theBid);
-        if (!user) {
-            toast({ variant: 'destructive', title: 'Not Authenticated', description: 'You must be logged in to place a bid.' });
-            return;
-        }
         if (!theBid || !theBid.id) {
             console.error("Bid information is missing. Received:", theBid);
             toast({ variant: 'destructive', title: 'Error', description: 'Cannot place bid. Bid information is missing.' });
+            return;
+        }
+         if (!user) {
+            toast({ variant: 'destructive', title: 'Not Authenticated', description: 'You must be logged in to place a bid.' });
             return;
         }
 
@@ -326,8 +327,16 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
                 description: `Your bid of ?${amount} for ${theBid.item} has been submitted.`,
             });
         } catch (error: any) {
+             let description = 'There was an error submitting your bid.';
+            if (error instanceof FirebaseError) {
+                if (error.code === 'permission-denied') {
+                    description = 'Permission denied. Please check Firestore security rules.';
+                } else {
+                    description = `A database error occurred: ${error.message}`;
+                }
+            }
             console.error('Error placing bid:', error);
-            toast({ variant: 'destructive', title: 'Failed to Place Bid', description: `There was an error submitting your bid. ${error.message}` });
+            toast({ variant: 'destructive', title: 'Failed to Place Bid', description });
         } finally {
             setIsSubmitting(false);
         }
@@ -337,14 +346,14 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
         setBidAmount(prev => Math.max(0, prev + adjustment));
     };
 
-    const onFormSubmit = (e: React.FormEvent<HTMLFormElement>, theBid: Bid) => {
+    const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        handleBidSubmit(theBid, bidAmount);
+        handleBidSubmit(bid, bidAmount);
     }
     
-    const onMatchAndAccept = (theBid: Bid) => {
-        setBidAmount(theBid.targetPrice);
-        handleBidSubmit(theBid, theBid.targetPrice);
+    const onMatchAndAccept = () => {
+        setBidAmount(bid.targetPrice);
+        handleBidSubmit(bid, bid.targetPrice);
     }
 
 
@@ -372,7 +381,7 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
 
                 {isSupplier && !isVendorOwner && bid.status === 'active' && (
                     <Card className="bg-glass p-4">
-                        <form onSubmit={(e) => onFormSubmit(e, bid)}>
+                        <form onSubmit={onFormSubmit}>
                             <Label className="text-sm font-semibold mb-2 block">Your Offer (?)</Label>
                             <div className="flex items-center gap-2 mb-4">
                                 <Button type="button" variant="outline" size="icon" onClick={() => adjustBid(-100)} disabled={isSubmitting}><Minus className="h-4 w-4" /></Button>
@@ -389,7 +398,7 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
                                 <Button type="submit" className="flex-1" disabled={isSubmitting}>
                                     {isSubmitting ? <Loader2 className="animate-spin" /> : "Submit Offer"}
                                 </Button>
-                                <Button type="button" onClick={() => onMatchAndAccept(bid)} className="flex-1" variant="outline" disabled={isSubmitting}>
+                                <Button type="button" onClick={onMatchAndAccept} className="flex-1" variant="outline" disabled={isSubmitting}>
                                     {isSubmitting ? <Loader2 className="animate-spin" /> : <><Handshake className="mr-2 h-4 w-4" /> Match & Accept</>}
                                 </Button>
                             </div>
@@ -455,5 +464,5 @@ export function MarketplaceBidsList() {
                 </div>
             </CardContent>
         </Card>
-    )
+    );
 }
