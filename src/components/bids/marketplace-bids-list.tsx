@@ -216,6 +216,7 @@ function BidCard({ bid }: { bid: Bid }) {
             await deleteBid(bid.id);
             toast({ title: 'Bid Deleted', description: 'Your requirement has been removed from the marketplace.' });
         } catch (error) {
+            console.log(error)
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the bid.' });
         } finally {
             setIsDeleting(false);
@@ -361,7 +362,7 @@ export function MarketplaceBidsList() {
                 {!loading &&
                     bids &&
                     bids.map(bid => {
-                        if (!bid || !bid.id) return null;
+                        if (!bid?.id) return null;
                         return <BidCard key={bid.id} bid={bid} />;
                     })}
             </div>
