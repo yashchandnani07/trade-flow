@@ -40,7 +40,9 @@ export default function SupplierDashboardPage() {
                 <section id="badges">
                     <TrustBadges />
                 </section>
-                <FactoryDiary />
+                <section id="diary">
+                    <FactoryDiary />
+                </section>
             </div>
         </div>
         <section id="bids">

@@ -28,6 +28,7 @@ import {
   Boxes,
   Bell,
   Award,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -49,6 +50,7 @@ const supplierNavItems = [
     { href: "/supplier-dashboard#alerts", icon: Bell, label: "Alerts" },
     { href: "/supplier-dashboard#stock", icon: Boxes, label: "My Stock" },
     { href: "/supplier-dashboard#badges", icon: Award, label: "Badges" },
+    { href: "/supplier-dashboard#diary", icon: BookOpen, label: "Factory Diary" },
 ];
 
 const commonNavItems = [
