@@ -12,17 +12,15 @@ async function getExpiringStockAlert(userId: string): Promise<AiEnhancedAlertInp
     if (!userId) return null;
 
     const today = new Date();
-    const threeDaysFromNow = new Date();
-    threeDaysFromNow.setDate(today.getDate() + 3);
+    const fiveDaysFromNow = new Date();
+    fiveDaysFromNow.setDate(today.getDate() + 5);
 
     const stockCollection = collection(db, 'stockItems');
     const q = query(
         stockCollection,
         where("ownerId", "==", userId),
         where("expiryDate", ">=", Timestamp.fromDate(today)),
-        where("expiryDate", "<=", Timestamp.fromDate(threeDaysFromNow))
-        // The orderBy was removed to avoid needing a composite index.
-        // We will just find the first one that matches.
+        where("expiryDate", "<=", Timestamp.fromDate(fiveDaysFromNow))
     );
 
     const querySnapshot = await getDocs(q);
@@ -30,7 +28,7 @@ async function getExpiringStockAlert(userId: string): Promise<AiEnhancedAlertInp
         return null;
     }
 
-    // Since we are not ordering by date in the query, we find the one expiring soonest from the results.
+    // Find the item that is expiring soonest from the results.
     const expiringItemDoc = querySnapshot.docs.reduce((soonest, current) => {
         return soonest.data().expiryDate.toMillis() < current.data().expiryDate.toMillis() ? soonest : current;
     });
