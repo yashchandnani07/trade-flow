@@ -65,10 +65,12 @@ export function MyBidsList() {
                         ))}
                         
                         {!loading && myProposals.length > 0 ? (
-                            myProposals.map(proposal => {
+                            myProposals.map((proposal, index) => {
                                 const createdAtDate = proposal.createdAt ? (proposal.createdAt as Timestamp).toDate() : new Date();
+                                // Create a robust key to prevent crashes, even if proposal.id is momentarily undefined.
+                                const uniqueKey = proposal.id || `${proposal.price}-${createdAtDate.getTime()}-${index}`;
                                 return (
-                                <TableRow key={proposal.id}>
+                                <TableRow key={uniqueKey}>
                                     <TableCell className="font-bold">${proposal.price.toFixed(2)}</TableCell>
                                     <TableCell>
                                         {format(createdAtDate, 'PPP')}
