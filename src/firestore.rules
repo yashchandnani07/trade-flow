@@ -1,0 +1,50 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can only read and write to their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth.uid == userId;
+    }
+
+    // Users can manage their own stock items
+    match /stockItems/{stockItemId} {
+      allow create: if request.auth.uid == request.resource.data.ownerId;
+      allow read, update: if request.auth.uid == resource.data.ownerId;
+      allow delete: if request.auth.uid == resource.data.ownerId;
+      allow list: if request.auth != null && request.query.resource.data.ownerId == request.auth.uid;
+    }
+    
+    // Suppliers can be read by any authenticated user
+    match /suppliers/{supplierId} {
+      allow read: if request.auth != null;
+    }
+    
+    // Orders can be managed by either the vendor or the supplier involved
+    match /orders/{orderId} {
+        allow read, write: if request.auth.uid == resource.data.vendorId || request.auth.uid == resource.data.supplierId;
+    }
+
+    // Reviews can be read by anyone, but only created by the authenticated vendor
+    match /reviews/{reviewId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth.uid == request.resource.data.vendorId;
+    }
+
+    // Bids can be read by any authenticated user
+    match /bids/{bidId} {
+        allow read: if request.auth != null;
+        // Bids can only be created by the vendor themselves
+        allow create, update: if request.auth.uid == request.resource.data.vendorId;
+    }
+    
+    // Proposals can be read by authenticated users
+    match /bids/{bidId}/proposals/{proposalId} {
+        allow read: if request.auth != null;
+        // Only suppliers can create proposals
+        allow create: if request.auth.uid == request.resource.data.supplierId;
+        // The vendor who owns the bid can update/accept proposals
+        allow update: if get(/databases/$(database)/documents/bids/$(bidId)).data.vendorId == request.auth.uid;
+    }
+  }
+}
