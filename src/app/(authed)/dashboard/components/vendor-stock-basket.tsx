@@ -126,13 +126,15 @@ export default function VendorStockBasket() {
 
             const newDocRef = await addDoc(stockCollectionRef, newDocData);
 
+            // This is a client-side representation for immediate UI update.
+            // Note: `createdAt` will be null until the server timestamp is applied.
             const newItem: StockItem = {
                 id: newDocRef.id,
                 name: itemName,
                 quantity: Number(quantity),
                 expiryDate: Timestamp.fromDate(new Date(expiryDate)),
                 ownerId: user.uid,
-                // createdAt will be a server timestamp, so we approximate for the UI
+                createdAt: new Timestamp(new Date().getTime() / 1000, 0), // Approximate client time
             };
 
             // Manually update state for instant feedback
@@ -310,5 +312,7 @@ export default function VendorStockBasket() {
         </Card>
     );
 }
+
+    
 
     

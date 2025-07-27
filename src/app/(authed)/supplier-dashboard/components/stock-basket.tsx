@@ -26,8 +26,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { FirebaseError } from "firebase/app";
 
-function AddStockDialog() {
+function AddStockDialog({ onStockAdded }: { onStockAdded: () => void }) {
     const { user } = useAuth();
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
@@ -59,10 +60,17 @@ function AddStockDialog() {
             setItemName('');
             setQuantity('');
             setExpiryDate('');
-            // Parent component will refetch
+            onStockAdded();
         } catch (error) {
             console.error('Error adding stock item:', error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not add stock item.' });
+            const isPermissionError = error instanceof FirebaseError && (error.code === 'permission-denied' || error.code === 'unauthenticated');
+            toast({
+                variant: 'destructive',
+                title: 'Error adding item',
+                description: isPermissionError
+                    ? "Permission denied. Check Firestore rules for 'stockItems'."
+                    : 'Could not add stock item.'
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -124,6 +132,7 @@ export default function StockBasket() {
             return;
         }
         setLoading(true);
+        setError(null);
         try {
             const stockCollectionRef = collection(db, 'stockItems');
             const stockQuery = query(stockCollectionRef, where("ownerId", "==", user.uid), orderBy("expiryDate", "asc"));
@@ -164,7 +173,7 @@ export default function StockBasket() {
                         <Package /> Stock Basket & Expiry
                     </CardTitle>
                 </div>
-                <AddStockDialog />
+                <AddStockDialog onStockAdded={fetchStockItems} />
             </CardHeader>
             <CardContent>
                 <Table>
@@ -240,3 +249,5 @@ export default function StockBasket() {
         </Card>
     );
 }
+
+    

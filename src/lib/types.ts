@@ -65,7 +65,8 @@ export type StockItem = {
     name: string;
     quantity: number;
     expiryDate: Timestamp;
-    ownerId: string; // Changed from supplierId to be generic
+    ownerId: string;
+    createdAt: Timestamp;
 }
 
 export type DiaryEntry = {
@@ -118,3 +119,5 @@ export type Proposal = {
     status: 'pending' | 'accepted' | 'rejected';
     createdAt: Timestamp;
 };
+
+    
