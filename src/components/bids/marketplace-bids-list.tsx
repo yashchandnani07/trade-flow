@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Gavel, Loader2, Plus, AlertTriangle, CheckCircle, Trash2 } from 'lucide-react';
+import { Gavel, Loader2, Plus, AlertTriangle, CheckCircle, Trash2, Handshake, MessageSquareQuote } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
@@ -105,7 +105,6 @@ function ProposalsList({ bid }: { bid: Bid }) {
 
     const handleAcceptProposal = async (proposalId: string) => {
         try {
-            // In a real-world app, this should be a transaction to ensure atomicity.
             const bidRef = doc(db, 'bids', bid.id);
             const proposalRef = doc(db, 'bids', bid.id, 'proposals', proposalId);
 
@@ -179,7 +178,6 @@ function DeleteBidDialog({ bid, onConfirm, isDeleting }: { bid: Bid, onConfirm: 
     );
 }
 
-
 function BidCard({ bid }: { bid: Bid }) {
     const { user } = useAuth();
     const { toast } = useToast();
@@ -187,6 +185,7 @@ function BidCard({ bid }: { bid: Bid }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showProposals, setShowProposals] = useState(false);
+    const [showNegotiateForm, setShowNegotiateForm] = useState(false);
 
     const isVendorOwner = user?.uid === bid.vendorId;
 
@@ -199,10 +198,9 @@ function BidCard({ bid }: { bid: Bid }) {
     const [userProposals, loadingUserProposals] = useCollectionData(userProposalQuery);
     const hasUserBid = !loadingUserProposals && userProposals && userProposals.length > 0;
 
-    const handleBidSubmit = async (e: FormEvent) => {
-        e.preventDefault();
-        if (!user || user.role !== 'supplier' || !price) {
-            toast({ variant: "destructive", title: "Bid Error", description: "Price cannot be empty."});
+    const submitOffer = async (offerPrice: number) => {
+        if (!user || user.role !== 'supplier') {
+            toast({ variant: "destructive", title: "Authentication Error", description: "You must be a supplier to submit an offer." });
             return;
         }
         setIsSubmitting(true);
@@ -210,19 +208,33 @@ function BidCard({ bid }: { bid: Bid }) {
             const proposalData = {
                 supplierId: user.uid,
                 supplierName: user.businessName,
-                price: Number(price),
+                price: offerPrice,
                 status: 'pending',
                 createdAt: serverTimestamp(),
             };
             await addDoc(proposalsCollection, proposalData);
             toast({ title: 'Offer Submitted!', description: `Your bid for ${bid.item} has been placed.` });
             setPrice('');
+            setShowNegotiateForm(false);
         } catch (error) {
             console.error(error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not submit your offer.' });
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleNegotiateSubmit = (e: FormEvent) => {
+        e.preventDefault();
+        if (!price) {
+            toast({ variant: "destructive", title: "Input Error", description: "Please enter a price to negotiate." });
+            return;
+        }
+        submitOffer(Number(price));
+    };
+
+    const handleAccept = () => {
+        submitOffer(bid.targetPrice);
     };
 
     const handleDeleteBid = async () => {
@@ -233,19 +245,13 @@ function BidCard({ bid }: { bid: Bid }) {
         } catch (error) {
             const isPermissionError = error instanceof FirebaseError && (error.code === 'permission-denied' || error.code === 'unauthenticated');
             console.error(error);
-            toast({ 
-                variant: 'destructive', 
-                title: 'Error', 
-                description: isPermissionError
-                    ? "You do not have permission to delete this bid. Please check Firestore rules."
-                    : 'Could not delete the bid.' 
-            });
+            toast({ variant: 'destructive', title: 'Error', description: isPermissionError ? "You do not have permission to delete this bid." : 'Could not delete the bid.' });
         } finally {
             setIsDeleting(false);
         }
     };
     
-    const showBidForm = user?.role === 'supplier' && bid.status === 'open' && !isVendorOwner;
+    const showBidActions = user?.role === 'supplier' && bid.status === 'open';
 
     return (
         <Card className="flex flex-col bg-glass">
@@ -272,21 +278,34 @@ function BidCard({ bid }: { bid: Bid }) {
                 </div>
             </CardContent>
             <CardFooter className="flex-col items-stretch space-y-4">
-                {showBidForm && !hasUserBid && (
-                    <form onSubmit={handleBidSubmit} className="flex gap-2">
-                        <Input
-                            type="number"
-                            placeholder="Your Price"
-                            value={price}
-                            onChange={(e) => setPrice(e.target.value)}
-                            required
-                        />
-                        <Button type="submit" disabled={isSubmitting || loadingUserProposals}>
-                            {isSubmitting || loadingUserProposals ? <Loader2 className="animate-spin" /> : 'Submit Offer'}
-                        </Button>
-                    </form>
+                {showBidActions && !hasUserBid && (
+                    <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                            <Button onClick={handleAccept} disabled={isSubmitting || loadingUserProposals}>
+                                <Handshake className="mr-2" /> Accept
+                            </Button>
+                            <Button variant="secondary" onClick={() => setShowNegotiateForm(!showNegotiateForm)}>
+                                <MessageSquareQuote className="mr-2" /> Negotiate
+                            </Button>
+                        </div>
+                        {showNegotiateForm && (
+                             <form onSubmit={handleNegotiateSubmit} className="flex gap-2 pt-2">
+                                <Input
+                                    type="number"
+                                    placeholder="Your Price"
+                                    value={price}
+                                    onChange={(e) => setPrice(e.target.value)}
+                                    required
+                                    step="0.01"
+                                />
+                                <Button type="submit" disabled={isSubmitting || loadingUserProposals}>
+                                    {isSubmitting || loadingUserProposals ? <Loader2 className="animate-spin" /> : 'Submit'}
+                                </Button>
+                            </form>
+                        )}
+                    </div>
                 )}
-                {showBidForm && hasUserBid && (
+                {showBidActions && hasUserBid && (
                      <Alert variant="success" className="text-sm">
                         <CheckCircle className="h-4 w-4" />
                         <AlertTitle>Offer Submitted</AlertTitle>
