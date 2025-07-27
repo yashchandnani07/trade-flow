@@ -289,7 +289,6 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
         }
     }, [bid]);
 
-
     const createdAt = bid.createdAt instanceof Timestamp 
         ? formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true }) 
         : 'just now';
@@ -304,8 +303,8 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
             return;
         }
         if (!theBid || !theBid.id) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Cannot place bid. Bid information is missing.' });
             console.error("Bid information is missing. Received:", theBid);
+            toast({ variant: 'destructive', title: 'Error', description: 'Cannot place bid. Bid information is missing.' });
             return;
         }
 
@@ -326,9 +325,9 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
                 title: 'Bid Placed Successfully!',
                 description: `Your bid of ?${amount} for ${theBid.item} has been submitted.`,
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error placing bid:', error);
-            toast({ variant: 'destructive', title: 'Failed to Place Bid', description: `There was an error submitting your bid. ${error}` });
+            toast({ variant: 'destructive', title: 'Failed to Place Bid', description: `There was an error submitting your bid. ${error.message}` });
         } finally {
             setIsSubmitting(false);
         }
@@ -458,3 +457,5 @@ export function MarketplaceBidsList() {
         </Card>
     )
 }
+
+    
