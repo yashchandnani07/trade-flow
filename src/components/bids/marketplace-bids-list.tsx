@@ -125,7 +125,7 @@ function BidCard({ bid }: { bid: Bid }) {
         submitOffer(bid.targetPrice);
     };
     
-    const showBidActions = user?.role === 'supplier' && bid.status === 'open';
+    const showBidActions = user?.role === 'supplier' && bid.status === 'open' && bid.vendorId !== user?.uid;
     const createdAtDate = useMemo(() => {
         if (!bid.createdAt) return new Date();
         return (bid.createdAt as Timestamp).toDate();
