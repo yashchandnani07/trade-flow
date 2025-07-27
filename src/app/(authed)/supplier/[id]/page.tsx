@@ -1,10 +1,10 @@
 
 'use client';
 import { useMemo } from 'react';
-import { doc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { useDocumentData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
-import { type Supplier } from '@/lib/types';
+import { type User, type Supplier } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Star, Mail, Phone, MapPin, Clock } from 'lucide-react';
@@ -35,8 +35,8 @@ function StarRating({ rating, className }: { rating: number; className?: string 
 
 export default function SupplierProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const supplierRef = useMemo(() => doc(db, 'suppliers', params.id), [params.id]);
-  const [supplier, loading, error] = useDocumentData(supplierRef, { idField: 'id' });
+  const supplierRef = useMemo(() => doc(db, 'users', params.id), [params.id]);
+  const [supplier, loading, error] = useDocumentData(supplierRef, { idField: 'uid' });
 
   const pageContent = () => {
     if (loading) {
@@ -63,7 +63,12 @@ export default function SupplierProfilePage({ params }: { params: { id: string }
       notFound();
     }
 
-    const typedSupplier = supplier as Supplier;
+    const typedSupplier = supplier as User;
+    
+    // Check if the user is a supplier
+    if (typedSupplier.role !== 'supplier') {
+        notFound();
+    }
 
     return (
       <div className="p-4 md:p-6 lg:p-8 space-y-6">
@@ -76,16 +81,19 @@ export default function SupplierProfilePage({ params }: { params: { id: string }
               <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row items-start gap-6">
                       <Avatar className="w-24 h-24 border-2 border-primary">
-                          <AvatarImage src={`https://placehold.co/96x96?text=${typedSupplier.avatar}`} data-ai-hint="company logo" />
-                          <AvatarFallback>{typedSupplier.avatar}</AvatarFallback>
+                          <AvatarImage src={`https://placehold.co/96x96?text=${typedSupplier.businessName?.[0]}`} data-ai-hint="company logo" />
+                          <AvatarFallback>{typedSupplier.businessName?.[0]}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                          <h2 className="text-3xl font-bold">{typedSupplier.name}</h2>
+                          <h2 className="text-3xl font-bold">{typedSupplier.businessName}</h2>
                           <div className="flex items-center gap-2 mt-2">
-                              <StarRating rating={typedSupplier.rating} />
-                              <span className="text-muted-foreground">({typedSupplier.reviewCount} reviews)</span>
+                              <StarRating rating={typedSupplier.points / 1000} />
+                              <span className="text-muted-foreground">({typedSupplier.points} points)</span>
                           </div>
-                          <p className="text-muted-foreground mt-2 max-w-prose">{typedSupplier.description}</p>
+                           <p className="text-muted-foreground mt-2 max-w-prose">
+                            {/* Placeholder for description, as it's not in the User type */}
+                            A trusted supplier on the TradeFlow platform, committed to quality and timely delivery.
+                           </p>
                       </div>
                   </div>
               </CardContent>
@@ -99,32 +107,38 @@ export default function SupplierProfilePage({ params }: { params: { id: string }
                           <CardTitle>Supplier Details</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4 text-sm">
-                          <div className="flex items-start gap-3">
-                              <Phone className="w-4 h-4 mt-1 text-muted-foreground flex-shrink-0" />
-                              <span>{typedSupplier.contact.phone}</span>
-                          </div>
-                           <div className="flex items-start gap-3">
-                              <Mail className="w-4 h-4 mt-1 text-muted-foreground flex-shrink-0" />
-                              <span>{typedSupplier.contact.email}</span>
-                          </div>
-                          <div className="flex items-start gap-3">
-                              <MapPin className="w-4 h-4 mt-1 text-muted-foreground flex-shrink-0" />
-                              <span>{typedSupplier.location}</span>
-                          </div>
+                          {typedSupplier.phoneNumber && (
+                            <div className="flex items-start gap-3">
+                                <Phone className="w-4 h-4 mt-1 text-muted-foreground flex-shrink-0" />
+                                <span>{typedSupplier.phoneNumber}</span>
+                            </div>
+                           )}
+                           {typedSupplier.email && (
+                            <div className="flex items-start gap-3">
+                                <Mail className="w-4 h-4 mt-1 text-muted-foreground flex-shrink-0" />
+                                <span>{typedSupplier.email}</span>
+                            </div>
+                           )}
+                           {typedSupplier.location && (
+                            <div className="flex items-start gap-3">
+                                <MapPin className="w-4 h-4 mt-1 text-muted-foreground flex-shrink-0" />
+                                <span>{typedSupplier.location.latitude}, {typedSupplier.location.longitude}</span>
+                            </div>
+                           )}
                           <div className="flex items-start gap-3">
                               <Clock className="w-4 h-4 mt-1 text-muted-foreground flex-shrink-0" />
-                              <span>{typedSupplier.hours}</span>
+                              <span>Available 24/7</span>
                           </div>
                       </CardContent>
                   </Card>
                    <Card className="bg-glass">
                       <CardHeader>
-                          <CardTitle>Products & Services</CardTitle>
+                          <CardTitle>Compliance</CardTitle>
                       </CardHeader>
                       <CardContent className="flex flex-wrap gap-2">
-                          {typedSupplier.offerings.map(offering => (
-                              <Badge key={offering} variant="secondary">{offering}</Badge>
-                          ))}
+                            <Badge variant={typedSupplier.fssaiStatus === 'verified' ? 'success' : 'destructive'}>
+                                FSSAI: {typedSupplier.fssaiStatus.charAt(0).toUpperCase() + typedSupplier.fssaiStatus.slice(1)}
+                            </Badge>
                       </CardContent>
                   </Card>
               </div>

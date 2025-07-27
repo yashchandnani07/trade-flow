@@ -1,60 +1,52 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Users can only read and update their own document
+    // Users can only read their own user document, but can be read by others if they are a supplier.
     match /users/{userId} {
-      allow read, update: if request.auth.uid == userId;
-      allow create: if request.auth.uid != null;
+      allow write: if request.auth.uid == userId;
+      allow read: if request.auth.uid == userId || resource.data.role == 'supplier';
     }
 
-    // Anyone can read suppliers
-    match /suppliers/{supplierId} {
-      allow read: if true;
-      // Allow write for admins or specific logic in the future
-      allow write: if false; 
-    }
-
-    // Authenticated users can write reviews
-    // Anyone can read reviews
-    match /reviews/{reviewId} {
-        allow read: if true;
-        allow create: if request.auth.uid != null;
-        // Allow update/delete only by the author
-        allow update, delete: if request.auth.uid == resource.data.vendorId;
-    }
-
-    // Logged-in users can create stock items.
-    // Users can only read, update, or delete their own stock items.
+    // Users can manage their own stock items
     match /stockItems/{stockItemId} {
-        allow create: if request.auth.uid != null && request.resource.data.ownerId == request.auth.uid;
-        allow read, update, delete: if request.auth.uid == resource.data.ownerId;
+      allow create: if request.auth.uid == request.resource.data.ownerId;
+      allow read, update: if request.auth.uid == resource.data.ownerId;
+      allow delete: if request.auth.uid == resource.data.ownerId;
+      allow list: if request.auth != null && request.query.resource.data.ownerId == request.auth.uid;
     }
-
-    // Bids can be read by anyone authenticated.
-    // Bids can be created by the vendor themselves.
-    // Bids can only be updated (awarded/closed) by the vendor who created it.
-    match /bids/{bidId} {
-        allow read: if request.auth.uid != null;
-        allow create: if request.auth.uid != null && request.resource.data.vendorId == request.auth.uid;
-        allow update: if request.auth.uid == resource.data.vendorId;
-        
-        // Proposals sub-collection
-        match /proposals/{proposalId} {
-            allow read: if request.auth.uid != null;
-            // A supplier can create a proposal
-            allow create: if request.auth.uid != null && request.resource.data.supplierId == request.auth.uid;
-            // The vendor can update all proposals (reject) and the supplier can update their own (negotiate)
-            allow update: if (get(/databases/$(database)/documents/bids/$(bidId)).data.vendorId == request.auth.uid) || (resource.data.supplierId == request.auth.uid);
-        }
+    
+    // Suppliers can be read by any authenticated user
+    match /suppliers/{supplierId} {
+      allow read: if request.auth != null;
     }
-
-    // Orders can be created by a vendor.
-    // Orders can only be read or updated by the vendor or the supplier involved.
+    
+    // Orders can be managed by either the vendor or the supplier involved
     match /orders/{orderId} {
-        allow create: if request.auth.uid != null && request.resource.data.vendorId == request.auth.uid;
-        allow read, update: if request.auth.uid == resource.data.vendorId || request.auth.uid == resource.data.supplierId;
+        allow read, write: if request.auth.uid == resource.data.vendorId || request.auth.uid == resource.data.supplierId;
+    }
+
+    // Reviews can be read by anyone, but only created by the authenticated vendor
+    match /reviews/{reviewId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth.uid == request.resource.data.vendorId;
+    }
+
+    // Bids can be read by any authenticated user
+    match /bids/{bidId} {
+        allow read: if request.auth != null;
+        // Bids can only be created by the vendor themselves
+        allow create, update: if request.auth.uid == request.resource.data.vendorId;
+    }
+    
+    // Proposals can be read by authenticated users
+    match /bids/{bidId}/proposals/{proposalId} {
+        allow read: if request.auth != null;
+        // Only suppliers can create proposals
+        allow create: if request.auth.uid == request.resource.data.supplierId;
+        // The vendor who owns the bid can update/accept proposals
+        allow update: if get(/databases/$(database)/documents/bids/$(bidId)).data.vendorId == request.auth.uid;
     }
   }
 }
