@@ -10,6 +10,7 @@ import {
   Settings,
   User,
   LogOut,
+  Repeat,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -27,7 +28,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
 export function AppHeader() {
-  const { user, logout } = useAuth();
+  const { user, logout, switchUserRole } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const pathSegments = pathname.split('/').filter(Boolean);
@@ -37,6 +38,13 @@ export function AppHeader() {
     const name = segment.charAt(0).toUpperCase() + segment.slice(1);
     return { href, name, isLast };
   });
+
+  const handleSwitchRole = () => {
+    if (user) {
+      const newRole = user.role === 'vendor' ? 'supplier' : 'vendor';
+      switchUserRole(newRole);
+    }
+  }
 
   return (
     <header className={cn(
@@ -94,6 +102,10 @@ export function AppHeader() {
           <DropdownMenuItem className="light:focus:bg-glass-hover">
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleSwitchRole} className="light:focus:bg-glass-hover">
+            <Repeat className="mr-2 h-4 w-4" />
+            <span>Switch to {user?.role === 'vendor' ? 'Supplier' : 'Vendor'}</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator className="light:bg-white/10" />
           <DropdownMenuItem onClick={() => logout(router)} className="light:focus:bg-glass-hover">

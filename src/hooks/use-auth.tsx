@@ -14,11 +14,12 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { app, db, auth } from '@/lib/firebase';
 import { type AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import type { User, Role } from '@/lib/types';
 import { FirebaseError } from 'firebase/app';
+import { useToast } from './use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -26,6 +27,7 @@ interface AuthContextType {
   signupWithPhone: (phoneNumber: string, password: string, additionalData: { role: Role; businessName: string }) => Promise<void>;
   loginWithPhone: (phoneNumber: string, password: string) => Promise<void>;
   logout: (router: AppRouterInstance) => Promise<void>;
+  switchUserRole: (newRole: Role) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,6 +44,7 @@ const fetchUserDocument = async (uid: string): Promise<Omit<User, 'uid'> | null>
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
@@ -96,12 +99,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/');
   };
 
+  const switchUserRole = async (newRole: Role) => {
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Not authenticated' });
+        return;
+    }
+    setLoading(true);
+    try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, { role: newRole });
+        setUser(prevUser => prevUser ? { ...prevUser, role: newRole } : null);
+        toast({ title: 'Role Switched', description: `You are now a ${newRole}. Redirecting...` });
+        // The redirect will be handled by the layout component
+    } catch (error) {
+        console.error("Error switching role:", error);
+        toast({ variant: 'destructive', title: 'Error switching role' });
+    } finally {
+        setLoading(false);
+    }
+  }
+
   const value = {
     user,
     loading,
     signupWithPhone,
     loginWithPhone,
     logout,
+    switchUserRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
