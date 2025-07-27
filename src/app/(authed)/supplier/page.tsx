@@ -7,13 +7,14 @@ import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Star } from 'lucide-react';
+import { Star, Mail, Phone, MapPin, ShieldCheck } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { type User } from '@/lib/types';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 function StarRating({ rating, className }: { rating: number; className?: string }) {
   return (
@@ -32,34 +33,49 @@ function StarRating({ rating, className }: { rating: number; className?: string 
 }
 
 const SupplierCard = ({ supplier }: { supplier: User }) => (
-  <Card className="bg-glass hover:shadow-lg transition-shadow duration-300 flex flex-col">
-    <CardHeader>
-        <div className="flex items-start gap-4">
-            <Avatar className="w-16 h-16 border">
-                <AvatarImage src={`https://placehold.co/64x64?text=${supplier.businessName?.[0]}`} data-ai-hint="company logo" />
-                <AvatarFallback>{supplier.businessName?.[0]}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-                 <CardTitle>{supplier.businessName}</CardTitle>
-                 <div className="flex items-center gap-2 mt-1">
-                    <StarRating rating={supplier.points / 1000} /> 
-                    <span className="text-sm text-muted-foreground">({supplier.points} points)</span>
+    <Card className="bg-glass hover:shadow-lg transition-shadow duration-300 flex flex-col">
+        <CardHeader>
+            <div className="flex items-start gap-4">
+                <Avatar className="w-16 h-16 border">
+                    <AvatarImage src={`https://placehold.co/64x64?text=${supplier.businessName?.[0]}`} data-ai-hint="company logo" />
+                    <AvatarFallback>{supplier.businessName?.[0]}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                     <CardTitle>{supplier.businessName}</CardTitle>
+                     <div className="flex items-center gap-2 mt-1">
+                        <StarRating rating={supplier.points / 1000} />
+                        <span className="text-sm text-muted-foreground">({supplier.points} points)</span>
+                    </div>
                 </div>
             </div>
-        </div>
-    </CardHeader>
-    <CardContent className="flex-grow">
-      <p className="text-muted-foreground text-sm mb-4 h-10 overflow-hidden">
-          {/* Placeholder for description. User documents don't have this field yet. */}
-          A leading supplier in the industry.
-      </p>
-    </CardContent>
-    <CardFooter>
-      <Button asChild className="w-full">
-        <Link href={`/supplier/${supplier.uid}`}>View Profile</Link>
-      </Button>
-    </CardFooter>
-  </Card>
+        </CardHeader>
+        <CardContent className="flex-grow space-y-3 text-sm">
+             {supplier.email && (
+                <div className="flex items-center gap-3 text-muted-foreground">
+                    <Mail className="w-4 h-4 flex-shrink-0" />
+                    <span>{supplier.email}</span>
+                </div>
+             )}
+             {supplier.phoneNumber && (
+                <div className="flex items-center gap-3 text-muted-foreground">
+                    <Phone className="w-4 h-4 flex-shrink-0" />
+                    <span>{supplier.phoneNumber}</span>
+                </div>
+             )}
+            {supplier.location && (
+                <div className="flex items-center gap-3 text-muted-foreground">
+                    <MapPin className="w-4 h-4 flex-shrink-0" />
+                    <span>{supplier.location.latitude}, {supplier.location.longitude}</span>
+                </div>
+            )}
+        </CardContent>
+        <CardFooter>
+            <Badge variant={supplier.fssaiStatus === 'verified' ? 'success' : 'destructive'} className="w-full justify-center py-1">
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                FSSAI: {supplier.fssaiStatus.charAt(0).toUpperCase() + supplier.fssaiStatus.slice(1)}
+            </Badge>
+        </CardFooter>
+    </Card>
 );
 
 export default function SupplierListPage() {
@@ -85,8 +101,8 @@ export default function SupplierListPage() {
             </AlertDescription>
         </Alert>
        )}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {loading && [...Array(8)].map((_, i) => <Skeleton key={i} className="h-[250px] w-full" />)}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {loading && [...Array(6)].map((_, i) => <Skeleton key={i} className="h-[280px] w-full" />)}
         {!loading && suppliers?.map(supplier => (
             <SupplierCard key={supplier.uid} supplier={supplier as User} />
         ))}
