@@ -79,7 +79,7 @@ export type DiaryEntry = {
  * Represents a bid requirement posted by a vendor in the marketplace.
  * @property {string} id - The unique identifier for the bid.
  * @property {string} vendorId - The UID of the vendor who posted the bid.
- * @property {string} vendorName - The business name of the vendor.
+ *property {string} vendorName - The business name of the vendor.
  * @property {string} item - The description of the item required.
  * @property {number} quantity - The amount of the item required.
  * @property {number} targetPrice - The vendor's target price per unit.

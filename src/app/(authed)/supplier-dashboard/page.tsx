@@ -32,6 +32,9 @@ export default function SupplierDashboardPage() {
                 <section id="stock">
                     <StockBasket />
                 </section>
+                 <section id="my-bids">
+                    <MyBidsList />
+                </section>
             </div>
             <div className="space-y-6">
                 <section id="alerts">
@@ -46,10 +49,6 @@ export default function SupplierDashboardPage() {
                 </section>
             </div>
         </div>
-
-        <section id="my-bids">
-            <MyBidsList />
-        </section>
 
         <section id="bids">
             <MarketplaceBidsList />

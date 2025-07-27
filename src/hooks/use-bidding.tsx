@@ -13,7 +13,7 @@ import {
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, writeBatch, query, orderBy, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Bid, Proposal, OrderStatus } from '@/lib/types';
+import type { Bid, Proposal, Order } from '@/lib/types';
 import { useAuth } from './use-auth';
 import { useToast } from './use-toast';
 import { FirebaseError } from 'firebase/app';

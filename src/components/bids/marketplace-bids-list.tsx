@@ -216,7 +216,7 @@ function BidCard({ bid }: { bid: Bid }) {
             await deleteBid(bid.id);
             toast({ title: 'Bid Deleted', description: 'Your requirement has been removed from the marketplace.' });
         } catch (error) {
-            // Error toast handled in hook
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the bid.' });
         } finally {
             setIsDeleting(false);
         }
@@ -324,6 +324,10 @@ export function MarketplaceBidsList() {
     const { user } = useAuth();
     const { bids, loading, error } = useBidding();
     
+    const openBids = useMemo(() => {
+        return bids.filter(bid => bid.status === 'open');
+    }, [bids]);
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -352,7 +356,7 @@ export function MarketplaceBidsList() {
                 </div>
             )}
 
-            {!loading && bids && bids.length === 0 && !error && (
+            {!loading && openBids.length === 0 && !error && (
                 <Card className="bg-glass">
                     <CardContent className="p-6 text-center text-muted-foreground">
                         No active requirements in the marketplace.
@@ -361,12 +365,10 @@ export function MarketplaceBidsList() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {!loading &&
-                    bids &&
-                    bids.map(bid => {
-                        if (!bid?.id) return null;
-                        return <BidCard key={bid.id} bid={bid} />;
-                    })}
+                {!loading && openBids.map(bid => {
+                    if (!bid?.id) return null;
+                    return <BidCard key={bid.id} bid={bid} />;
+                })}
             </div>
         </div>
     );
