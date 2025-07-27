@@ -20,7 +20,8 @@ import {
     doc,
     writeBatch,
     where,
-    getDocs
+    getDocs,
+    deleteDoc
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
@@ -34,7 +35,7 @@ interface BiddingContextType {
     loading: boolean;
     error: FirebaseError | undefined;
     isAddingBid: boolean;
-    addBid: (bidData: Omit<Bid, 'id' | 'createdAt' | 'vendorId' | 'vendorName' | 'status' | 'proposals'>) => Promise<void>;
+    addBid: (bidData: Omit<Bid, 'id' | 'createdAt' | 'vendorId' | 'vendorName' | 'status' | 'acceptedProposalId'>) => Promise<void>;
     isAddingProposal: boolean;
     addProposal: (bidId: string, proposalData: { price: number }) => Promise<void>;
     isAcceptingProposal: boolean;
@@ -77,7 +78,7 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
     }, [proposals, user, bids]);
 
 
-    const addBid = async (bidData: Omit<Bid, 'id' | 'createdAt' | 'vendorId' | 'vendorName' | 'status' | 'proposals'>) => {
+    const addBid = async (bidData: Omit<Bid, 'id' | 'createdAt' | 'vendorId' | 'vendorName' | 'status' | 'acceptedProposalId'>) => {
         if (!user || user.role !== 'vendor') {
             toast({ variant: 'destructive', title: 'Action not allowed', description: 'Only vendors can post requirements.' });
             return;
@@ -133,7 +134,6 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
         try {
             const batch = writeBatch(db);
 
-            // 1. Update the bid status to 'closed' and mark accepted proposal
             const bidRef = doc(db, 'bids', bidId);
             const bid = bids?.find(b => b.id === bidId);
             const proposal = proposals?.find(p => p.id === proposalId);
@@ -142,7 +142,6 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
 
             batch.update(bidRef, { status: 'closed', acceptedProposalId: proposalId });
             
-            // 2. Create a new order
             const orderRef = doc(collection(db, 'orders'));
             const newOrder: Omit<Order, 'id'> = {
                 vendorId: bid.vendorId,
@@ -152,6 +151,8 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
                 status: 'Order Placed',
                 orderDate: serverTimestamp() as Timestamp,
                 deliveryTimestamp: null,
+                preDeliveryImage: null,
+                postDeliveryImage: null,
             };
             batch.set(orderRef, newOrder);
 
@@ -173,12 +174,12 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
         }
         setIsDeletingBid(true);
         try {
-            // Also delete all proposals associated with this bid
             const proposalsToDeleteQuery = query(proposalsCollection, where('bidId', '==', bidId));
             const proposalsSnapshot = await getDocs(proposalsToDeleteQuery);
             
             const batch = writeBatch(db);
             proposalsSnapshot.forEach(doc => batch.delete(doc.ref));
+            
             batch.delete(doc(db, 'bids', bidId));
             
             await batch.commit();

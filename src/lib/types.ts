@@ -76,8 +76,6 @@ export type DiaryEntry = {
   createdAt: Timestamp;
 };
 
-// --- New Bidding System Types ---
-
 export type BidStatus = 'open' | 'closed';
 
 export interface Bid {
