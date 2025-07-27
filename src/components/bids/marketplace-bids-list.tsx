@@ -216,7 +216,7 @@ function BidCard({ bid }: { bid: Bid }) {
             await deleteBid(bid.id);
             toast({ title: 'Bid Deleted', description: 'Your requirement has been removed from the marketplace.' });
         } catch (error) {
-            console.log(error)
+            console.log(error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the bid.' });
         } finally {
             setIsDeleting(false);
@@ -321,6 +321,10 @@ function AcceptedProposalInfo({ bid }: { bid: Bid }) {
 export function MarketplaceBidsList() {
     const { user } = useAuth();
     const { bids, loading, error } = useBidding();
+    
+    const openBids = useMemo(() => {
+        return bids ? bids.filter(bid => bid.status === 'open') : [];
+    }, [bids]);
 
     return (
         <div className="space-y-6">

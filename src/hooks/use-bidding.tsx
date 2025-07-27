@@ -46,9 +46,10 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
     const { user } = useAuth();
     const { toast } = useToast();
 
-    // Fetch Bids from Firestore
-    const bidsQuery = useMemo(() => query(collection(db, 'bids'), orderBy('createdAt', 'desc')), []);
-    const [bids, loading, error] = useCollectionData(bidsQuery, { idField: 'id' });
+    // Manage bids in-memory
+    const [bids, setBids] = useState<Bid[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<Error | undefined>();
 
     // Manage proposals in-memory
     const [proposals, setProposals] = useState<Proposal[]>([]);
@@ -58,21 +59,22 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
             toast({ variant: 'destructive', title: 'Permission Denied' });
             return;
         }
-        const bidsCollection = collection(db, 'bids');
-        await addDoc(bidsCollection, {
+
+        const newBid: Bid = {
+            id: `bid_${Date.now()}_${Math.random()}`,
             ...newBidData,
             vendorId: user.uid,
             vendorName: user.businessName || 'Anonymous Vendor',
             status: 'open',
-            createdAt: serverTimestamp(),
-        });
+            createdAt: Timestamp.now(),
+        };
+        
+        setBids(prev => [newBid, ...prev]);
+
     }, [user, toast]);
     
     const deleteBid = useCallback(async (bidId: string) => {
-        // This will only delete from Firestore.
-        // We don't need to manage local state as react-firebase-hooks does it.
-        const bidDocRef = doc(db, 'bids', bidId);
-        await deleteDoc(bidDocRef);
+       setBids(prev => prev.filter(b => b.id !== bidId));
     }, []);
 
     const addProposal = useCallback(async (bidId: string, newProposalData: Omit<Proposal, 'id' | 'status' | 'createdAt' | 'bidId' | 'supplierId' | 'supplierName'>) => {
@@ -101,12 +103,10 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
 
-        // Close bid in Firestore
-        const bidDocRef = doc(db, 'bids', bidId);
-        await updateDoc(bidDocRef, {
-            status: 'closed',
-            acceptedProposalId: proposalId,
-        });
+        // Close bid in local state
+        setBids(prev => prev.map(b => 
+            b.id === bidId ? { ...b, status: 'closed', acceptedProposalId: proposalId } : b
+        ));
 
         // Update local proposal state
         setProposals(prev => prev.map(p => {
@@ -122,7 +122,7 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
     }, [proposals]);
 
     const value = {
-        bids: (bids || []) as Bid[],
+        bids: bids,
         proposals,
         loading,
         error,
