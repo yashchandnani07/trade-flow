@@ -33,6 +33,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const fetchUserDocument = async (uid: string): Promise<Omit<User, 'uid'> | null> => {
+    if (!db) return null;
     const userDocRef = doc(db, "users", uid);
     const userDoc = await getDoc(userDocRef);
     if (userDoc.exists()) {
@@ -78,6 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signupWithPhone = async (phoneNumber: string, password: string, additionalData: { role: Role; businessName: string }) => {
+    if (!auth || !db) throw new Error("Firebase not initialized");
     const email = `${phoneNumber}@tradeflow.app`;
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
@@ -105,19 +107,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const loginWithPhone = async (phoneNumber: string, password: string) => {
+    if (!auth) throw new Error("Firebase not initialized");
     const email = `${phoneNumber}@tradeflow.app`;
     await signInWithEmailAndPassword(auth, email, password);
   }
 
   const logout = async (router: AppRouterInstance) => {
+    if (!auth) return;
     await signOut(auth);
     setUser(null);
     router.push('/');
   };
 
   const switchUserRole = async (newRole: Role) => {
-    if (!user) {
-        toast({ variant: 'destructive', title: 'Not authenticated' });
+    if (!user || !db) {
+        toast({ variant: 'destructive', title: 'Not authenticated or DB not available' });
         return;
     }
     setLoading(true);

@@ -1,3 +1,4 @@
+
 'use client';
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
@@ -18,12 +19,21 @@ let db: Firestore;
 
 if (typeof window !== 'undefined') {
     if (!getApps().length) {
-        app = initializeApp(firebaseConfig);
+        try {
+            app = initializeApp(firebaseConfig);
+        } catch (e) {
+            console.error("Failed to initialize Firebase", e);
+        }
     } else {
         app = getApp();
     }
-    auth = getAuth(app);
-    db = getFirestore(app);
+    
+    try {
+        auth = getAuth(app);
+        db = getFirestore(app);
+    } catch (e) {
+        console.error("Failed to get Auth or Firestore instance", e)
+    }
 }
 
 // @ts-ignore
