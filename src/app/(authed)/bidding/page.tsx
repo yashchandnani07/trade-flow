@@ -1,17 +1,5 @@
-
-'use client';
-import { MarketplaceBidsList } from "@/components/bids/marketplace-bids-list";
-import { MyBidsList } from "@/components/bids/my-bids-list";
-import { MyRequirementsList } from "@/components/bids/my-requirements-list";
-import { useAuth } from "@/hooks/use-auth";
-
+// This file is intentionally left blank. 
+// We will rebuild the bidding page from scratch.
 export default function BiddingPage() {
-    const { user } = useAuth();
-    return (
-        <div className="space-y-8">
-            {user?.role === 'vendor' && <MyRequirementsList />}
-            {user?.role === 'supplier' && <MyBidsList />}
-            <MarketplaceBidsList />
-        </div>
-    );
+    return null;
 }
