@@ -360,11 +360,10 @@ export function MarketplaceBidsList() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {!loading &&
                     bids &&
-                    bids
-                        .filter(bid => !!bid.id) // Ensure bid has an ID
-                        .map(bid => (
-                            <BidCard key={bid.id} bid={bid} />
-                        ))}
+                    bids.map(bid => {
+                        if (!bid || !bid.id) return null;
+                        return <BidCard key={bid.id} bid={bid} />;
+                    })}
             </div>
         </div>
     );
