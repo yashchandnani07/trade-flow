@@ -95,3 +95,10 @@ export type StockItem = {
     expiryDate: Timestamp;
     ownerId: string; // Changed from supplierId to be generic
 }
+
+export type DiaryEntry = {
+  id: string;
+  ownerId: string;
+  content: string;
+  createdAt: Timestamp;
+};
