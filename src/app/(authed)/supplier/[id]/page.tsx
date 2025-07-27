@@ -35,7 +35,7 @@ function StarRating({ rating, className }: { rating: number; className?: string 
 
 export default function SupplierProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const supplierRef = useMemo(() => doc(db, 'suppliers', params.id), [params.id]);
+  const supplierRef = useMemo(() => doc(db, 'users', params.id), [params.id]);
   const [supplier, loading, error] = useDocumentData(supplierRef, { idField: 'id' });
 
   const pageContent = () => {
