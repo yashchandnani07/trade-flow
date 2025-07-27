@@ -1,11 +1,11 @@
 
 'use client';
-import KeyMetrics from '@/app/supplier/components/key-metrics';
-import OrderManagement from '@/app/supplier/components/order-management';
-import FactoryDiary from '@/app/supplier/components/factory-diary';
-import ComplianceStatus from '@/app/supplier/components/compliance-status';
+import KeyMetrics from '@/app/(authed)/supplier-dashboard/components/key-metrics';
+import OrderManagement from '@/app/(authed)/supplier-dashboard/components/order-management';
+import FactoryDiary from '@/app/(authed)/supplier-dashboard/components/factory-diary';
+import ComplianceStatus from '@/app/(authed)/supplier-dashboard/components/compliance-status';
 import { MarketplaceBidsList } from '@/components/bids/marketplace-bids-list';
-import TrustBadges from '@/app/supplier/components/trust-badges';
+import TrustBadges from '@/app/(authed)/supplier-dashboard/components/trust-badges';
 import { useAuth } from '@/hooks/use-auth';
 
 export default function SupplierDashboardPage() {
