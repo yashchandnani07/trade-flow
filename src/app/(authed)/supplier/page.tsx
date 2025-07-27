@@ -21,7 +21,7 @@ function StarRating({ rating, className }: { rating: number; className?: string 
     <div className={cn("flex items-center gap-0.5", className)}>
       {[...Array(5)].map((_, i) => (
         <Star
-          key={i}
+          key={`star-${i}`}
           className={cn(
             "w-4 h-4",
             i < Math.round(rating) ? "text-primary fill-primary" : "text-muted-foreground/50"
