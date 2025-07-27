@@ -222,6 +222,7 @@ function BidCard({ bid }: { bid: Bid }) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not submit your offer.' });
         } finally {
             setIsSubmitting(false);
+             toast({ title: 'Offer Submitted!', description: `Your bid for ${bid.item} has been placed.` }); // Show confirmation alert after submission
         }
     };
 
@@ -245,7 +246,7 @@ function BidCard({ bid }: { bid: Bid }) {
         }
     };
     
-    const showBidForm = user?.role === 'supplier' && bid.status === 'open' && !isVendorOwner && !hasUserBid;
+    const showBidForm = user?.role === 'supplier' && bid.status === 'open' && !hasUserBid;
 
     return (
         <Card className="flex flex-col bg-glass">
@@ -373,3 +374,5 @@ export function MarketplaceBidsList() {
         </div>
     );
 }
+
+    
