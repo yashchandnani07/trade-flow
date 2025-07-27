@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { List, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
-import { Timestamp } from 'firebase/firestore';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 
@@ -22,8 +21,8 @@ export function MyBidsList() {
         return proposals
             .filter(p => p.supplierId === user.uid)
             .sort((a, b) => {
-                const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(0);
-                const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : new Date(0);
+                const dateA = new Date(a.createdAt);
+                const dateB = new Date(b.createdAt);
                 return dateB.getTime() - dateA.getTime();
             });
     }, [proposals, user]);
@@ -69,7 +68,7 @@ export function MyBidsList() {
                                 <TableRow key={proposal.id}>
                                     <TableCell className="font-bold">${proposal.price.toFixed(2)}</TableCell>
                                     <TableCell>
-                                        {proposal.createdAt instanceof Timestamp ? format(proposal.createdAt.toDate(), 'PPP') : 'Invalid Date'}
+                                        {format(new Date(proposal.createdAt), 'PPP')}
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant={proposal.status === 'accepted' ? 'success' : 'secondary'} className="capitalize">

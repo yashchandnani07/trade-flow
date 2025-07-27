@@ -8,22 +8,8 @@ import {
   useContext,
   ReactNode,
   useCallback,
-  useMemo,
 } from 'react';
 import type { Bid, Proposal } from '@/lib/types';
-import { db } from '@/lib/firebase';
-import {
-    collection,
-    addDoc,
-    serverTimestamp,
-    query,
-    orderBy,
-    deleteDoc,
-    doc,
-    updateDoc,
-    Timestamp,
-} from 'firebase/firestore';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { useAuth } from './use-auth';
 import { useToast } from './use-toast';
 
@@ -42,17 +28,55 @@ interface BiddingContextType {
 
 const BiddingContext = createContext<BiddingContextType | undefined>(undefined);
 
+const BIDS_STORAGE_KEY = 'tradeflow_bids';
+const PROPOSALS_STORAGE_KEY = 'tradeflow_proposals';
+
+
 export const BiddingProvider = ({ children }: { children: ReactNode }) => {
     const { user } = useAuth();
     const { toast } = useToast();
 
-    // Manage bids in-memory
     const [bids, setBids] = useState<Bid[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<Error | undefined>();
-
-    // Manage proposals in-memory
     const [proposals, setProposals] = useState<Proposal[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<Error | undefined>();
+    
+    // Load from localStorage on initial mount
+    useEffect(() => {
+        try {
+            const storedBids = window.localStorage.getItem(BIDS_STORAGE_KEY);
+            if (storedBids) {
+                setBids(JSON.parse(storedBids));
+            }
+            const storedProposals = window.localStorage.getItem(PROPOSALS_STORAGE_KEY);
+            if(storedProposals) {
+                setProposals(JSON.parse(storedProposals));
+            }
+        } catch (err) {
+            console.error("Failed to load from localStorage", err);
+            setError(err instanceof Error ? err : new Error("Failed to load data"));
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    // Save to localStorage whenever bids or proposals change
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(BIDS_STORAGE_KEY, JSON.stringify(bids));
+        } catch (err) {
+            console.error("Failed to save bids to localStorage", err);
+        }
+    }, [bids]);
+    
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(PROPOSALS_STORAGE_KEY, JSON.stringify(proposals));
+        } catch (err) {
+            console.error("Failed to save proposals to localStorage", err);
+        }
+    }, [proposals]);
+
 
     const addBid = useCallback(async (newBidData: Omit<Bid, 'id' | 'status' | 'createdAt' | 'vendorId' | 'vendorName' | 'acceptedProposalId'>) => {
         if (!user || user.role !== 'vendor') {
@@ -66,7 +90,7 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
             vendorId: user.uid,
             vendorName: user.businessName || 'Anonymous Vendor',
             status: 'open',
-            createdAt: Timestamp.now(),
+            createdAt: new Date().toISOString(),
         };
         
         setBids(prev => [newBid, ...prev]);
@@ -89,7 +113,7 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
             supplierId: user.uid,
             supplierName: user.businessName || 'Anonymous Supplier',
             status: 'pending',
-            createdAt: Timestamp.now(), // Use a client-side timestamp for in-memory
+            createdAt: new Date().toISOString(),
             ...newProposalData,
         };
 

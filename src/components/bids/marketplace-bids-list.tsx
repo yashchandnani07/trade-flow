@@ -16,7 +16,6 @@ import { Gavel, Loader2, Plus, AlertTriangle, CheckCircle, Trash2, Handshake, Me
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
-import { Timestamp } from 'firebase/firestore';
 
 
 function CreateBidDialog() {
@@ -224,7 +223,7 @@ function BidCard({ bid }: { bid: Bid }) {
     };
     
     const showBidActions = user?.role === 'supplier' && bid.status === 'open';
-    const createdAtDate = bid.createdAt instanceof Timestamp ? bid.createdAt.toDate() : new Date();
+    const createdAtDate = useMemo(() => new Date(bid.createdAt), [bid.createdAt]);
 
     return (
         <Card className="flex flex-col bg-glass">
