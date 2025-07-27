@@ -39,6 +39,8 @@ import {
   KeyRound,
   Loader2,
   Phone,
+  Boxes,
+  Bell,
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -97,16 +99,16 @@ const appFeatures = [
     gradient: "bg-gradient-to-br from-yellow-500/10 to-orange-500/10",
   },
   {
-    icon: MessageCircle,
-    title: "WhatsApp Updates",
-    description: "Free delivery updates right on WhatsApp.",
+    icon: Boxes,
+    title: "Stock Management",
+    description: "Manage your inventory effectively with our intuitive stock tracking tools.",
     color: "from-green-500 to-emerald-500",
     gradient: "bg-gradient-to-br from-green-500/10 to-emerald-500/10",
   },
   {
-    icon: ThumbsUp,
-    title: "Post-Delivery Ratings",
-    description: "Rate every order on freshness, quantity accuracy, and delivery time.",
+    icon: Bell,
+    title: "Expiry Alerts",
+    description: "Get timely alerts for expiring products to reduce wastage and optimize stock.",
     color: "from-red-500 to-rose-500",
     gradient: "bg-gradient-to-br from-red-500/10 to-rose-500/10",
   },
@@ -257,9 +259,9 @@ export default function SupplyChainConnect() {
   };
   
   const headlineWords = [
-    { text: "Secure.", color: "text-[#6ee7b7]" },
-    { text: "Fast.", color: "text-[#60a5fa]" },
-    { text: "Fair.", color: "text-[#c084fc]" },
+    { text: "Secure.", color: "text-emerald-400" },
+    { text: "Fast.", color: "text-blue-400" },
+    { text: "Fair.", color: "text-purple-400" },
   ];
 
   const headlineVariants = {
