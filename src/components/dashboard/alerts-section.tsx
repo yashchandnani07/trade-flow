@@ -58,7 +58,7 @@ export function AlertsSection() {
             <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
               <PartyPopper className="w-12 h-12 mb-4 text-green-500" />
               <p className="font-semibold text-lg">All good!</p>
-              <p className="text-sm">No items are expiring in the next 5 days.</p>
+              <p className="text-sm">No items are expiring in the next 30 days.</p>
             </div>
           ) : (
              <ScrollArea className="h-[300px] w-full pr-4">
