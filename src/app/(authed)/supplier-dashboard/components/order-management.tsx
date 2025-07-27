@@ -60,7 +60,7 @@ export default function OrderManagement() {
                                     <TableCell className="font-mono text-xs">{order.id}</TableCell>
                                     <TableCell>{order.vendorId}</TableCell> {/* Placeholder, ideally we'd fetch vendor name */}
                                     <TableCell><Badge>{order.status}</Badge></TableCell>
-                                    <TableCell>
+                                    <TableCell className="text-right">
                                         <Button asChild variant="outline" size="sm">
                                             <Link href={`/orders/${order.id}`}>Manage</Link>
                                         </Button>

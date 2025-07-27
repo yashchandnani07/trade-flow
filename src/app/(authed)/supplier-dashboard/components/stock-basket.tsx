@@ -200,16 +200,18 @@ export default function StockBasket() {
                                 );
                             })
                         ) : (
+                           !loading && (
                             <TableRow>
                                 <TableCell colSpan={4} className="h-24 text-center">
                                     No stock items yet. Add one to get started.
                                 </TableCell>
                             </TableRow>
+                           )
                         )}
                          {error && (
                             <TableRow>
-                                <TableCell colSpan={4}>
-                                     <div className="text-destructive-foreground text-center py-4">{error.message}</div>
+                                <TableCell colSpan={4} className="text-center text-destructive py-4">
+                                     Error: {error.message}
                                 </TableCell>
                             </TableRow>
                          )}
