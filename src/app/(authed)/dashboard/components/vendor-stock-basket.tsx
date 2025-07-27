@@ -165,9 +165,18 @@ export default function VendorStockBasket() {
                                 const isExpiringSoon = daysUntilExpiry <= 7 && daysUntilExpiry > 0;
                                 const isExpired = daysUntilExpiry <= 0;
 
-                                let expiryVariant: "destructive" | "warning" | null = null;
+                                let expiryVariant: "destructive" | "warning" | "default" = "default";
                                 if (isExpired) expiryVariant = "destructive";
                                 else if (isExpiringSoon) expiryVariant = "warning";
+                                
+                                let badgeVariant: "destructive" | "default" | undefined;
+                                let badgeClass = "";
+                                if (isExpired) {
+                                    badgeVariant = "destructive";
+                                } else if (isExpiringSoon) {
+                                    badgeVariant = "default";
+                                    badgeClass = "bg-yellow-500 hover:bg-yellow-600";
+                                }
 
                                 return (
                                     <TableRow key={item.id} className={cn(expiryVariant === 'warning' && 'bg-yellow-500/10', expiryVariant === 'destructive' && 'bg-destructive/10')}>
@@ -177,8 +186,8 @@ export default function VendorStockBasket() {
                                             <div className="flex items-center gap-2">
                                                 <CalendarIcon className="w-4 h-4" />
                                                 <span>{format(item.expiryDate.toDate(), 'PPP')}</span>
-                                                 {expiryVariant && (
-                                                    <Badge variant={expiryVariant === 'warning' ? 'default' : 'destructive'} className={cn(expiryVariant === 'warning' && 'bg-yellow-500 hover:bg-yellow-600')}>
+                                                 {badgeVariant && (
+                                                    <Badge variant={badgeVariant} className={cn(badgeClass)}>
                                                         {isExpired ? 'Expired' : `in ${daysUntilExpiry}d`}
                                                     </Badge>
                                                  )}
@@ -203,8 +212,8 @@ export default function VendorStockBasket() {
                         )}
                          {error && (
                             <TableRow>
-                                <TableCell colSpan={4}>
-                                     <div className="text-destructive-foreground text-center py-4">{error.message}</div>
+                                <TableCell colSpan={4} className="text-center text-destructive py-4">
+                                     Error: {error.message}
                                 </TableCell>
                             </TableRow>
                          )}
