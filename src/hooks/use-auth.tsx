@@ -48,7 +48,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      setLoading(true); // Start loading when auth state changes
       if (firebaseUser) {
         const userData = await fetchUserDocument(firebaseUser.uid);
         if (userData) {
@@ -64,28 +63,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setUser(null);
       }
-      setLoading(false); // Stop loading after user data is processed
+      setLoading(false); 
     });
 
     return () => unsubscribe();
   }, []);
 
   const signupWithPhone = async (phoneNumber: string, password: string, additionalData: { role: Role; businessName: string }) => {
-    // Firebase doesn't support phone+password directly. We use the phone number as the email.
-    // To make this work, we'll append a dummy domain.
     const email = `${phoneNumber}@tradeflow.app`;
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
 
     const userDocRef = doc(db, "users", firebaseUser.uid);
+    
+    const newUserBadges = [];
+    if(additionalData.role === 'supplier') {
+        newUserBadges.push({
+            name: 'Newly Joined',
+            dateAwarded: serverTimestamp()
+        });
+    }
+
     await setDoc(userDocRef, {
         ...additionalData,
-        email: firebaseUser.email, // Store the dummy email
+        email: firebaseUser.email,
         phoneNumber,
         fssaiStatus: 'pending',
         location: null,
         createdAt: serverTimestamp(),
         points: 0,
+        badges: newUserBadges,
     });
   }
 

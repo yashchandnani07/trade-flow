@@ -39,6 +39,11 @@ export type Alert = AiEnhancedAlertOutput & {
 
 export type Role = 'vendor' | 'supplier' | 'farmer';
 
+export type BadgeInfo = {
+  name: string;
+  dateAwarded: Timestamp;
+};
+
 export interface User {
   uid: string;
   email: string | null;
@@ -52,6 +57,7 @@ export interface User {
   };
   location: GeoPoint | null;
   points: number;
+  badges?: BadgeInfo[];
 }
 
 export type Bid = {
