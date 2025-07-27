@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, FormEvent, useMemo } from 'react';
+import { useState, FormEvent, useMemo, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useBidding } from '@/hooks/use-bidding';
 import type { Bid, Proposal } from '@/lib/types';
@@ -358,7 +358,7 @@ export function MarketplaceBidsList() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {!loading && bids.map(bid => (
+                {!loading && bids && bids.map(bid => (
                     <BidCard key={bid.id} bid={bid} />
                 ))}
             </div>
