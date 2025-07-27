@@ -15,34 +15,23 @@ import { Timestamp } from 'firebase/firestore';
 
 export function MyBidsList() {
     const { user } = useAuth();
-    const { proposals, loading, error } = useBidding();
-
-    const myProposals = useMemo(() => {
-        if (!user || !proposals) return [];
-        return proposals
-            .filter(p => p.supplierId === user.uid)
-            .sort((a, b) => {
-                 const dateA = a.createdAt ? (a.createdAt as Timestamp).toDate() : new Date();
-                 const dateB = b.createdAt ? (b.createdAt as Timestamp).toDate() : new Date();
-                return dateB.getTime() - dateA.getTime();
-            });
-    }, [proposals, user]);
+    const { myBids, loading, error } = useBidding();
 
     return (
         <Card className="glassmorphic mb-6">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <List /> My Submitted Proposals
+                    <List /> My Submitted Bids
                 </CardTitle>
-                <CardDescription>A list of all the proposals you have submitted.</CardDescription>
+                <CardDescription>A list of all the bids you have submitted.</CardDescription>
             </CardHeader>
             <CardContent>
                  {error && (
                      <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Error Loading Your Proposals</AlertTitle>
+                        <AlertTitle>Error Loading Your Bids</AlertTitle>
                         <AlertDescription>
-                            There was a problem fetching your proposals. If you just created the Firestore index, please wait a few minutes for it to activate.
+                            There was a problem fetching your bids.
                              <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
                         </AlertDescription>
                     </Alert>
@@ -50,34 +39,36 @@ export function MyBidsList() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Price</TableHead>
+                            <TableHead>Item</TableHead>
+                            <TableHead>Your Bid</TableHead>
                             <TableHead>Date</TableHead>
                             <TableHead>Status</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading && [...Array(3)].map((_, i) => (
-                            <TableRow key={`my-proposals-skeleton-${i}`}>
+                            <TableRow key={`my-bids-skeleton-${i}`}>
                                 <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                                 <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                                 <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
                             </TableRow>
                         ))}
                         
-                        {!loading && myProposals.length > 0 ? (
-                            myProposals.map((proposal, index) => {
-                                const createdAtDate = proposal.createdAt ? (proposal.createdAt as Timestamp).toDate() : new Date();
-                                // Create a robust key to prevent crashes, even if proposal.id is momentarily undefined.
-                                const uniqueKey = proposal.id || `${proposal.price}-${createdAtDate.getTime()}-${index}`;
+                        {!loading && myBids.length > 0 ? (
+                            myBids.map((bid) => {
+                                const createdAtDate = bid.timestamp ? (bid.timestamp as Timestamp).toDate() : new Date();
+                                const uniqueKey = bid.id || `${bid.itemId}-${createdAtDate.getTime()}`;
                                 return (
                                 <TableRow key={uniqueKey}>
-                                    <TableCell className="font-bold">${proposal.price.toFixed(2)}</TableCell>
+                                    <TableCell className="font-medium">{bid.itemName}</TableCell>
+                                    <TableCell className="font-bold">${bid.amount.toFixed(2)}</TableCell>
                                     <TableCell>
                                         {format(createdAtDate, 'PPP')}
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant={proposal.status === 'accepted' ? 'success' : 'secondary'} className="capitalize">
-                                            {proposal.status}
+                                        <Badge variant={bid.status === 'accepted' ? 'success' : 'secondary'} className="capitalize">
+                                            {bid.status}
                                         </Badge>
                                     </TableCell>
                                 </TableRow>
@@ -86,8 +77,8 @@ export function MyBidsList() {
                         ) : (
                             !loading && !error && (
                                 <TableRow>
-                                    <TableCell colSpan={3} className="h-24 text-center">
-                                        You haven't submitted any proposals yet.
+                                    <TableCell colSpan={4} className="h-24 text-center">
+                                        You haven't submitted any bids yet.
                                     </TableCell>
                                 </TableRow>
                             )

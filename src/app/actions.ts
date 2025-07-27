@@ -5,6 +5,38 @@ import { collection, getDocs, writeBatch, doc, query, where, limit, orderBy, Tim
 import { db } from "@/lib/firebase";
 import { User } from "@/lib/types";
 
+// Sample data for marketplace items
+const marketplaceItems = [
+    {
+        name: "Organic Tomatoes",
+        category: "Produce",
+        currentPrice: 2.50,
+        sellerId: "MOCK_SELLER_1",
+        sellerName: "FarmFresh Organics",
+        imageUrl: "https://placehold.co/600x400.png",
+        aiHint: "fresh tomatoes",
+    },
+    {
+        name: "Free-Range Chicken Breast",
+        category: "Meat",
+        currentPrice: 8.00,
+        sellerId: "MOCK_SELLER_2",
+        sellerName: "Happy Farms Poultry",
+        imageUrl: "https://placehold.co/600x400.png",
+        aiHint: "chicken breast",
+    },
+    {
+        name: "Sourdough Bread Loaf",
+        category: "Bakery",
+        currentPrice: 5.00,
+        sellerId: "MOCK_SELLER_3",
+        sellerName: "Artisan Bakes",
+        imageUrl: "https://placehold.co/600x400.png",
+        aiHint: "artisan bread",
+    }
+];
+
+
 export async function seedDatabase() {
   try {
     const batch = writeBatch(db);
@@ -50,7 +82,9 @@ export async function seedDatabase() {
     }
 
     const collectionsSeeded = await seedCollection("reviews", []) || await seedCollection("orders", []);
-    if (collectionsSeeded) {
+    const marketplaceSeeded = await seedCollection("marketplaceItems", marketplaceItems);
+
+    if (collectionsSeeded || marketplaceSeeded) {
         operationsPerformed = true;
     }
 
@@ -60,8 +94,8 @@ export async function seedDatabase() {
         if (updatedSuppliers > 0) {
             message = `Successfully awarded badges to ${updatedSuppliers} suppliers.`;
         }
-        if (collectionsSeeded) {
-            message = "Database seeded and badges awarded."
+        if (collectionsSeeded || marketplaceSeeded) {
+            message = "Database seeded successfully."
         }
         return { success: true, message };
     } else {
