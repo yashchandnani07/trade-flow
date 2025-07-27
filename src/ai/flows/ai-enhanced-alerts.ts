@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -12,17 +13,17 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const AiEnhancedAlertInputSchema = z.object({
-  eventType: z.string().describe('The type of event that triggered the alert (e.g., order confirmation, shipping update).'),
-  eventDetails: z.string().describe('Detailed information about the event.'),
-  userBehaviorData: z.string().describe('Data about the user behavior like past interactions, preferences, etc.'),
+  eventType: z.string().describe('The type of event that triggered the alert (e.g., Stock Expiry Warning, order confirmation, shipping update).'),
+  eventDetails: z.string().describe('Detailed information about the event. This is the primary source of information.'),
+  userBehaviorData: z.string().describe('Data about the user behavior like past interactions, preferences, etc. This provides context.'),
   urgency: z.enum(['high', 'medium', 'low']).describe('The urgency level of the event.'),
 });
 export type AiEnhancedAlertInput = z.infer<typeof AiEnhancedAlertInputSchema>;
 
 const AiEnhancedAlertOutputSchema = z.object({
-  alertTitle: z.string().describe('The title of the alert.'),
-  alertMessage: z.string().describe('The formatted alert message tailored to the user.'),
-  priority: z.enum(['high', 'medium', 'low']).describe('The priority of the alert.'),
+  alertTitle: z.string().describe('A short, clear, and concise title for the alert. Example: "Stock Expiration Warning"'),
+  alertMessage: z.string().describe('The formatted alert message. It should be a clear, user-friendly summary of the eventDetails. Example: "Your stock of Apples is nearing its expiration date!"'),
+  priority: z.enum(['high', 'medium', 'low']).describe('The priority of the alert, derived from the urgency.'),
 });
 export type AiEnhancedAlertOutput = z.infer<typeof AiEnhancedAlertOutputSchema>;
 
@@ -34,16 +35,19 @@ const aiEnhancedAlertPrompt = ai.definePrompt({
   name: 'aiEnhancedAlertPrompt',
   input: {schema: AiEnhancedAlertInputSchema},
   output: {schema: AiEnhancedAlertOutputSchema},
-  prompt: `You are an AI assistant designed to generate and format user alerts based on event type, details, user behavior, and urgency.
+  prompt: `You are an AI assistant for a supply chain management app called TradeFlow. Your task is to create a clear and concise alert for the user based on the provided information.
 
-  Based on the following information, create a concise and informative alert.  Consider the user's past behavior and the urgency of the event to tailor the message and set the appropriate priority.
+  **Instructions:**
+  1.  **Analyze the Input:** Use the event details as the main source of information.
+  2.  **Create a Title:** The \`alertTitle\` should be a short, direct summary of the event type. For a 'Stock Expiry Warning', the title should be exactly that.
+  3.  **Create a Message:** The \`alertMessage\` must be a simple, easy-to-read sentence that clearly explains the alert. For an expiring item, it should state that the item is nearing expiration.
+  4.  **Set Priority:** The \`priority\` should match the input \`urgency\`.
 
-  Event Type: {{{eventType}}}
-  Event Details: {{{eventDetails}}}
-  User Behavior Data: {{{userBehaviorData}}}
-  Urgency: {{{urgency}}}
-
-  Format the alert to be easily understood and actionable.  The alertTitle should be short and descriptive. The alertMessage should provide all necessary information. Set the priority based on the urgency and user behavior data.
+  **Alert Details:**
+  - **Event Type:** {{{eventType}}}
+  - **Urgency:** {{{urgency}}}
+  - **Event Details:** {{{eventDetails}}}
+  - **User Context:** {{{userBehaviorData}}}
   `,
 });
 

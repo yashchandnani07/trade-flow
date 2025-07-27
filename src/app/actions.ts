@@ -11,15 +11,15 @@ async function getExpiringStockAlerts(userId: string): Promise<AiEnhancedAlertOu
     if (!userId) return [];
 
     const today = startOfDay(new Date());
-    const fiveDaysFromNow = new Date(today);
-    fiveDaysFromNow.setDate(today.getDate() + 5);
+    const thirtyDaysFromNow = new Date(today);
+    thirtyDaysFromNow.setDate(today.getDate() + 30);
 
     const stockCollection = collection(db, 'stockItems');
     const q = query(
         stockCollection,
         where("ownerId", "==", userId),
         where("expiryDate", ">=", Timestamp.fromDate(today)),
-        where("expiryDate", "<=", Timestamp.fromDate(fiveDaysFromNow))
+        where("expiryDate", "<=", Timestamp.fromDate(thirtyDaysFromNow))
     );
 
     const querySnapshot = await getDocs(q);
@@ -34,17 +34,18 @@ async function getExpiringStockAlerts(userId: string): Promise<AiEnhancedAlertOu
         const dayString = daysLeft <= 1 ? "day" : "days";
 
         const input: AiEnhancedAlertInput = {
-            eventType: 'Urgent Stock Expiry',
-            eventDetails: `Your stock of ${item.name} (${item.quantity} units) is expiring in ${daysLeft} ${dayString} on ${format(item.expiryDate.toDate(), 'PPP')}.`,
-            userBehaviorData: 'User actively manages stock.',
+            eventType: 'Stock Expiry Warning',
+            eventDetails: `Your stock of ${item.name} (${item.quantity} units) is expiring in ${daysLeft} ${dayString} on ${format(item.expiryDate.toDate(), 'PPP')}. Please take action.`,
+            userBehaviorData: 'User wants to be alerted about expiring stock to minimize waste.',
             urgency: 'high',
         };
         
         return aiEnhancedAlert(input).catch(error => {
             console.error("AI Alert Generation Error:", error);
+            // Fallback to a simple, non-AI alert if the AI service fails.
             return {
-              alertTitle: "Urgent Stock Alert",
-              alertMessage: input.eventDetails,
+              alertTitle: "Stock Expiry Warning",
+              alertMessage: `Item nearing expiration: ${item.name} expires on ${format(item.expiryDate.toDate(), 'PPP')}.`,
               priority: 'high' as const,
             };
         });
