@@ -10,13 +10,11 @@ import { differenceInDays, format, startOfDay } from "date-fns";
 async function getExpiringStockAlerts(userId: string): Promise<AiEnhancedAlertOutput[]> {
     if (!userId) return [];
 
-    const today = startOfDay(new Date()); // Normalize to the beginning of the day
+    const today = startOfDay(new Date());
     const fiveDaysFromNow = new Date(today);
     fiveDaysFromNow.setDate(today.getDate() + 5);
 
     const stockCollection = collection(db, 'stockItems');
-    // This query now correctly checks for items expiring from the start of today
-    // up to the end of the 5th day.
     const q = query(
         stockCollection,
         where("ownerId", "==", userId),
@@ -31,7 +29,6 @@ async function getExpiringStockAlerts(userId: string): Promise<AiEnhancedAlertOu
 
     const expiringItems = querySnapshot.docs.map(doc => doc.data() as Omit<StockItem, 'id'>);
 
-    // Generate an AI-enhanced alert for each expiring item.
     const alertPromises = expiringItems.map(item => {
         const daysLeft = differenceInDays(item.expiryDate.toDate(), today);
         const dayString = daysLeft <= 1 ? "day" : "days";
@@ -45,7 +42,6 @@ async function getExpiringStockAlerts(userId: string): Promise<AiEnhancedAlertOu
         
         return aiEnhancedAlert(input).catch(error => {
             console.error("AI Alert Generation Error:", error);
-            // Fallback to a simple message if AI fails for a real alert
             return {
               alertTitle: "Urgent Stock Alert",
               alertMessage: input.eventDetails,
@@ -59,9 +55,10 @@ async function getExpiringStockAlerts(userId: string): Promise<AiEnhancedAlertOu
 
 
 export async function generateAlerts(userId: string): Promise<AiEnhancedAlertOutput[]> {
-  // Check for real, urgent alerts about expiring stock for the specific user.
-  const expiringStockAlerts = await getExpiringStockAlerts(userId);
-  return expiringStockAlerts;
+  // This function now ONLY checks for real expiring stock alerts.
+  // It no longer falls back to mock alerts. This ensures the UI
+  // will correctly display the "All good!" message when no items are expiring.
+  return getExpiringStockAlerts(userId);
 }
 
 export async function seedDatabase() {
