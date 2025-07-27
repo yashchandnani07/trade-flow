@@ -4,59 +4,56 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if a user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
+    // Default deny all access to prevent unauthorized access.
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    // Helper function to check if the user is the owner of a document
-    function isOwner(resource) {
-      return request.auth.uid == resource.data.ownerId;
-    }
-    
-    function isVendorOwner(resource) {
-        return request.auth.uid == resource.data.vendorId;
-    }
-
-    // Users can only read/update their own user document
+    // Users can read, update, and delete their own user document.
+    // Any authenticated user can create a user document (on signup).
     match /users/{userId} {
-      allow read, update: if isAuthenticated() && request.auth.uid == userId;
+      allow read, update, delete: if request.auth.uid == userId;
+      allow create: if request.auth.uid != null;
     }
 
-    // Allow logged-in users to read from suppliers and reviews
+    // Authenticated users can read suppliers and reviews.
+    // Any authenticated user can create a review.
     match /suppliers/{supplierId} {
-        allow read: if isAuthenticated();
+      allow read: if request.auth.uid != null;
     }
-    
     match /reviews/{reviewId} {
-        allow read: if isAuthenticated();
-        allow create: if isAuthenticated() && request.auth.uid == request.resource.data.vendorId;
-    }
-
-    // Rules for bids and proposals
-    match /bids/{bidId} {
-      allow read: if isAuthenticated();
-      allow create: if isVendorOwner(request.resource);
-
-      // Proposals sub-collection
-      match /proposals/{proposalId} {
-        allow read: if isAuthenticated();
-        // Allow suppliers to create proposals on bids
-        allow create: if isAuthenticated() && request.auth.uid == request.resource.data.supplierId;
-        // Allow proposal owners or bid owners to update proposals (for negotiation)
-        allow update: if isAuthenticated();
-      }
+      allow read: if request.auth.uid != null;
+      allow create: if request.auth.uid != null;
     }
     
-    // Rules for orders
-    match /orders/{orderId} {
-        allow read, update: if isAuthenticated() && (request.auth.uid == resource.data.vendorId || request.auth.uid == resource.data.supplierId);
-    }
-    
-    // Rules for stockItems
+    // --- CORRECTED STOCK ITEM RULES ---
     match /stockItems/{itemId} {
-      allow read, create, delete: if isAuthenticated() && isOwner(request.resource);
+      // Allow read/update/delete IFF the user is the owner of the item.
+      allow read, update, delete: if request.auth.uid == resource.data.ownerId;
+      // Allow create IFF the incoming document's ownerId matches the user's ID.
+      allow create: if request.auth.uid == request.resource.data.ownerId;
+    }
+    
+    // Bids can be read by any authenticated user and created by any authenticated user.
+    // The bid owner (vendor) can update the bid (e.g., to award it).
+    match /bids/{bidId} {
+        allow read, create: if request.auth.uid != null;
+        allow update: if request.auth.uid == resource.data.vendorId;
+
+        // Proposals can be read by the vendor or the proposing supplier.
+        // Any authenticated user can create a proposal.
+        // Updates for negotiation are allowed by either party.
+        match /proposals/{proposalId} {
+            allow read: if request.auth.uid == resource.data.vendorId || request.auth.uid == resource.data.supplierId;
+            allow create: if request.auth.uid != null;
+            allow update: if request.auth.uid == resource.data.vendorId || request.auth.uid == resource.data.supplierId;
+        }
     }
 
+    // Orders can only be read or updated by the vendor or supplier involved.
+     match /orders/{orderId} {
+        allow read, update: if request.auth.uid == resource.data.vendorId || request.auth.uid == resource.data.supplierId;
+        allow create: if request.auth.uid == request.resource.data.vendorId;
+     }
   }
 }
