@@ -34,7 +34,9 @@ export default function SupplierDashboardPage() {
                     <AlertsSection />
                 </section>
                 <ComplianceStatus />
-                <TrustBadges />
+                <section id="badges">
+                    <TrustBadges />
+                </section>
                 <FactoryDiary />
             </div>
         </div>

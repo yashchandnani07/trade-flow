@@ -27,6 +27,7 @@ import {
   MessageSquare,
   Boxes,
   Bell,
+  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -47,6 +48,7 @@ const supplierNavItems = [
     { href: "/supplier-dashboard#bids", icon: Gavel, label: "Bids" },
     { href: "/supplier-dashboard#alerts", icon: Bell, label: "Alerts" },
     { href: "/supplier-dashboard#stock", icon: Boxes, label: "My Stock" },
+    { href: "/supplier-dashboard#badges", icon: Award, label: "Badges" },
 ];
 
 const commonNavItems = [
