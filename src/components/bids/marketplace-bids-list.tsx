@@ -161,7 +161,10 @@ function BidCard({ bid }: { bid: Bid }) {
 
     const handleBidSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        if (!user || user.role !== 'supplier' || !price) return;
+        if (!user || user.role !== 'supplier' || !price) {
+            toast({ variant: "destructive", title: "Bid Error", description: "Price cannot be empty."});
+            return;
+        }
         setIsSubmitting(true);
         try {
             const proposalData = {
@@ -183,8 +186,10 @@ function BidCard({ bid }: { bid: Bid }) {
     };
 
     const handleDeleteBid = async () => {
-        if (!window.confirm("Are you sure you want to delete this bid?")) return;
+        if (!window.confirm("Are you sure you want to delete this bid requirement?")) return;
         try {
+            // Note: In a real app, you might want to delete subcollections too.
+            // For simplicity here, we only delete the bid doc.
             await deleteDoc(doc(db, 'bids', bid.id));
             toast({ title: 'Bid Deleted', description: 'Your requirement has been removed from the marketplace.' });
         } catch (error) {
@@ -251,7 +256,11 @@ function BidCard({ bid }: { bid: Bid }) {
 }
 
 function AcceptedProposalInfo({ bid }: { bid: Bid }) {
-    const proposalRef = useMemo(() => doc(db, 'bids', bid.id, 'proposals', bid.acceptedProposalId!), [bid]);
+    const proposalRef = useMemo(() => {
+        if (!bid.acceptedProposalId) return null;
+        return doc(db, 'bids', bid.id, 'proposals', bid.acceptedProposalId);
+    }, [bid]);
+    
     const [proposal, loading, error] = useDocumentData(proposalRef);
 
     if (loading) return <Skeleton className="h-10 w-full" />;
