@@ -2,12 +2,68 @@
 'use server';
 
 import { aiEnhancedAlert, type AiEnhancedAlertInput, type AiEnhancedAlertOutput } from "@/ai/flows/ai-enhanced-alerts";
-import { collection, getDocs, writeBatch, doc, query, where, limit } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { collection, getDocs, writeBatch, doc, query, where, limit, orderBy, Timestamp } from "firebase/firestore";
+import { db, auth } from "@/lib/firebase";
 import { mockSuppliers, mockReviews, mockOrders } from "@/lib/data";
+import type { StockItem } from "@/lib/types";
+import { differenceInDays, format } from "date-fns";
+
+async function getExpiringStockAlert(): Promise<AiEnhancedAlertInput | null> {
+    const user = auth.currentUser;
+    if (!user) return null;
+
+    const today = new Date();
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(today.getDate() + 3);
+
+    const stockCollection = collection(db, 'stockItems');
+    const q = query(
+        stockCollection,
+        where("ownerId", "==", user.uid),
+        where("expiryDate", ">=", Timestamp.fromDate(today)),
+        where("expiryDate", "<=", Timestamp.fromDate(threeDaysFromNow)),
+        orderBy("expiryDate", "asc"),
+        limit(1)
+    );
+
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+        return null;
+    }
+
+    const expiringItem = querySnapshot.docs[0].data() as StockItem;
+    const daysLeft = differenceInDays(expiringItem.expiryDate.toDate(), today);
+    const dayString = daysLeft <= 1 ? "day" : "days";
+
+    return {
+        eventType: 'Low Stock Warning',
+        eventDetails: `Your stock of ${expiringItem.name} (${expiringItem.quantity} units) is expiring in ${daysLeft} ${dayString} on ${format(expiringItem.expiryDate.toDate(), 'PPP')}.`,
+        userBehaviorData: 'User actively manages stock.',
+        urgency: 'high',
+    };
+}
+
 
 export async function generateAlert(): Promise<AiEnhancedAlertOutput> {
-  const eventTypes = ['Order Shipped', 'New Bid Received', 'Payment Processed', 'Low Stock Warning', 'Contract expiring soon'];
+  // First, check for a real, urgent alert about expiring stock.
+  const expiringStockAlert = await getExpiringStockAlert();
+  if (expiringStockAlert) {
+      try {
+          const result = await aiEnhancedAlert(expiringStockAlert);
+          return result;
+      } catch (error) {
+          console.error("AI Alert Generation Error (for stock):", error);
+          // Fallback to a simple message if AI fails for the real alert
+          return {
+              alertTitle: "Urgent Stock Alert",
+              alertMessage: expiringStockAlert.eventDetails,
+              priority: 'high',
+          };
+      }
+  }
+
+  // If no real alerts, generate a random mock alert.
+  const eventTypes = ['Order Shipped', 'New Bid Received', 'Payment Processed', 'Contract expiring soon'];
   const userBehaviors = ['Frequently checks tracking page', 'Prefers email notifications', 'Has not logged in for a week', 'High-value customer'];
   const urgencies: Array<"low" | "medium" | "high"> = ['low', 'medium', 'high'];
 
@@ -24,7 +80,7 @@ export async function generateAlert(): Promise<AiEnhancedAlertOutput> {
     const result = await aiEnhancedAlert(mockInput);
     return result;
   } catch (error) {
-    console.error("AI Alert Generation Error:", error);
+    console.error("AI Alert Generation Error (for mock):", error);
     return {
       alertTitle: "Error: Could Not Generate Alert",
       alertMessage: "The AI service is currently unavailable. Please try again later.",
