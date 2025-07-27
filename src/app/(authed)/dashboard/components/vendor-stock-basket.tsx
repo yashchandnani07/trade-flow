@@ -7,9 +7,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, Plus, Trash2, Package, CalendarIcon } from 'lucide-react';
-import { useState, FormEvent, useMemo } from 'react';
-import { collection, addDoc, serverTimestamp, query, where, orderBy, deleteDoc, doc, Timestamp } from 'firebase/firestore';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { useState, FormEvent, useEffect, useCallback } from 'react';
+import { collection, addDoc, serverTimestamp, query, where, orderBy, deleteDoc, doc, Timestamp, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { StockItem } from '@/lib/types';
 import {
@@ -77,15 +76,35 @@ export default function VendorStockBasket() {
     const [quantity, setQuantity] = useState('');
     const [expiryDate, setExpiryDate] = useState('');
 
-    const stockCollection = useMemo(() => collection(db, 'stockItems'), []);
-    const stockQuery = useMemo(() => {
-        if (!user) return null;
-        return query(stockCollection, where("ownerId", "==", user.uid), orderBy("expiryDate", "asc"));
-    }, [stockCollection, user]);
-
-    const [stockItems, loading, error] = useCollectionData(stockQuery, { idField: 'id' });
+    const [stockItems, setStockItems] = useState<StockItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<Error | null>(null);
     
     const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    const fetchStockItems = useCallback(async () => {
+        if (!user) {
+            setLoading(false);
+            return;
+        };
+        setLoading(true);
+        try {
+            const stockCollectionRef = collection(db, 'stockItems');
+            const stockQuery = query(stockCollectionRef, where("ownerId", "==", user.uid), orderBy("expiryDate", "asc"));
+            const querySnapshot = await getDocs(stockQuery);
+            const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as StockItem));
+            setStockItems(items);
+        } catch (e) {
+            console.error(e);
+            setError(e as Error);
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        fetchStockItems();
+    }, [fetchStockItems]);
 
     const handleAddItem = async (e: FormEvent) => {
         e.preventDefault();
@@ -97,13 +116,25 @@ export default function VendorStockBasket() {
         setIsSubmitting(true);
         try {
             const stockCollectionRef = collection(db, 'stockItems');
-            await addDoc(stockCollectionRef, {
+            const newDocRef = await addDoc(stockCollectionRef, {
                 name: itemName,
                 quantity: Number(quantity),
                 expiryDate: Timestamp.fromDate(new Date(expiryDate)),
                 ownerId: user.uid,
                 createdAt: serverTimestamp(),
             });
+
+            const newItem: StockItem = {
+                id: newDocRef.id,
+                name: itemName,
+                quantity: Number(quantity),
+                expiryDate: Timestamp.fromDate(new Date(expiryDate)),
+                ownerId: user.uid,
+                // createdAt will be a server timestamp, so we approximate for the UI
+            };
+
+            // Manually update state for instant feedback
+            setStockItems(prevItems => [...prevItems, newItem].sort((a,b) => a.expiryDate.toMillis() - b.expiryDate.toMillis()));
 
             toast({ title: 'Item Added', description: `${itemName} has been added to your stock basket.` });
             setIsOpen(false);
@@ -129,6 +160,8 @@ export default function VendorStockBasket() {
         setDeletingId(itemId);
         try {
             await deleteDoc(doc(db, 'stockItems', itemId));
+            // Manually update state for instant feedback
+            setStockItems(prevItems => prevItems.filter(item => item.id !== itemId));
             toast({ title: "Item Removed", description: "The stock item has been removed from your basket." });
         } catch (error) {
             console.error("Error deleting item:", error);
@@ -210,8 +243,7 @@ export default function VendorStockBasket() {
                             </TableRow>
                         ))}
                         {!loading && stockItems && stockItems.length > 0 ? (
-                            stockItems.map(itemData => {
-                                const item = itemData as StockItem;
+                            stockItems.map(item => {
                                 const daysUntilExpiry = differenceInDays(item.expiryDate.toDate(), new Date());
                                 const isExpiringSoon = daysUntilExpiry <= 7 && daysUntilExpiry > 0;
                                 const isExpired = daysUntilExpiry <= 0;

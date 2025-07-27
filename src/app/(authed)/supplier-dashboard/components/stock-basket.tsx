@@ -7,9 +7,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, Plus, Trash2, Package, CalendarIcon } from 'lucide-react';
-import { useState, FormEvent, useMemo } from 'react';
-import { collection, addDoc, serverTimestamp, query, where, orderBy, deleteDoc, doc, Timestamp } from 'firebase/firestore';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { useState, FormEvent, useEffect, useCallback } from 'react';
+import { collection, addDoc, serverTimestamp, query, where, orderBy, deleteDoc, doc, Timestamp, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { StockItem } from '@/lib/types';
 import {
@@ -60,6 +59,7 @@ function AddStockDialog() {
             setItemName('');
             setQuantity('');
             setExpiryDate('');
+            // Parent component will refetch
         } catch (error) {
             console.error('Error adding stock item:', error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not add stock item.' });
@@ -113,20 +113,40 @@ export default function StockBasket() {
     const { user } = useAuth();
     const { toast } = useToast();
     
-    const stockCollection = useMemo(() => collection(db, 'stockItems'), []);
-    const stockQuery = useMemo(() => {
-        if (!user) return null;
-        return query(stockCollection, where("ownerId", "==", user.uid), orderBy("expiryDate", "asc"));
-    }, [stockCollection, user]);
-
-    const [stockItems, loading, error] = useCollectionData(stockQuery, { idField: 'id' });
-    
+    const [stockItems, setStockItems] = useState<StockItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<Error | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    const fetchStockItems = useCallback(async () => {
+        if (!user) {
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
+        try {
+            const stockCollectionRef = collection(db, 'stockItems');
+            const stockQuery = query(stockCollectionRef, where("ownerId", "==", user.uid), orderBy("expiryDate", "asc"));
+            const querySnapshot = await getDocs(stockQuery);
+            const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as StockItem));
+            setStockItems(items);
+        } catch (e) {
+            console.error(e);
+            setError(e as Error);
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        fetchStockItems();
+    }, [fetchStockItems]);
 
     const handleDelete = async (itemId: string) => {
         setDeletingId(itemId);
         try {
             await deleteDoc(doc(db, 'stockItems', itemId));
+            setStockItems(prevItems => prevItems.filter(item => item.id !== itemId));
             toast({ title: "Item Removed", description: "The stock item has been removed from your basket." });
         } catch (error) {
             console.error("Error deleting item:", error);
@@ -166,8 +186,7 @@ export default function StockBasket() {
                             </TableRow>
                         ))}
                         {!loading && stockItems && stockItems.length > 0 ? (
-                            stockItems.map(itemData => {
-                                const item = itemData as StockItem;
+                            stockItems.map(item => {
                                 const daysUntilExpiry = differenceInDays(item.expiryDate.toDate(), new Date());
                                 const isExpiringSoon = daysUntilExpiry <= 7 && daysUntilExpiry > 0;
                                 const isExpired = daysUntilExpiry <= 0;
