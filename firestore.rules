@@ -3,70 +3,89 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
+    // Helper function to check if a user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    function isRole(role) {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
-    }
-    
-    function isOwner(userId) {
-        return request.auth.uid == userId;
+    // Helper function to get user data
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
     }
 
-    match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+    // Helper function to check user role
+    function hasRole(role) {
+      return isAuthenticated() && getUserData(request.auth.uid).role == role;
     }
     
+    // User profiles can be read by anyone, but only the user can write to their own document.
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Bids (Requirements posted by vendors)
+    match /bids/{bidId} {
+      // Any authenticated user can view the list of bids.
+      allow list: if isAuthenticated();
+      
+      // Only authenticated vendors can create bids.
+      allow create: if hasRole('vendor');
+      
+      // Only the vendor who created the bid can read its full details or update it (e.g., to close it).
+      allow read, update: if isAuthenticated() && resource.data.vendorId == request.auth.uid;
+      
+      // Only the vendor who created the bid can delete it.
+      allow delete: if isAuthenticated() && resource.data.vendorId == request.auth.uid;
+
+      // Proposals (Offers submitted by suppliers on a bid)
+      match /proposals/{proposalId} {
+        // A vendor can see all proposals on their own bid.
+        // A supplier can see their own proposal.
+        allow read: if (isAuthenticated() && get(/databases/$(database)/documents/bids/$(bidId)).data.vendorId == request.auth.uid) || 
+                     (hasRole('supplier') && resource.data.supplierId == request.auth.uid);
+                     
+        // Only suppliers can create proposals.
+        allow create: if hasRole('supplier');
+
+        // Allow suppliers to update their own proposals (though this is not used in the current app).
+        allow update: if hasRole('supplier') && resource.data.supplierId == request.auth.uid;
+        
+        // Delete is disallowed for now to maintain record integrity.
+        allow delete: if false;
+      }
+    }
+
+    // Collection group query for proposals. This is the key fix.
+    // This allows a supplier to query the 'proposals' collection group
+    // to find all bids they have submitted.
+    match /{path=**}/proposals/{proposalId} {
+        allow list: if hasRole('supplier');
+    }
+
+    // Orders can be read/written by the vendor or the supplier involved.
+    match /orders/{orderId} {
+      allow read, write: if isAuthenticated() && (request.auth.uid == resource.data.vendorId || request.auth.uid == resource.data.supplierId);
+    }
+
+    // Reviews can be read by any authenticated user.
+    // Users can only create reviews (no updates/deletes for now to preserve history).
     match /reviews/{reviewId} {
         allow read: if isAuthenticated();
         allow create: if isAuthenticated();
+        allow update, delete: if false;
     }
     
-    match /orders/{orderId} {
-        allow read, update: if isAuthenticated() && (
-            isOwner(resource.data.vendorId) || isOwner(resource.data.supplierId)
-        );
-    }
-    
+    // Stock Items can only be managed by their owner.
     match /stockItems/{itemId} {
-        allow read, create, delete: if isAuthenticated() && isOwner(request.resource.data.ownerId);
+        allow read, write, delete: if isAuthenticated() && request.auth.uid == resource.data.ownerId;
+        allow list: if isAuthenticated();
     }
     
+    // Diary Entries can only be managed by their owner.
     match /diaryEntries/{entryId} {
-        allow read, create: if isAuthenticated() && isOwner(request.resource.data.ownerId);
-    }
-
-    // Bidding System Rules
-    match /bids/{bidId} {
-      // Anyone authenticated can see the list of requirements.
-      allow read: if isAuthenticated();
-      
-      // Only vendors can create new requirements.
-      allow create: if isAuthenticated() && isRole('vendor');
-      
-      // Only the vendor who created the bid can update or delete it.
-      allow update, delete: if isAuthenticated() && request.auth.uid == resource.data.vendorId;
-
-      match /proposals/{proposalId} {
-        // A vendor can see proposals on their own bid. A supplier can see their own proposal.
-        allow read: if isAuthenticated() && 
-                    (get(/databases/$(database)/documents/bids/$(bidId)).data.vendorId == request.auth.uid ||
-                     isOwner(resource.data.supplierId));
-        
-        // Only suppliers can create proposals. They can't bid on their own reqs (if they were also a vendor)
-        allow create: if isAuthenticated() && isRole('supplier') && get(/databases/$(database)/documents/bids/$(bidId)).data.vendorId != request.auth.uid;
-        
-        // Only the vendor can "update" a proposal (by accepting it).
-        allow update: if isAuthenticated() && isRole('vendor') && get(/databases/$(database)/documents/bids/$(bidId)).data.vendorId == request.auth.uid;
-        
-        // Proposals cannot be deleted for record-keeping.
-        allow delete: if false;
-      }
+        allow read, write, delete: if isAuthenticated() && request.auth.uid == resource.data.ownerId;
     }
   }
 }
