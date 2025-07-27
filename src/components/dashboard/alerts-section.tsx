@@ -28,25 +28,30 @@ export function AlertsSection() {
     
     const today = useMemo(() => {
         const date = new Date();
+        date.setHours(0, 0, 0, 0); // Set to start of today
         return Timestamp.fromDate(date);
     }, []);
 
     const alertsQuery = useMemo(() => {
         if (!user) return null;
+        // The orderBy clause is removed to prevent the index error.
+        // We will sort the items on the client-side instead.
         return query(
             stockCollection, 
             where("ownerId", "==", user.uid),
-            where("expiryDate", "<=", thirtyDaysFromNow),
-            orderBy("expiryDate", "asc")
+            where("expiryDate", "<=", thirtyDaysFromNow)
         );
     }, [stockCollection, user, thirtyDaysFromNow]);
 
-    const [expiringItems, loading, error] = useCollectionData(alertsQuery, { idField: 'id' });
+    const [expiringItemsData, loading, error] = useCollectionData(alertsQuery, { idField: 'id' });
     
     const validExpiringItems = useMemo(() => {
-        if (!expiringItems) return [];
-        return expiringItems.filter(item => (item.expiryDate as Timestamp).toDate() >= today.toDate()) as StockItem[];
-    }, [expiringItems, today]);
+        if (!expiringItemsData) return [];
+        // Filter for items that have not yet expired and sort them on the client
+        return (expiringItemsData as StockItem[])
+            .filter(item => (item.expiryDate as Timestamp).toDate() >= today.toDate())
+            .sort((a, b) => (a.expiryDate as Timestamp).toMillis() - (b.expiryDate as Timestamp).toMillis());
+    }, [expiringItemsData, today]);
 
 
     const renderContent = () => {
@@ -113,4 +118,3 @@ export function AlertsSection() {
         </Card>
     );
 }
-
