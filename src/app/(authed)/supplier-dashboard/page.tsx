@@ -51,6 +51,7 @@ export default function SupplierDashboardPage() {
         </div>
 
         <section id="bids">
+            <h2 className="text-2xl font-bold tracking-tight mb-4">Marketplace</h2>
             <MarketplaceBidsList />
         </section>
     </main>

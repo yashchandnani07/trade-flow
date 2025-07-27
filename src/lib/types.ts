@@ -1,6 +1,5 @@
 
 'use server';
-import type { AiEnhancedAlertOutput } from "@/ai/flows/ai-enhanced-alerts";
 import type { Timestamp, GeoPoint } from "firebase/firestore";
 
 export type OrderStatus = 'Order Placed' | 'Shipped' | 'Received';
@@ -32,10 +31,6 @@ export type Review = {
   verified: boolean;
 };
 
-export type Alert = AiEnhancedAlertOutput & {
-  id: string;
-  read: boolean;
-};
 
 export type Role = 'vendor' | 'supplier' | 'farmer';
 

@@ -13,11 +13,11 @@ export default function BiddingPage() {
             <div className="space-y-8">
                 <MyRequirementsList />
                 <MarketplaceBidsList />
-                 <MyBidsList />
             </div>
         )
     }
 
+    // Default view for Suppliers
     return (
         <div className="space-y-8">
             <MarketplaceBidsList />

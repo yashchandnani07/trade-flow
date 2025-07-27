@@ -6,11 +6,11 @@ import {
   ReactNode,
 } from 'react';
 
-// A simple context provider without complex logic
+// A simple context provider. All data fetching is now handled by individual components.
 const BiddingContext = createContext<{} | undefined>(undefined);
 
 export const BiddingProvider = ({ children }: { children: ReactNode }) => {
-    const value = {}; // No shared state needed anymore
+    const value = {}; 
     return <BiddingContext.Provider value={value}>{children}</BiddingContext.Provider>;
 };
 

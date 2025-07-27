@@ -19,6 +19,7 @@ import { Timestamp, collection, addDoc, serverTimestamp, query, where, orderBy }
 import { db } from '@/lib/firebase';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { cn } from '@/lib/utils';
+import { FirebaseError } from 'firebase/app';
 
 function BidCard({ bid }: { bid: Bid }) {
     const { user } = useAuth();
@@ -138,6 +139,12 @@ function BidCard({ bid }: { bid: Bid }) {
                         <AlertDescription>You proposed ${userProposal.price.toFixed(2)} for this item.</AlertDescription>
                     </Alert>
                 )}
+                 {user?.role === 'vendor' && bid.vendorId === user?.uid && (
+                     <Alert variant="default" className="text-sm">
+                        <AlertTitle>This is your requirement</AlertTitle>
+                        <AlertDescription>You can manage proposals in your dashboard.</AlertDescription>
+                    </Alert>
+                )}
             </CardFooter>
         </Card>
     );
@@ -147,6 +154,10 @@ export function MarketplaceBidsList() {
     const bidsCollection = useMemo(() => collection(db, 'bids'), []);
     const openBidsQuery = useMemo(() => query(bidsCollection, where('status', '==', 'open'), orderBy('createdAt', 'desc')), [bidsCollection]);
     const [bids, loading, error] = useCollectionData(openBidsQuery, { idField: 'id' });
+    
+    // Check for specific Firestore error for missing index
+    const isIndexError = error instanceof FirebaseError && error.code === 'failed-precondition';
+    const indexCreationLink = isIndexError ? (error.message.match(/https?:\/\/[^\s]+/) || [])[0] : '';
     
     return (
         <div className="space-y-6">
@@ -158,16 +169,30 @@ export function MarketplaceBidsList() {
                     </p>
                 </div>
             </div>
-             {error && (
+             {isIndexError && (
+                 <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Database Index Required</AlertTitle>
+                    <AlertDescription>
+                        To display marketplace requirements, a Firestore index is needed. Please create it by clicking the link below, then refresh the page.
+                        <a href={indexCreationLink} target="_blank" rel="noopener noreferrer" className="block w-full text-center mt-2 p-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                            Create Firestore Index
+                        </a>
+                         <pre className="mt-2 p-2 bg-muted rounded-md text-xs whitespace-pre-wrap">{error.message}</pre>
+                    </AlertDescription>
+                </Alert>
+            )}
+             {error && !isIndexError && (
                  <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Error Loading Requirements</AlertTitle>
                     <AlertDescription>
-                        There was a problem fetching requirements from the database. Please check your connection and Firestore security rules.
-                         <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
+                        There was a problem fetching requirements from the database. Please check your connection and try again.
+                         <pre className="mt-2 p-2 bg-muted rounded-md text-xs whitespace-pre-wrap">{error.message}</pre>
                     </AlertDescription>
                 </Alert>
             )}
+
 
             {loading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
