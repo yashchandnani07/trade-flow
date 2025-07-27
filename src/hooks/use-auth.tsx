@@ -48,7 +48,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      setLoading(true); // Start loading when auth state changes
       if (firebaseUser) {
+        // Optimistic: stop loading early
+        setLoading(false);
         const userData = await fetchUserDocument(firebaseUser.uid);
         if (userData) {
             setUser({
@@ -62,8 +65,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } else {
         setUser(null);
+        setLoading(false); 
       }
-      setLoading(false); 
     });
 
     return () => unsubscribe();
