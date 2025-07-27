@@ -200,7 +200,7 @@ function BidCard({ bid }: { bid: Bid }) {
                     <div>
                         <CardTitle>{bid.item}</CardTitle>
                         <CardDescription>
-                            by {bid.vendorName} &bull; {formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true })}
+                            by {bid.vendorName} &bull; {bid.createdAt ? formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true }) : 'just now'}
                         </CardDescription>
                     </div>
                      <div className="flex items-center gap-2">
@@ -230,8 +230,7 @@ function BidCard({ bid }: { bid: Bid }) {
                             required
                         />
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting && <Loader2 className="animate-spin" />}
-                            {!isSubmitting && 'Submit Offer'}
+                            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Submit Offer'}
                         </Button>
                     </form>
                 )}
@@ -310,4 +309,5 @@ export function MarketplaceBidsList() {
             </div>
         </div>
     );
-}
+
+    
