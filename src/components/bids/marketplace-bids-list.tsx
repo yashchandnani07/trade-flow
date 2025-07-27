@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo, FormEvent } from 'react';
-import { collection, addDoc, serverTimestamp, query, where, orderBy, doc, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, orderBy, doc, updateDoc, getDoc, deleteDoc, limit } from 'firebase/firestore';
 import { useCollection, useDocumentData, useCollectionData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
@@ -10,7 +10,7 @@ import type { Bid, Proposal, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -18,6 +18,7 @@ import { Gavel, Loader2, Plus, AlertTriangle, CheckCircle, User as UserIcon, Tra
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
+import { FirebaseError } from 'firebase/app';
 
 function CreateBidDialog() {
 // ... keep existing code (CreateBidDialog component)
@@ -152,11 +153,42 @@ function ProposalsList({ bid }: { bid: Bid }) {
     );
 }
 
+function DeleteBidDialog({ bid, onConfirm, isDeleting }: { bid: Bid, onConfirm: () => void, isDeleting: boolean }) {
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-destructive h-6 w-6">
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Are you sure?</DialogTitle>
+                    <DialogDescription>
+                        This action cannot be undone. This will permanently delete your bid requirement for <span className="font-bold">{bid.item}</span>.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary">Cancel</Button>
+                    </DialogClose>
+                    <Button type="button" onClick={onConfirm} disabled={isDeleting} variant="destructive">
+                        {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Delete
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+
 function BidCard({ bid }: { bid: Bid }) {
     const { user } = useAuth();
     const { toast } = useToast();
     const [price, setPrice] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [showProposals, setShowProposals] = useState(false);
 
     const isVendorOwner = user?.uid === bid.vendorId;
@@ -197,13 +229,22 @@ function BidCard({ bid }: { bid: Bid }) {
     };
 
     const handleDeleteBid = async () => {
-        if (!window.confirm("Are you sure you want to delete this bid requirement?")) return;
+        setIsDeleting(true);
         try {
             await deleteDoc(doc(db, 'bids', bid.id));
             toast({ title: 'Bid Deleted', description: 'Your requirement has been removed from the marketplace.' });
         } catch (error) {
+            const isPermissionError = error instanceof FirebaseError && (error.code === 'permission-denied' || error.code === 'unauthenticated');
             console.error(error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the bid.' });
+            toast({ 
+                variant: 'destructive', 
+                title: 'Error', 
+                description: isPermissionError
+                    ? "You do not have permission to delete this bid. Please check Firestore rules."
+                    : 'Could not delete the bid.' 
+            });
+        } finally {
+            setIsDeleting(false);
         }
     };
     
@@ -222,9 +263,7 @@ function BidCard({ bid }: { bid: Bid }) {
                      <div className="flex items-center gap-2">
                         <Badge variant={bid.status === 'open' ? 'success' : 'secondary'} className="capitalize">{bid.status}</Badge>
                          {isVendorOwner && (
-                            <Button variant="ghost" size="icon" onClick={handleDeleteBid} className="text-destructive h-6 w-6">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <DeleteBidDialog bid={bid} onConfirm={handleDeleteBid} isDeleting={isDeleting} />
                         )}
                     </div>
                 </div>
