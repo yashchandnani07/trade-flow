@@ -67,7 +67,7 @@ const BlurText: FC<BlurTextProps> = ({
             delay: index * delay,
             ease: "easeOut",
           }}
-          style={{ whiteSpace: "pre-wrap" }} // Use pre-wrap to respect newlines
+          style={{ whiteSpace: "pre-wrap" }}
         >
           {data}{animateBy === 'words' && !data.includes('\n') ? ' ' : ''}
         </motion.span>

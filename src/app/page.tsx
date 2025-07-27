@@ -45,7 +45,7 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Role } from "@/lib/types";
 import { FirebaseError } from "firebase/app";
-import BlurText from "@/components/ui/blur-text";
+import { motion } from "framer-motion";
 
 const roles: {id: Role, title: string, description: string, icon: React.ElementType, color: string, emoji: string}[] = [
   {
@@ -255,6 +255,18 @@ export default function SupplyChainConnect() {
   const handleAnimationComplete = () => {
     console.log('Animation completed!');
   };
+  
+  const headlineWords = [
+    { text: "Secure.", color: "text-[#6ee7b7]" },
+    { text: "Fast.", color: "text-[#60a5fa]" },
+    { text: "Fair.", color: "text-[#c084fc]" },
+  ];
+
+  const headlineVariants = {
+    hidden: { y: 20, opacity: 0, filter: "blur(4px)" },
+    visible: { y: 0, opacity: 1, filter: "blur(0px)" },
+  };
+
 
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-hidden">
@@ -303,14 +315,18 @@ export default function SupplyChainConnect() {
                 </div>
 
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                    <BlurText
-                      text={"Secure.\nFast.\nFair."}
-                      delay={0.1}
-                      animateBy="words"
-                      direction="top"
-                      onAnimationComplete={handleAnimationComplete}
-                      className="text-slate-100 !justify-start"
-                    />
+                  {headlineWords.map((word, index) => (
+                      <motion.div
+                          key={index}
+                          initial="hidden"
+                          animate="visible"
+                          variants={headlineVariants}
+                          transition={{ duration: 0.5, delay: index * 0.2 }}
+                          className={word.color}
+                      >
+                          {word.text}
+                      </motion.div>
+                  ))}
                 </h1>
 
                 <p className="text-lg md:text-xl text-slate-300 max-w-2xl leading-relaxed">
