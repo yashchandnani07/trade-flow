@@ -20,11 +20,10 @@ import {
     orderBy,
     deleteDoc,
     doc,
-    writeBatch,
-    where,
-    collectionGroup,
+    updateDoc,
+    Timestamp,
 } from 'firebase/firestore';
-import { useCollectionData, useCollection } from 'react-firebase-hooks/firestore';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { useAuth } from './use-auth';
 import { useToast } from './use-toast';
 
@@ -34,7 +33,7 @@ interface BiddingContextType {
   proposals: Proposal[];
   loading: boolean;
   error?: Error;
-  addBid: (newBidData: Omit<Bid, 'id' | 'status' | 'createdAt' | 'vendorId' | 'vendorName'>) => Promise<void>;
+  addBid: (newBidData: Omit<Bid, 'id' | 'status' | 'createdAt' | 'vendorId' | 'vendorName' | 'acceptedProposalId'>) => Promise<void>;
   deleteBid: (bidId: string) => Promise<void>;
   addProposal: (bidId: string, newProposalData: Omit<Proposal, 'id' | 'status' | 'createdAt' | 'bidId' | 'supplierId' | 'supplierName'>) => Promise<void>;
   acceptProposal: (bidId: string, proposalId: string) => Promise<void>;
@@ -47,22 +46,16 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
     const { user } = useAuth();
     const { toast } = useToast();
 
-    // Fetch all bids
+    // Fetch Bids from Firestore
     const bidsQuery = useMemo(() => query(collection(db, 'bids'), orderBy('createdAt', 'desc')), []);
-    const [bidsSnapshot, bidsLoading, bidsError] = useCollection(bidsQuery);
-    const bids = useMemo(() => (bidsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || []) as Bid[], [bidsSnapshot]);
+    const [bids, loading, error] = useCollectionData(bidsQuery, { idField: 'id' });
 
-    // Fetch all proposals using a collection group query
-    const proposalsQuery = useMemo(() => query(collectionGroup(db, 'proposals')), []);
-    const [proposalsSnapshot, proposalsLoading, proposalsError] = useCollection(proposalsQuery);
-    const proposals = useMemo(() => (proposalsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || []) as Proposal[], [proposalsSnapshot]);
+    // Manage proposals in-memory
+    const [proposals, setProposals] = useState<Proposal[]>([]);
 
-    const loading = bidsLoading || proposalsLoading;
-    const error = bidsError || proposalsError;
-
-    const addBid = useCallback(async (newBidData: Omit<Bid, 'id' | 'status' | 'createdAt' | 'vendorId' | 'vendorName'>) => {
+    const addBid = useCallback(async (newBidData: Omit<Bid, 'id' | 'status' | 'createdAt' | 'vendorId' | 'vendorName' | 'acceptedProposalId'>) => {
         if (!user || user.role !== 'vendor') {
-            toast({ variant: 'destructive', title: 'Permission Denied', description: 'Only vendors can post new requirements.' });
+            toast({ variant: 'destructive', title: 'Permission Denied' });
             return;
         }
         const bidsCollection = collection(db, 'bids');
@@ -74,45 +67,54 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
             createdAt: serverTimestamp(),
         });
     }, [user, toast]);
-
+    
     const deleteBid = useCallback(async (bidId: string) => {
+        // This will only delete from Firestore.
+        // We don't need to manage local state as react-firebase-hooks does it.
         const bidDocRef = doc(db, 'bids', bidId);
         await deleteDoc(bidDocRef);
-        // Note: Deleting subcollections (proposals) needs a Cloud Function for production.
-        // For this app, we assume they become orphaned but won't be displayed.
     }, []);
 
     const addProposal = useCallback(async (bidId: string, newProposalData: Omit<Proposal, 'id' | 'status' | 'createdAt' | 'bidId' | 'supplierId' | 'supplierName'>) => {
         if (!user || user.role !== 'supplier') {
-            toast({ variant: 'destructive', title: 'Permission Denied', description: 'Only suppliers can submit proposals.' });
+            toast({ variant: 'destructive', title: 'Permission Denied' });
             return;
         }
-        const proposalsCollection = collection(db, 'bids', bidId, 'proposals');
-        await addDoc(proposalsCollection, {
-            ...newProposalData,
+        
+        const newProposal: Proposal = {
+            id: `prop_${Date.now()}_${Math.random()}`,
             bidId: bidId,
             supplierId: user.uid,
             supplierName: user.businessName || 'Anonymous Supplier',
             status: 'pending',
-            createdAt: serverTimestamp(),
-        });
+            createdAt: Timestamp.now(), // Use a client-side timestamp for in-memory
+            ...newProposalData,
+        };
+
+        setProposals(prev => [...prev, newProposal]);
+
     }, [user, toast]);
 
     const acceptProposal = useCallback(async (bidId: string, proposalId: string) => {
-         if (!user || user.role !== 'vendor') {
-            toast({ variant: 'destructive', title: 'Permission Denied', description: 'Only the vendor can accept proposals.' });
+        if (!user || user.role !== 'vendor') {
+            toast({ variant: 'destructive', title: 'Permission Denied' });
             return;
         }
 
+        // Close bid in Firestore
         const bidDocRef = doc(db, 'bids', bidId);
-        const proposalDocRef = doc(db, 'bids', bidId, 'proposals', proposalId);
+        await updateDoc(bidDocRef, {
+            status: 'closed',
+            acceptedProposalId: proposalId,
+        });
 
-        const batch = writeBatch(db);
-        batch.update(bidDocRef, { status: 'closed', acceptedProposalId: proposalId });
-        batch.update(proposalDocRef, { status: 'accepted' });
-
-        await batch.commit();
-
+        // Update local proposal state
+        setProposals(prev => prev.map(p => {
+            if (p.bidId === bidId) {
+                return { ...p, status: p.id === proposalId ? 'accepted' : 'rejected' };
+            }
+            return p;
+        }));
     }, [user, toast]);
 
     const getProposalsForBid = useCallback((bidId: string) => {
@@ -120,7 +122,7 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
     }, [proposals]);
 
     const value = {
-        bids,
+        bids: (bids || []) as Bid[],
         proposals,
         loading,
         error,
