@@ -1,7 +1,7 @@
 
 'use client';
 import { useMemo } from 'react';
-import { collectionGroup, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { collectionGroup, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
@@ -19,16 +19,23 @@ export function MyBidsList() {
 
     const proposalsQuery = useMemo(() => {
         if (!user || user.role !== 'supplier') return null;
-        // This query fetches from the 'proposals' collection group, 
-        // which is necessary because proposals are nested under each bid.
         return query(
             collectionGroup(db, 'proposals'), 
-            where("supplierId", "==", user.uid),
-            orderBy("createdAt", "desc")
+            where("supplierId", "==", user.uid)
         );
     }, [user]);
 
     const [proposals, loading, error] = useCollectionData(proposalsQuery, { idField: 'id' });
+
+    const sortedProposals = useMemo(() => {
+        if (!proposals) return [];
+        return [...proposals].sort((a, b) => {
+            const dateA = (a.createdAt as Timestamp)?.toDate() || 0;
+            const dateB = (b.createdAt as Timestamp)?.toDate() || 0;
+            if (!dateA || !dateB) return 0;
+            return dateB.getTime() - dateA.getTime();
+        });
+    }, [proposals]);
 
     return (
         <Card className="glassmorphic mb-6">
@@ -62,15 +69,15 @@ export function MyBidsList() {
                                         <AlertTriangle className="h-4 w-4" />
                                         <AlertTitle>Error Loading Your Bids</AlertTitle>
                                         <AlertDescription>
-                                            There was a problem fetching your bids. If you just created the Firestore index, please wait a few minutes for it to activate.
+                                            There was a problem fetching your bids. Please ensure your Firestore security rules are correct and you have waited a few minutes for any new index to activate.
                                             <pre className="mt-2 p-2 bg-muted rounded-md text-xs whitespace-pre-wrap">{error.message}</pre>
                                         </AlertDescription>
                                     </Alert>
                                 </TableCell>
                             </TableRow>
                         )}
-                        {!loading && proposals && proposals.length > 0 ? (
-                            proposals.map(proposalData => {
+                        {!loading && sortedProposals && sortedProposals.length > 0 ? (
+                            sortedProposals.map(proposalData => {
                                 const proposal = proposalData as Proposal;
                                 return (
                                     <TableRow key={proposal.id}>
