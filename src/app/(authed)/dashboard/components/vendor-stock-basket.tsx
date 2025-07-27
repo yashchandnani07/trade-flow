@@ -71,24 +71,14 @@ function DeleteConfirmationDialog({ item, onConfirm, isDeleting }: { item: Stock
 function StockTableSkeleton() {
     return (
         <>
-            <TableRow>
-                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
-            </TableRow>
-            <TableRow>
-                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
-            </TableRow>
-            <TableRow>
-                <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-36" /></TableCell>
-                <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
-            </TableRow>
+            {[...Array(3)].map((_, index) => (
+                <TableRow key={`skeleton-row-${index}`}>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                    <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
+                </TableRow>
+            ))}
         </>
     );
 }
@@ -259,7 +249,7 @@ export default function VendorStockBasket() {
                                 }
 
                                 return (
-                                    <TableRow key={item.id} className={cn(expiryVariant === 'warning' && 'bg-yellow-500/10', expiryVariant === 'destructive' && 'bg-destructive/10')}>
+                                    <TableRow key={`${item.id}-${item.name}`} className={cn(expiryVariant === 'warning' && 'bg-yellow-500/10', expiryVariant === 'destructive' && 'bg-destructive/10')}>
                                         <TableCell className="font-medium">{item.name}</TableCell>
                                         <TableCell>{item.quantity}</TableCell>
                                         <TableCell>

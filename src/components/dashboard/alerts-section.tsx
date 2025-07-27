@@ -82,7 +82,7 @@ export function AlertsSection() {
                      if (daysUntilExpiry < 1) alertVariant = "destructive";
 
                     return (
-                        <Alert key={item.id} variant={alertVariant === 'warning' ? 'default' : alertVariant} className={cn(alertVariant === 'warning' && 'bg-yellow-500/10 border-yellow-500/20 text-yellow-700 dark:text-yellow-400', alertVariant === 'destructive' && 'border-destructive/50 text-destructive')}>
+                        <Alert key={`${item.id}-${item.name}`} variant={alertVariant === 'warning' ? 'default' : alertVariant} className={cn(alertVariant === 'warning' && 'bg-yellow-500/10 border-yellow-500/20 text-yellow-700 dark:text-yellow-400', alertVariant === 'destructive' && 'border-destructive/50 text-destructive')}>
                             <AlertTriangle className="h-4 w-4" />
                             <AlertTitle className="font-semibold">Expiring Soon: {item.name}</AlertTitle>
                             <AlertDescription>
@@ -114,3 +114,4 @@ export function AlertsSection() {
     );
 }
 
+    
