@@ -98,15 +98,13 @@ export default function VendorStockBasket() {
 
         setIsSubmitting(true);
         try {
-            const newDocData = {
+            await addDoc(stockCollectionRef, {
                 name: itemName,
                 quantity: Number(quantity),
                 expiryDate: Timestamp.fromDate(new Date(expiryDate)),
-                ownerId: user.uid,
+                ownerId: user.uid, // Explicitly include ownerId
                 createdAt: serverTimestamp(),
-            };
-
-            await addDoc(stockCollectionRef, newDocData);
+            });
 
             toast({ title: 'Item Added', description: `${itemName} has been added to your stock basket.` });
             setIsOpen(false);
