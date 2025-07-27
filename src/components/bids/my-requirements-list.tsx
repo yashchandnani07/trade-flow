@@ -1,25 +1,25 @@
 
 'use client';
 
-import { useMemo, useState, FormEvent } from 'react';
+import { useMemo, useState, FormEvent, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import type { Bid, Proposal } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, AlertTriangle, CheckCircle, Trash2, ListChecks, Plus } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle, Trash2, ListChecks, Plus, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Timestamp, collection, query, where, orderBy, addDoc, serverTimestamp, writeBatch, doc, getDocs, deleteDoc } from 'firebase/firestore';
+import { Timestamp, collection, query, where, orderBy, addDoc, serverTimestamp, writeBatch, doc, getDocs, deleteDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import React from 'react';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { type Order } from '@/lib/types';
+import { type Order, type User } from '@/lib/types';
 
 function AcceptedProposalInfo({ bid }: { bid: Bid }) {
     const proposalsCollection = useMemo(() => collection(db, 'proposals'), []);
@@ -42,6 +42,52 @@ function AcceptedProposalInfo({ bid }: { bid: Bid }) {
                 Accepted from <strong>{acceptedProposal.supplierName}</strong> at <strong>${(acceptedProposal.price as number).toFixed(2)}</strong>. An order has been created.
             </AlertDescription>
         </Alert>
+    );
+}
+
+function WhatsAppButton({ proposal, bid }: { proposal: Proposal, bid: Bid }) {
+    const { toast } = useToast();
+    const [isLoading, setIsLoading] = useState(false);
+    const { user: vendor } = useAuth();
+
+    const handleChat = async () => {
+        setIsLoading(true);
+        try {
+            const userDocRef = doc(db, 'users', proposal.supplierId);
+            const userDoc = await getDoc(userDocRef);
+
+            if (!userDoc.exists() || !userDoc.data()?.phoneNumber) {
+                toast({ variant: 'destructive', title: 'Supplier contact not found', description: 'This supplier has not provided a valid phone number.' });
+                return;
+            }
+            
+            const supplier = userDoc.data() as User;
+            const phoneNumber = supplier.phoneNumber;
+
+            const message = `Hello ${supplier.businessName}, I'm inquiring about your proposal for my requirement:
+Item: ${bid.item}
+Quantity: ${bid.quantity}
+My Requirement ID: ${bid.id}
+My Vendor ID: ${vendor?.uid}
+`;
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+
+            window.open(whatsappUrl, '_blank');
+
+        } catch (error) {
+            console.error("Error fetching supplier phone number:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch supplier details.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <Button size="sm" variant="secondary" onClick={handleChat} disabled={isLoading}>
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquare className="mr-2 h-4 w-4" />}
+            Chat
+        </Button>
     );
 }
 
@@ -101,10 +147,13 @@ function ProposalsList({ bid }: { bid: Bid}) {
                         <p className="text-lg font-bold text-primary">${p.price.toFixed(2)}</p>
                     </div>
                     {bid?.status === 'open' ? (
-                        <Button size="sm" onClick={() => handleAcceptProposal(p)} disabled={isAcceptingProposal}>
-                            {isAcceptingProposal ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            Accept
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <WhatsAppButton proposal={p} bid={bid} />
+                            <Button size="sm" onClick={() => handleAcceptProposal(p)} disabled={isAcceptingProposal}>
+                                {isAcceptingProposal ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                Accept
+                            </Button>
+                        </div>
                     ) : (
                         <Badge variant={p.id === bid?.acceptedProposalId ? 'success' : 'secondary'}>
                             {p.id === bid?.acceptedProposalId ? 'Accepted' : 'Not Selected'}
@@ -297,7 +346,7 @@ export function MyRequirementsList() {
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Error Loading Requirements</AlertTitle>
                     <AlertDescription>
-                        There was a problem fetching your requirements from the database. Please check your network connection and try again. If the issue persists, the required database index may still be building.
+                        There was a problem fetching your requirements from the database. Please check your network connection and try again.
                          <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
                     </AlertDescription>
                 </Alert>
@@ -326,3 +375,5 @@ export function MyRequirementsList() {
         </div>
     );
 }
+
+    
