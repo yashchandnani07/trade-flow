@@ -297,10 +297,9 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
     const isSupplier = user?.role === 'supplier';
     const isVendorOwner = user?.uid === bid.vendorId;
 
-    const handleBidSubmit = async (theBid: Bid, amount: number) => {
-        console.log("Submitting bid for:", theBid);
-        if (!theBid || !theBid.id) {
-            console.error("Bid information is missing. Received:", theBid);
+    const handleBidSubmit = async (amount: number) => {
+        if (!bid || !bid.id) {
+            console.error("Bid information is missing. Received:", bid);
             toast({ variant: 'destructive', title: 'Error', description: 'Cannot place bid. Bid information is missing.' });
             return;
         }
@@ -311,7 +310,7 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
 
         setIsSubmitting(true);
         try {
-            const proposalsCollection = collection(db, 'bids', theBid.id, 'proposals');
+            const proposalsCollection = collection(db, 'bids', bid.id, 'proposals');
             const businessName = user.businessName || 'Unnamed Supplier';
 
             await addDoc(proposalsCollection, {
@@ -324,7 +323,7 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
 
             toast({
                 title: 'Bid Placed Successfully!',
-                description: `Your bid of ?${amount} for ${theBid.item} has been submitted.`,
+                description: `Your bid of ?${amount} for ${bid.item} has been submitted.`,
             });
         } catch (error: any) {
              let description = 'There was an error submitting your bid.';
@@ -348,12 +347,12 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
 
     const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        handleBidSubmit(bid, bidAmount);
+        handleBidSubmit(bidAmount);
     }
     
     const onMatchAndAccept = () => {
         setBidAmount(bid.targetPrice);
-        handleBidSubmit(bid, bid.targetPrice);
+        handleBidSubmit(bid.targetPrice);
     }
 
 
