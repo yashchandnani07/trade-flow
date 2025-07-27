@@ -8,7 +8,6 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { seedDatabase } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { RecentOrders } from "@/components/dashboard/recent-orders";
 import VendorStockBasket from "./components/vendor-stock-basket";
 import { AlertsSection } from "@/components/dashboard/alerts-section";
 
@@ -57,12 +56,6 @@ export default function DashboardPage() {
         <section id="alerts">
             <AlertsSection />
         </section>
-
-        <div className="grid gap-8 lg:grid-cols-1" id="tracking-and-alerts">
-          <div className="lg:col-span-2">
-              <RecentOrders />
-          </div>
-        </div>
 
         <div className="grid gap-8 lg:grid-cols-5" id="history">
             <div className="lg:col-span-3">
