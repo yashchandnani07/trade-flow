@@ -20,7 +20,6 @@ import {
   LogOut,
   Package,
   Settings,
-  Star,
   Users,
   Truck,
   Gavel,
@@ -78,7 +77,7 @@ export function AppSidebar() {
           <Button 
               variant="ghost"
               size="icon"
-              className="bg-glass/15 border-0 text-white hover:bg-glass/25 transition-all duration-300"
+              className="bg-glass/15 border-0 text-white hover:bg-glass/25 transition-all duration-300 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:-right-4 group-data-[collapsible=icon]:top-14 group-data-[collapsible=icon]:z-50"
               onClick={toggleSidebar}
           >
               <ChevronLeft className={cn("transition-transform", state === "collapsed" && "rotate-180")} />
