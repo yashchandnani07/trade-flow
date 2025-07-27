@@ -1,11 +1,9 @@
 
 'use client';
 
-import { useState, useMemo, FormEvent } from 'react';
-import { collection, addDoc, serverTimestamp, query, where, orderBy, doc, updateDoc, getDoc, deleteDoc, limit } from 'firebase/firestore';
-import { useCollection, useDocumentData, useCollectionData } from 'react-firebase-hooks/firestore';
-import { db } from '@/lib/firebase';
+import { useState, FormEvent, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { useBidding } from '@/hooks/use-bidding';
 import type { Bid, Proposal } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -18,10 +16,10 @@ import { Gavel, Loader2, Plus, AlertTriangle, CheckCircle, Trash2, Handshake, Me
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
-import { FirebaseError } from 'firebase/app';
 
 function CreateBidDialog() {
     const { user } = useAuth();
+    const { addBid } = useBidding();
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,25 +34,17 @@ function CreateBidDialog() {
             return;
         }
         setIsSubmitting(true);
-        try {
-            await addDoc(collection(db, 'bids'), {
-                vendorId: user.uid,
-                vendorName: user.businessName,
-                item,
-                quantity: Number(quantity),
-                targetPrice: Number(targetPrice),
-                status: 'open',
-                createdAt: serverTimestamp(),
-            });
-            toast({ title: 'Requirement Posted!', description: 'Your bid is now live on the marketplace.' });
-            setIsOpen(false);
-            setItem(''); setQuantity(''); setTargetPrice('');
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not post your requirement.' });
-        } finally {
-            setIsSubmitting(false);
-        }
+        addBid({
+            vendorId: user.uid,
+            vendorName: user.businessName || 'Anonymous Vendor',
+            item,
+            quantity: Number(quantity),
+            targetPrice: Number(targetPrice),
+        });
+        toast({ title: 'Requirement Posted!', description: 'Your bid is now live on the marketplace.' });
+        setIsSubmitting(false);
+        setIsOpen(false);
+        setItem(''); setQuantity(''); setTargetPrice('');
     };
 
     return (
@@ -97,31 +87,15 @@ function CreateBidDialog() {
     );
 }
 
-function ProposalsList({ bid }: { bid: Bid }) {
-    const proposalsCollection = useMemo(() => collection(db, 'bids', bid.id, 'proposals'), [bid.id]);
-    const proposalsQuery = useMemo(() => query(proposalsCollection, orderBy('createdAt', 'desc')), [proposalsCollection]);
-    const [proposalsSnapshot, loading, error] = useCollection(proposalsQuery);
+function ProposalsList({ bidId, proposals }: { bidId: string, proposals: Proposal[] }) {
+    const { acceptProposal, bids } = useBidding();
     const { toast } = useToast();
+    const bid = bids.find(b => b.id === bidId);
 
-    const handleAcceptProposal = async (proposalId: string) => {
-        try {
-            const bidRef = doc(db, 'bids', bid.id);
-            const proposalRef = doc(db, 'bids', bid.id, 'proposals', proposalId);
-
-            await updateDoc(bidRef, { status: 'closed', acceptedProposalId: proposalId });
-            await updateDoc(proposalRef, { status: 'accepted' });
-
-            toast({ title: 'Proposal Accepted!', description: 'The supplier has been notified.' });
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not accept the proposal.' });
-        }
+    const handleAcceptProposal = (proposalId: string) => {
+        acceptProposal(bidId, proposalId);
+        toast({ title: 'Proposal Accepted!', description: 'The supplier has been notified.' });
     };
-
-    if (loading) return <Skeleton className="h-20 w-full" />;
-    if (error) return <Alert variant="destructive"><AlertTriangle className="mr-2" />{error.message}</Alert>;
-
-    const proposals = proposalsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Proposal)) || [];
 
     if (proposals.length === 0) {
         return <p className="text-sm text-center text-muted-foreground py-4">No proposals yet.</p>;
@@ -135,14 +109,14 @@ function ProposalsList({ bid }: { bid: Bid }) {
                         <p className="font-semibold">{p.supplierName}</p>
                         <p className="text-lg font-bold text-primary">${p.price.toFixed(2)}</p>
                     </div>
-                    {bid.status === 'open' ? (
+                    {bid?.status === 'open' ? (
                         <Button size="sm" onClick={() => handleAcceptProposal(p.id)} disabled={p.status === 'accepted'}>
                             {p.status === 'accepted' ? <CheckCircle className="mr-2" /> : null}
                             {p.status === 'accepted' ? 'Accepted' : 'Accept'}
                         </Button>
                     ) : (
-                        <Badge variant={p.id === bid.acceptedProposalId ? 'success' : 'secondary'}>
-                            {p.id === bid.acceptedProposalId ? 'Accepted' : 'Not Selected'}
+                        <Badge variant={p.id === bid?.acceptedProposalId ? 'success' : 'secondary'}>
+                            {p.id === bid?.acceptedProposalId ? 'Accepted' : 'Not Selected'}
                         </Badge>
                     )}
                 </div>
@@ -180,6 +154,7 @@ function DeleteBidDialog({ bid, onConfirm, isDeleting }: { bid: Bid, onConfirm: 
 
 function BidCard({ bid }: { bid: Bid }) {
     const { user } = useAuth();
+    const { addProposal, deleteBid, getProposalsForBid } = useBidding();
     const { toast } = useToast();
     const [price, setPrice] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -189,39 +164,23 @@ function BidCard({ bid }: { bid: Bid }) {
 
     const isVendorOwner = user?.uid === bid.vendorId;
 
-    const proposalsCollection = useMemo(() => collection(db, 'bids', bid.id, 'proposals'), [bid.id]);
-    const userProposalQuery = useMemo(() => {
-        if (!user || user.role !== 'supplier') return null;
-        return query(proposalsCollection, where('supplierId', '==', user.uid), limit(1));
-    }, [proposalsCollection, user]);
+    const allProposals = getProposalsForBid(bid.id);
+    const userProposal = useMemo(() => {
+        return allProposals.find(p => p.supplierId === user?.uid);
+    }, [allProposals, user?.uid]);
 
-    const [userProposals, loadingUserProposals] = useCollectionData(userProposalQuery);
-    const hasUserBid = !loadingUserProposals && userProposals && userProposals.length > 0;
-
-    const submitOffer = async (offerPrice: number) => {
-        if (!user || user.role !== 'supplier') {
-            toast({ variant: "destructive", title: "Authentication Error", description: "You must be a supplier to submit an offer." });
-            return;
-        }
+    const submitOffer = (offerPrice: number) => {
+        if (!user || user.role !== 'supplier') return;
         setIsSubmitting(true);
-        try {
-            const proposalData = {
-                supplierId: user.uid,
-                supplierName: user.businessName,
-                price: offerPrice,
-                status: 'pending',
-                createdAt: serverTimestamp(),
-            };
-            await addDoc(proposalsCollection, proposalData);
-            toast({ title: 'Offer Submitted!', description: `Your bid for ${bid.item} has been placed.` });
-            setPrice('');
-            setShowNegotiateForm(false);
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not submit your offer.' });
-        } finally {
-            setIsSubmitting(false);
-        }
+        addProposal(bid.id, {
+            supplierId: user.uid,
+            supplierName: user.businessName || 'Anonymous Supplier',
+            price: offerPrice,
+        });
+        toast({ title: 'Offer Submitted!', description: `Your bid for ${bid.item} has been placed.` });
+        setPrice('');
+        setShowNegotiateForm(false);
+        setIsSubmitting(false);
     };
 
     const handleNegotiateSubmit = (e: FormEvent) => {
@@ -236,19 +195,12 @@ function BidCard({ bid }: { bid: Bid }) {
     const handleAccept = () => {
         submitOffer(bid.targetPrice);
     };
-
-    const handleDeleteBid = async () => {
+    
+    const handleDeleteBid = () => {
         setIsDeleting(true);
-        try {
-            await deleteDoc(doc(db, 'bids', bid.id));
-            toast({ title: 'Bid Deleted', description: 'Your requirement has been removed from the marketplace.' });
-        } catch (error) {
-            const isPermissionError = error instanceof FirebaseError && (error.code === 'permission-denied' || error.code === 'unauthenticated');
-            console.error(error);
-            toast({ variant: 'destructive', title: 'Error', description: isPermissionError ? "You do not have permission to delete this bid." : 'Could not delete the bid.' });
-        } finally {
-            setIsDeleting(false);
-        }
+        deleteBid(bid.id);
+        toast({ title: 'Bid Deleted', description: 'Your requirement has been removed from the marketplace.' });
+        setIsDeleting(false);
     };
     
     const showBidActions = user?.role === 'supplier' && bid.status === 'open';
@@ -260,7 +212,7 @@ function BidCard({ bid }: { bid: Bid }) {
                     <div>
                         <CardTitle>{bid.item}</CardTitle>
                         <CardDescription>
-                            by {bid.vendorName} &bull; {bid.createdAt ? formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true }) : 'just now'}
+                            by {bid.vendorName} &bull; {formatDistanceToNow(new Date(bid.createdAt), { addSuffix: true })}
                         </CardDescription>
                     </div>
                      <div className="flex items-center gap-2">
@@ -278,10 +230,10 @@ function BidCard({ bid }: { bid: Bid }) {
                 </div>
             </CardContent>
             <CardFooter className="flex-col items-stretch space-y-4">
-                {showBidActions && !hasUserBid && (
+                {showBidActions && !userProposal && (
                     <div className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
-                            <Button onClick={handleAccept} disabled={isSubmitting || loadingUserProposals}>
+                            <Button onClick={handleAccept} disabled={isSubmitting}>
                                 <Handshake className="mr-2" /> Accept
                             </Button>
                             <Button variant="secondary" onClick={() => setShowNegotiateForm(!showNegotiateForm)}>
@@ -298,14 +250,14 @@ function BidCard({ bid }: { bid: Bid }) {
                                     required
                                     step="0.01"
                                 />
-                                <Button type="submit" disabled={isSubmitting || loadingUserProposals}>
-                                    {isSubmitting || loadingUserProposals ? <Loader2 className="animate-spin" /> : 'Submit'}
+                                <Button type="submit" disabled={isSubmitting}>
+                                    {isSubmitting ? <Loader2 className="animate-spin" /> : 'Submit'}
                                 </Button>
                             </form>
                         )}
                     </div>
                 )}
-                {showBidActions && hasUserBid && (
+                {showBidActions && userProposal && (
                      <Alert variant="success" className="text-sm">
                         <CheckCircle className="h-4 w-4" />
                         <AlertTitle>Offer Submitted</AlertTitle>
@@ -315,9 +267,9 @@ function BidCard({ bid }: { bid: Bid }) {
                 {isVendorOwner && (
                     <>
                         <Button variant="outline" onClick={() => setShowProposals(!showProposals)}>
-                            {showProposals ? 'Hide Proposals' : 'View Proposals'}
+                            {showProposals ? 'Hide Proposals' : `View Proposals (${allProposals.length})`}
                         </Button>
-                        {showProposals && <ProposalsList bid={bid} />}
+                        {showProposals && <ProposalsList bidId={bid.id} proposals={allProposals} />}
                     </>
                 )}
                  {bid.status === 'closed' && bid.acceptedProposalId && (
@@ -329,22 +281,17 @@ function BidCard({ bid }: { bid: Bid }) {
 }
 
 function AcceptedProposalInfo({ bid }: { bid: Bid }) {
-    const proposalRef = useMemo(() => {
-        if (!bid.acceptedProposalId) return null;
-        return doc(db, 'bids', bid.id, 'proposals', bid.acceptedProposalId);
-    }, [bid]);
-    
-    const [proposal, loading, error] = useDocumentData(proposalRef);
+    const { getProposalsForBid } = useBidding();
+    const acceptedProposal = getProposalsForBid(bid.id).find(p => p.id === bid.acceptedProposalId);
 
-    if (loading) return <Skeleton className="h-10 w-full" />;
-    if (error || !proposal) return null;
+    if (!acceptedProposal) return null;
     
     return (
         <Alert variant="success">
             <CheckCircle className="h-4 w-4" />
             <AlertTitle>Proposal Accepted</AlertTitle>
             <AlertDescription>
-                Accepted from <strong>{proposal.supplierName}</strong> at <strong>${(proposal.price as number).toFixed(2)}</strong>.
+                Accepted from <strong>{acceptedProposal.supplierName}</strong> at <strong>${(acceptedProposal.price as number).toFixed(2)}</strong>.
             </AlertDescription>
         </Alert>
     );
@@ -352,11 +299,7 @@ function AcceptedProposalInfo({ bid }: { bid: Bid }) {
 
 export function MarketplaceBidsList() {
     const { user } = useAuth();
-    const bidsCollection = useMemo(() => collection(db, 'bids'), []);
-    const bidsQuery = useMemo(() => query(bidsCollection, orderBy('createdAt', 'desc')), [bidsCollection]);
-    const [bidsSnapshot, loading, error] = useCollection(bidsQuery);
-
-    const bids = bidsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Bid)) || [];
+    const { bids, loading } = useBidding();
 
     return (
         <div className="space-y-6">
@@ -375,7 +318,7 @@ export function MarketplaceBidsList() {
                     {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-64" />)}
                 </div>
             )}
-            {error && <Alert variant="destructive"><AlertTriangle className="mr-2" />{error.message}</Alert>}
+
             {!loading && bids.length === 0 && (
                 <Card className="bg-glass">
                     <CardContent className="p-6 text-center text-muted-foreground">

@@ -8,6 +8,7 @@ import { AppHeader } from '@/components/layout/header';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { BiddingProvider } from '@/hooks/use-bidding';
 
 export default function AuthedLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -44,18 +45,20 @@ export default function AuthedLayout({ children }: { children: ReactNode }) {
   }
   
   return (
-    <SidebarProvider>
-      <div className={cn("flex min-h-screen w-full", "dark:bg-background")}>
-        <AppSidebar />
-        <div className="flex flex-col flex-1">
-          <AppHeader />
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8" style={{ scrollBehavior: 'smooth' }}>
-            <div className="dark:bg-card dark:p-6 dark:rounded-lg">
-                {children}
+    <BiddingProvider>
+        <SidebarProvider>
+        <div className={cn("flex min-h-screen w-full", "dark:bg-background")}>
+            <AppSidebar />
+            <div className="flex flex-col flex-1">
+            <AppHeader />
+            <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8" style={{ scrollBehavior: 'smooth' }}>
+                <div className="dark:bg-card dark:p-6 dark:rounded-lg">
+                    {children}
+                </div>
+            </main>
             </div>
-          </main>
         </div>
-      </div>
-    </SidebarProvider>
+        </SidebarProvider>
+    </BiddingProvider>
   );
 }
