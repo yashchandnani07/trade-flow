@@ -24,7 +24,7 @@ const nextConfig = {
     ],
   },
   // This allows requests from the development environment's domain.
-  allowedDevOrigins: ["*.cloudworkstations.dev"],
+  allowedDevOrigins: ["*.cloudworkstations.dev", "*.firebase.studio"],
   experimental: {
   },
 };
