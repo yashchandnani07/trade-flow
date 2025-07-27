@@ -28,14 +28,27 @@ import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
-function AddStockDialog() {
+
+export default function VendorStockBasket() {
     const { user } = useAuth();
     const { toast } = useToast();
+    
+    // State for the "Add Item" dialog
     const [isOpen, setIsOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [itemName, setItemName] = useState('');
     const [quantity, setQuantity] = useState('');
     const [expiryDate, setExpiryDate] = useState('');
+
+    const stockCollection = useMemo(() => collection(db, 'stockItems'), []);
+    const stockQuery = useMemo(() => {
+        if (!user) return null;
+        return query(stockCollection, where("ownerId", "==", user.uid), orderBy("expiryDate", "asc"));
+    }, [stockCollection, user]);
+
+    const [stockItems, loading, error] = useCollectionData(stockQuery, { idField: 'id' });
+    
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const handleAddItem = async (e: FormEvent) => {
         e.preventDefault();
@@ -46,8 +59,8 @@ function AddStockDialog() {
 
         setIsSubmitting(true);
         try {
-            const stockCollection = collection(db, 'stockItems');
-            await addDoc(stockCollection, {
+            const stockCollectionRef = collection(db, 'stockItems');
+            await addDoc(stockCollectionRef, {
                 name: itemName,
                 quantity: Number(quantity),
                 expiryDate: Timestamp.fromDate(new Date(expiryDate)),
@@ -67,61 +80,6 @@ function AddStockDialog() {
             setIsSubmitting(false);
         }
     };
-
-    return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" /> Add Stock Item
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md bg-glass">
-                <DialogHeader>
-                    <DialogTitle>Add New Stock Item</DialogTitle>
-                    <DialogDescription>Enter the details for the new stock item.</DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleAddItem}>
-                    <div className="space-y-4 py-4">
-                        <div>
-                            <Label htmlFor="item-name">Item Name</Label>
-                            <Input id="item-name" value={itemName} onChange={(e) => setItemName(e.target.value)} placeholder="e.g., Organic Apples" required />
-                        </div>
-                        <div>
-                            <Label htmlFor="quantity">Quantity (units)</Label>
-                            <Input id="quantity" type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="e.g., 100" required />
-                        </div>
-                        <div>
-                            <Label htmlFor="expiry-date">Expiry Date</Label>
-                            <Input id="expiry-date" type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} required />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Add Item
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-
-export default function VendorStockBasket() {
-    const { user } = useAuth();
-    const { toast } = useToast();
-    
-    const stockCollection = useMemo(() => collection(db, 'stockItems'), []);
-    const stockQuery = useMemo(() => {
-        if (!user) return null;
-        return query(stockCollection, where("ownerId", "==", user.uid), orderBy("expiryDate", "asc"));
-    }, [stockCollection, user]);
-
-    const [stockItems, loading, error] = useCollectionData(stockQuery, { idField: 'id' });
-    
-    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const handleDelete = async (itemId: string) => {
         setDeletingId(itemId);
@@ -144,7 +102,42 @@ export default function VendorStockBasket() {
                         <Package /> My Stock & Expiry
                     </CardTitle>
                 </div>
-                <AddStockDialog />
+                <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <Plus className="mr-2 h-4 w-4" /> Add Stock Item
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md bg-glass">
+                        <DialogHeader>
+                            <DialogTitle>Add New Stock Item</DialogTitle>
+                            <DialogDescription>Enter the details for the new stock item.</DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleAddItem}>
+                            <div className="space-y-4 py-4">
+                                <div>
+                                    <Label htmlFor="item-name">Item Name</Label>
+                                    <Input id="item-name" value={itemName} onChange={(e) => setItemName(e.target.value)} placeholder="e.g., Organic Apples" required />
+                                </div>
+                                <div>
+                                    <Label htmlFor="quantity">Quantity (units)</Label>
+                                    <Input id="quantity" type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="e.g., 100" required />
+                                </div>
+                                <div>
+                                    <Label htmlFor="expiry-date">Expiry Date</Label>
+                                    <Input id="expiry-date" type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} required />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+                                <Button type="submit" disabled={isSubmitting}>
+                                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Add Item
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </CardHeader>
             <CardContent>
                 <Table>
