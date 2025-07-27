@@ -12,6 +12,13 @@ export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
       {...props}
     >
       <path
+        d="M16 4L28 16L16 28L4 16L16 4Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
         d="M12 24L4 16L12 8"
         stroke="currentColor"
         strokeWidth="2"
@@ -20,13 +27,6 @@ export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
       />
       <path
         d="M20 8L28 16L20 24"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M4 16H28"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
