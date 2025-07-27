@@ -38,6 +38,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { FirebaseError } from "firebase/app";
 
 
 export default function VendorStockBasket() {
@@ -98,7 +99,11 @@ export default function VendorStockBasket() {
             toast({ title: "Item Removed", description: "The stock item has been removed from your basket." });
         } catch (error) {
             console.error("Error deleting item:", error);
-            toast({ variant: 'destructive', title: "Error", description: "Could not remove the item." });
+            let description = "Could not remove the item.";
+            if (error instanceof FirebaseError && error.code === 'permission-denied') {
+                description = "You don't have permission to delete this item. Please check your Firestore security rules.";
+            }
+            toast({ variant: 'destructive', title: "Error", description });
         } finally {
             setDeletingId(null);
         }
