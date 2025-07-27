@@ -4,12 +4,12 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { collection, query, addDoc, serverTimestamp, where, getDocs, limit } from 'firebase/firestore';
+import { collection, query, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import type { Supplier } from '@/lib/types';
+import type { User } from '@/lib/types';
 import { checkOrderHistory } from '@/app/actions';
 
 import { Button } from "@/components/ui/button";
@@ -46,10 +46,10 @@ const RatingInput = ({ rating, onRate }: { rating: number, onRate: (rating: numb
 );
 
 
-function SupplierCombobox({ onSelect, value, suppliers, loading }: { onSelect: (id: string) => void, value: string, suppliers: Supplier[], loading: boolean }) {
+function SupplierCombobox({ onSelect, value, suppliers, loading }: { onSelect: (id: string) => void, value: string, suppliers: User[], loading: boolean }) {
   const [open, setOpen] = useState(false);
   const selectedSupplierName = useMemo(() => {
-    return suppliers.find(s => s.id === value)?.name || "Select a supplier...";
+    return suppliers.find(s => s.uid === value)?.businessName || "Select a supplier...";
   }, [value, suppliers]);
 
   return (
@@ -74,20 +74,20 @@ function SupplierCombobox({ onSelect, value, suppliers, loading }: { onSelect: (
             <CommandGroup>
               {suppliers.map((supplier) => (
                 <CommandItem
-                  key={supplier.id}
-                  value={supplier.name}
+                  key={supplier.uid}
+                  value={supplier.businessName || ''}
                   onSelect={() => {
-                    onSelect(supplier.id);
+                    onSelect(supplier.uid);
                     setOpen(false);
                   }}
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value === supplier.id ? "opacity-100" : "opacity-0"
+                      value === supplier.uid ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {supplier.name}
+                  {supplier.businessName}
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -105,10 +105,10 @@ export default function SupplierReviewPage() {
   const [isValidated, setIsValidated] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(false);
 
-  const suppliersCollection = useMemo(() => collection(db, 'suppliers'), []);
-  const q = useMemo(() => query(suppliersCollection), [suppliersCollection]);
-  const [suppliersSnapshot, suppliersLoading] = useCollectionData(q, { idField: 'id' });
-  const suppliers = (suppliersSnapshot || []) as Supplier[];
+  const usersCollection = useMemo(() => collection(db, 'users'), []);
+  const q = useMemo(() => query(usersCollection, where("role", "==", "supplier")), [usersCollection]);
+  const [suppliersSnapshot, suppliersLoading] = useCollectionData(q, { idField: 'uid' });
+  const suppliers = (suppliersSnapshot || []) as User[];
 
   const form = useForm<ReviewFormValues>({
     resolver: zodResolver(reviewSchema),

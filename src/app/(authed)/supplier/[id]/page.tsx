@@ -1,12 +1,12 @@
 
 'use client';
 import { useMemo } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { useDocumentData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
-import { type User, type Supplier } from '@/lib/types';
+import { type User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Star, Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -77,7 +77,7 @@ export default function SupplierProfilePage({ params }: { params: { id: string }
               Back to Suppliers
           </Button>
           {/* Header section */}
-          <Card className="bg-glass">
+          <Card className="glassmorphic">
               <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row items-start gap-6">
                       <Avatar className="w-24 h-24 border-2 border-primary">
@@ -102,7 +102,7 @@ export default function SupplierProfilePage({ params }: { params: { id: string }
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left column for details */}
               <div className="lg:col-span-1 space-y-6">
-                  <Card className="bg-glass">
+                  <Card className="glassmorphic">
                       <CardHeader>
                           <CardTitle>Supplier Details</CardTitle>
                       </CardHeader>
@@ -131,7 +131,7 @@ export default function SupplierProfilePage({ params }: { params: { id: string }
                           </div>
                       </CardContent>
                   </Card>
-                   <Card className="bg-glass">
+                   <Card className="glassmorphic">
                       <CardHeader>
                           <CardTitle>Compliance</CardTitle>
                       </CardHeader>
