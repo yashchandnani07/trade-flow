@@ -10,20 +10,13 @@ export default function BiddingPage() {
 
     return (
         <div className="space-y-8">
-            {user?.role === 'vendor' && (
-                <section id="my-requirements">
-                    <MyRequirementsList />
-                </section>
-            )}
-
-            <section id="marketplace">
-                 <MarketplaceBidsList />
-            </section>
-           
-            {user?.role === 'supplier' && (
-                <section id="my-bids">
+            {user?.role === 'vendor' ? (
+                <MyRequirementsList />
+            ) : (
+                <>
+                    <MarketplaceBidsList />
                     <MyBidsList />
-                </section>
+                </>
             )}
         </div>
     );

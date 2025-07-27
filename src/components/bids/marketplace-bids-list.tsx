@@ -3,7 +3,6 @@
 
 import { useState, FormEvent, useMemo, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { useBidding } from '@/hooks/use-bidding';
 import type { Bid, Proposal } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -16,29 +15,49 @@ import { Gavel, Loader2, Plus, AlertTriangle, CheckCircle, Trash2, Handshake, Me
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp, collection, addDoc, serverTimestamp, query, where, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { cn } from '@/lib/utils';
 
 function BidCard({ bid }: { bid: Bid }) {
     const { user } = useAuth();
-    const { addProposal, isAddingProposal, getProposalsForBid } = useBidding();
     const { toast } = useToast();
     const [price, setPrice] = useState('');
     const [showNegotiateForm, setShowNegotiateForm] = useState(false);
+    const [isAddingProposal, setIsAddingProposal] = useState(false);
+    
+    const proposalsCollection = useMemo(() => collection(db, 'proposals'), []);
+    const userProposalQuery = useMemo(() => {
+        if (!user) return null;
+        return query(proposalsCollection, where('bidId', '==', bid.id), where('supplierId', '==', user.uid));
+    }, [proposalsCollection, bid.id, user]);
 
-    const proposals = getProposalsForBid(bid.id);
-    const userProposal = useMemo(() => {
-        return proposals.find(p => p.supplierId === user?.uid);
-    }, [proposals, user?.uid]);
+    const [userProposals] = useCollectionData(userProposalQuery);
+    const userProposal = useMemo(() => userProposals?.[0] as Proposal, [userProposals]);
 
     const submitOffer = async (offerPrice: number) => {
+        if (!user || user.role !== 'supplier') {
+            toast({ variant: 'destructive', title: 'Action not allowed' });
+            return;
+        }
+        setIsAddingProposal(true);
         try {
-            await addProposal(bid.id, { price: offerPrice });
+            await addDoc(collection(db, 'proposals'), {
+                bidId: bid.id,
+                supplierId: user.uid,
+                supplierName: user.businessName,
+                price: offerPrice,
+                createdAt: serverTimestamp(),
+            });
             toast({ title: 'Offer Submitted!', description: `Your proposal for ${bid.item} has been placed.` });
             setPrice('');
             setShowNegotiateForm(false);
         } catch (error) {
-            // Error toast handled in hook
+            console.error('Error adding proposal:', error);
+            toast({ variant: 'destructive', title: 'Action Failed', description: 'Could not submit your proposal.' });
+        } finally {
+            setIsAddingProposal(false);
         }
     };
 
@@ -125,8 +144,9 @@ function BidCard({ bid }: { bid: Bid }) {
 }
 
 export function MarketplaceBidsList() {
-    const { bids, loading, error } = useBidding();
-    const openBids = useMemo(() => bids.filter(b => b.status === 'open'), [bids]);
+    const bidsCollection = useMemo(() => collection(db, 'bids'), []);
+    const openBidsQuery = useMemo(() => query(bidsCollection, where('status', '==', 'open'), orderBy('createdAt', 'desc')), [bidsCollection]);
+    const [bids, loading, error] = useCollectionData(openBidsQuery, { idField: 'id' });
     
     return (
         <div className="space-y-6">
@@ -155,7 +175,7 @@ export function MarketplaceBidsList() {
                 </div>
             )}
 
-            {!loading && openBids.length === 0 && !error && (
+            {!loading && bids?.length === 0 && !error && (
                 <Card className="bg-glass">
                     <CardContent className="p-6 text-center text-muted-foreground">
                         No active requirements found in the marketplace.
@@ -164,9 +184,9 @@ export function MarketplaceBidsList() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {!loading && openBids.map(bid => {
+                {!loading && bids?.map(bid => {
                     if (!bid?.id) return null;
-                    return <BidCard key={bid.id} bid={bid} />;
+                    return <BidCard key={bid.id} bid={bid as Bid} />;
                 })}
             </div>
         </div>
