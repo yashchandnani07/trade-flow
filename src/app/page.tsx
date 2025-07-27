@@ -309,7 +309,7 @@ export default function SupplyChainConnect() {
                       animateBy="words"
                       direction="top"
                       onAnimationComplete={handleAnimationComplete}
-                      className="bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent !justify-start"
+                      className="text-slate-100 !justify-start"
                     />
                 </h1>
 
