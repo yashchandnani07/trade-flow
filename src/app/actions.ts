@@ -3,14 +3,13 @@
 
 import { aiEnhancedAlert, type AiEnhancedAlertInput, type AiEnhancedAlertOutput } from "@/ai/flows/ai-enhanced-alerts";
 import { collection, getDocs, writeBatch, doc, query, where, limit, orderBy, Timestamp } from "firebase/firestore";
-import { db, auth } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { mockSuppliers, mockReviews, mockOrders } from "@/lib/data";
 import type { StockItem } from "@/lib/types";
 import { differenceInDays, format } from "date-fns";
 
-async function getExpiringStockAlert(): Promise<AiEnhancedAlertInput | null> {
-    const user = auth.currentUser;
-    if (!user) return null;
+async function getExpiringStockAlert(userId: string): Promise<AiEnhancedAlertInput | null> {
+    if (!userId) return null;
 
     const today = new Date();
     const threeDaysFromNow = new Date();
@@ -19,7 +18,7 @@ async function getExpiringStockAlert(): Promise<AiEnhancedAlertInput | null> {
     const stockCollection = collection(db, 'stockItems');
     const q = query(
         stockCollection,
-        where("ownerId", "==", user.uid),
+        where("ownerId", "==", userId),
         where("expiryDate", ">=", Timestamp.fromDate(today)),
         where("expiryDate", "<=", Timestamp.fromDate(threeDaysFromNow)),
         orderBy("expiryDate", "asc"),
@@ -31,22 +30,23 @@ async function getExpiringStockAlert(): Promise<AiEnhancedAlertInput | null> {
         return null;
     }
 
-    const expiringItem = querySnapshot.docs[0].data() as StockItem;
+    const expiringItemDoc = querySnapshot.docs[0];
+    const expiringItem = expiringItemDoc.data() as Omit<StockItem, 'id'>;
     const daysLeft = differenceInDays(expiringItem.expiryDate.toDate(), today);
     const dayString = daysLeft <= 1 ? "day" : "days";
 
     return {
-        eventType: 'Low Stock Warning',
-        eventDetails: `Your stock of ${expiringItem.name} (${expiringItem.quantity} units) is expiring in ${daysLeft} ${dayString} on ${format(expiringItem.expiryDate.toDate(), 'PPP')}.`,
+        eventType: 'Urgent Stock Expiry',
+        eventDetails: `Your stock of ${expiringItem.name} (${expiringItem.quantity} units) is expiring in ${daysLeft} ${dayString} on ${format(expiringItem.expiryDate.toDate(), 'PPP')}. Consider using it or selling it soon.`,
         userBehaviorData: 'User actively manages stock.',
         urgency: 'high',
     };
 }
 
 
-export async function generateAlert(): Promise<AiEnhancedAlertOutput> {
-  // First, check for a real, urgent alert about expiring stock.
-  const expiringStockAlert = await getExpiringStockAlert();
+export async function generateAlert(userId: string): Promise<AiEnhancedAlertOutput> {
+  // First, check for a real, urgent alert about expiring stock for the specific user.
+  const expiringStockAlert = await getExpiringStockAlert(userId);
   if (expiringStockAlert) {
       try {
           const result = await aiEnhancedAlert(expiringStockAlert);

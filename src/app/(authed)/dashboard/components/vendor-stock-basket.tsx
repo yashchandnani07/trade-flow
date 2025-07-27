@@ -62,7 +62,7 @@ function AddStockDialog() {
             setExpiryDate('');
         } catch (error) {
             console.error('Error adding stock item:', error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not add stock item.' });
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not add stock item. Check Firestore rules.' });
         } finally {
             setIsSubmitting(false);
         }
@@ -200,11 +200,13 @@ export default function VendorStockBasket() {
                                 );
                             })
                         ) : (
+                            !loading && (
                             <TableRow>
                                 <TableCell colSpan={4} className="h-24 text-center">
                                     No stock items yet. Add one to get started.
                                 </TableCell>
                             </TableRow>
+                            )
                         )}
                          {error && (
                             <TableRow>

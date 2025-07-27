@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useTransition } from "react";
@@ -11,6 +12,7 @@ import { Bell, Loader2 } from "lucide-react";
 import type { Alert } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 const priorityVariantMap = {
   high: "destructive",
@@ -22,10 +24,19 @@ export function AlertsSection() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleGenerateAlert = () => {
+    if (!user) {
+        toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "You must be logged in to generate alerts.",
+        });
+        return;
+    }
     startTransition(async () => {
-      const newAlertData = await generateAlert();
+      const newAlertData = await generateAlert(user.uid);
       if (newAlertData.alertTitle.includes("Error")) {
         toast({
             variant: "destructive",
