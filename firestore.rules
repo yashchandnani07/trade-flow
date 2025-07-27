@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -8,17 +9,18 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Helper function to get user data
+    // Helper function to get user data from the 'users' collection
     function getUserData(userId) {
       return get(/databases/$(database)/documents/users/$(userId)).data;
     }
 
-    // Helper function to check user role
+    // Helper function to check if the current user has a specific role
     function hasRole(role) {
       return isAuthenticated() && getUserData(request.auth.uid).role == role;
     }
     
-    // User profiles can be read by anyone, but only the user can write to their own document.
+    // User profiles can be read by any authenticated user.
+    // A user can only write to their own document.
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated() && request.auth.uid == userId;
@@ -26,61 +28,64 @@ service cloud.firestore {
 
     // Bids (Requirements posted by vendors)
     match /bids/{bidId} {
-      // Any authenticated user can view the list of bids.
+      // Any authenticated user can view the list of bids in the marketplace.
       allow list: if isAuthenticated();
       
-      // Only authenticated vendors can create bids.
+      // The vendor who created the bid can read its full details.
+      // A supplier can read the details of a bid to decide if they want to propose an offer.
+      allow read: if isAuthenticated();
+      
+      // Only authenticated vendors can create new bids.
       allow create: if hasRole('vendor');
+
+      // Only the vendor who owns the bid can update it (e.g., to close it).
+      allow update: if isAuthenticated() && resource.data.vendorId == request.auth.uid;
       
-      // Only the vendor who created the bid can read its full details or update it (e.g., to close it).
-      allow read, update: if isAuthenticated() && resource.data.vendorId == request.auth.uid;
-      
-      // Only the vendor who created the bid can delete it.
+      // Only the vendor who owns the bid can delete it.
       allow delete: if isAuthenticated() && resource.data.vendorId == request.auth.uid;
 
-      // Proposals (Offers submitted by suppliers on a bid)
+      // --- Nested Proposals Rule ---
+      // This rule applies to the 'proposals' sub-collection within a specific bid.
       match /proposals/{proposalId} {
-        // A vendor can see all proposals on their own bid.
         // A supplier can see their own proposal.
-        allow read: if (isAuthenticated() && get(/databases/$(database)/documents/bids/$(bidId)).data.vendorId == request.auth.uid) || 
-                     (hasRole('supplier') && resource.data.supplierId == request.auth.uid);
+        // A vendor can see all proposals on their own bid.
+        allow read: if (hasRole('supplier') && resource.data.supplierId == request.auth.uid) ||
+                     (hasRole('vendor') && get(/databases/$(database)/documents/bids/$(bidId)).data.vendorId == request.auth.uid);
                      
-        // Only suppliers can create proposals.
+        // Only suppliers can create proposals on a bid.
         allow create: if hasRole('supplier');
 
-        // Allow suppliers to update their own proposals (though this is not used in the current app).
+        // Only the supplier who created the proposal can update it.
         allow update: if hasRole('supplier') && resource.data.supplierId == request.auth.uid;
         
-        // Delete is disallowed for now to maintain record integrity.
-        allow delete: if false;
+        // A vendor can see all proposals on their specific bid.
+        allow list: if hasRole('vendor') && get(/databases/$(database)/documents/bids/$(bidId)).data.vendorId == request.auth.uid;
         
-        // Deny direct listing of all proposals on a bid to prevent suppliers from seeing competitor bids.
-        allow list: if false;
+        // Deleting proposals is disallowed to maintain a record.
+        allow delete: if false;
       }
     }
     
-    // This rule is critical for the "My Bids" query for suppliers.
-    // It allows a supplier to query the 'proposals' collection group for documents where their UID matches the supplierId.
+    // This is the collection group query rule for the "My Submitted Bids" list for suppliers.
+    // It allows a supplier to query across all 'proposals' collections, but only retrieves documents where they are the owner.
     match /{path=**}/proposals/{proposalId} {
-      // A user can only list documents that they also have read permission for.
-      // This rule, combined with the read rule on proposals, secures the collection group query.
-      allow list: if hasRole('supplier');
+        allow list: if hasRole('supplier') && request.query.where.supplierId == request.auth.uid;
     }
 
-    // Orders can be read/written by the vendor or the supplier involved.
+    // Orders can be read or written only by the vendor or the supplier involved in that order.
     match /orders/{orderId} {
       allow read, write: if isAuthenticated() && (request.auth.uid == resource.data.vendorId || request.auth.uid == resource.data.supplierId);
     }
 
     // Reviews can be read by any authenticated user.
-    // Users can only create reviews (no updates/deletes for now to preserve history).
+    // To preserve integrity, reviews can only be created, not updated or deleted.
     match /reviews/{reviewId} {
         allow read: if isAuthenticated();
         allow create: if isAuthenticated();
         allow update, delete: if false;
     }
     
-    // Stock Items can only be managed by their owner.
+    // Stock Items can only be managed (read, write, delete) by their owner.
     match /stockItems/{itemId} {
         allow read, write, delete: if isAuthenticated() && request.auth.uid == resource.data.ownerId;
         allow list: if isAuthenticated();
