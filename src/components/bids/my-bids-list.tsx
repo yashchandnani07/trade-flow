@@ -19,6 +19,8 @@ export function MyBidsList() {
 
     const proposalsQuery = useMemo(() => {
         if (!user || user.role !== 'supplier') return null;
+        // Simplified query to make it less dependent on complex indexes.
+        // Sorting will be handled on the client-side.
         return query(
             collectionGroup(db, 'proposals'), 
             where("supplierId", "==", user.uid)
@@ -27,6 +29,7 @@ export function MyBidsList() {
 
     const [proposals, loading, error] = useCollectionData(proposalsQuery, { idField: 'id' });
 
+    // Client-side sorting
     const sortedProposals = useMemo(() => {
         if (!proposals) return [];
         return [...proposals].sort((a, b) => {
@@ -69,7 +72,7 @@ export function MyBidsList() {
                                         <AlertTriangle className="h-4 w-4" />
                                         <AlertTitle>Error Loading Your Bids</AlertTitle>
                                         <AlertDescription>
-                                            There was a problem fetching your bids. Please ensure your Firestore security rules are correct and you have waited a few minutes for any new index to activate.
+                                            There was a problem fetching your bids. The most common cause is a missing Firestore index or a permissions issue in your security rules. Please ensure they are configured correctly.
                                             <pre className="mt-2 p-2 bg-muted rounded-md text-xs whitespace-pre-wrap">{error.message}</pre>
                                         </AlertDescription>
                                     </Alert>
@@ -94,7 +97,7 @@ export function MyBidsList() {
                                 );
                             })
                         ) : (
-                            !loading && (
+                            !loading && !error && (
                                 <TableRow>
                                     <TableCell colSpan={3} className="h-24 text-center">
                                         You haven't submitted any bids yet.

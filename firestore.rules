@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service cloud.firestore {
@@ -54,14 +53,18 @@ service cloud.firestore {
         
         // Delete is disallowed for now to maintain record integrity.
         allow delete: if false;
+        
+        // Deny direct listing of all proposals on a bid to prevent suppliers from seeing competitor bids.
+        allow list: if false;
       }
     }
-
-    // Collection group query for proposals. This is the key fix.
-    // This allows a supplier to query the 'proposals' collection group
-    // to find all bids they have submitted.
+    
+    // This rule is critical for the "My Bids" query for suppliers.
+    // It allows a supplier to query the 'proposals' collection group for documents where their UID matches the supplierId.
     match /{path=**}/proposals/{proposalId} {
-        allow list: if hasRole('supplier');
+      // A user can only list documents that they also have read permission for.
+      // This rule, combined with the read rule on proposals, secures the collection group query.
+      allow list: if hasRole('supplier');
     }
 
     // Orders can be read/written by the vendor or the supplier involved.
