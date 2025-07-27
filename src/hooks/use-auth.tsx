@@ -14,7 +14,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp, updateDoc, Timestamp } from 'firebase/firestore';
 import { app, db, auth } from '@/lib/firebase';
 import { type AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import type { User, Role } from '@/lib/types';
@@ -48,10 +48,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      setLoading(true); // Start loading when auth state changes
+      setLoading(true);
       if (firebaseUser) {
-        // Optimistic: stop loading early
-        setLoading(false);
+        setLoading(false); // Optimistic: stop loading early
         const userData = await fetchUserDocument(firebaseUser.uid);
         if (userData) {
             setUser({
@@ -83,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if(additionalData.role === 'supplier') {
         newUserBadges.push({
             name: 'Newly Joined',
-            dateAwarded: serverTimestamp()
+            dateAwarded: Timestamp.now() // Use client-side timestamp
         });
     }
 
