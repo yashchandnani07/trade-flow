@@ -22,23 +22,49 @@ import {
   DialogClose,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { FirebaseError } from "firebase/app";
+
+
+function DeleteConfirmationDialog({ item, onConfirm, isDeleting }: { item: StockItem, onConfirm: () => void, isDeleting: boolean }) {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const handleConfirm = () => {
+        onConfirm();
+        setIsOpen(false);
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" disabled={isDeleting}>
+                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-destructive" />}
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md bg-glass">
+                <DialogHeader>
+                    <DialogTitle>Are you absolutely sure?</DialogTitle>
+                    <DialogDescription>
+                        This action cannot be undone. This will permanently delete the item
+                        <span className="font-bold"> {item.name} </span>
+                        from your stock basket.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+                    <Button type="button" onClick={handleConfirm} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                        {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Delete
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 
 export default function VendorStockBasket() {
@@ -86,7 +112,14 @@ export default function VendorStockBasket() {
             setExpiryDate('');
         } catch (error) {
             console.error('Error adding stock item:', error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not add stock item. Check Firestore rules.' });
+            const isPermissionError = error instanceof FirebaseError && (error.code === 'permission-denied' || error.code === 'unauthenticated');
+            toast({ 
+                variant: 'destructive', 
+                title: "Error adding item", 
+                description: isPermissionError
+                    ? "You do not have permission to add this item. Please check Firestore rules."
+                    : "Could not add stock item."
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -212,29 +245,11 @@ export default function VendorStockBasket() {
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="ghost" size="icon" disabled={deletingId === item.id}>
-                                                        {deletingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-destructive" />}
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This action cannot be undone. This will permanently delete the item
-                                                            <span className="font-bold"> {item.name} </span>
-                                                            from your stock basket.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDelete(item.id)} className="bg-destructive hover:bg-destructive/90">
-                                                            Delete
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
+                                            <DeleteConfirmationDialog 
+                                                item={item}
+                                                onConfirm={() => handleDelete(item.id)}
+                                                isDeleting={deletingId === item.id}
+                                            />
                                         </TableCell>
                                     </TableRow>
                                 );
