@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, Plus, Trash2, Package, CalendarIcon } from 'lucide-react';
-import { useState, FormEvent, useEffect, useCallback } from 'react';
-import { collection, addDoc, serverTimestamp, query, where, orderBy, deleteDoc, doc, Timestamp, getDocs } from 'firebase/firestore';
+import { Loader2, Plus, Trash2, Package, CalendarIcon, AlertTriangle } from 'lucide-react';
+import { useState, FormEvent, useCallback, useMemo } from 'react';
+import { collection, addDoc, serverTimestamp, query, where, orderBy, deleteDoc, doc, Timestamp } from 'firebase/firestore';
+import { useCollectionData } from "react-firebase-hooks/firestore";
 import { db } from '@/lib/firebase';
 import type { StockItem } from '@/lib/types';
 import {
@@ -27,6 +28,8 @@ import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { FirebaseError } from "firebase/app";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 
 function AddStockDialog({ onStockAdded }: { onStockAdded: () => void }) {
     const { user } = useAuth();
@@ -51,7 +54,7 @@ function AddStockDialog({ onStockAdded }: { onStockAdded: () => void }) {
                 name: itemName,
                 quantity: Number(quantity),
                 expiryDate: Timestamp.fromDate(new Date(expiryDate)),
-                ownerId: user.uid, // Explicitly include ownerId
+                ownerId: user.uid,
                 createdAt: serverTimestamp(),
             });
 
@@ -120,42 +123,20 @@ function AddStockDialog({ onStockAdded }: { onStockAdded: () => void }) {
 export default function StockBasket() {
     const { user } = useAuth();
     const { toast } = useToast();
-    
-    const [stockItems, setStockItems] = useState<StockItem[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<Error | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
-    const fetchStockItems = useCallback(async () => {
-        if (!user) {
-            setLoading(false);
-            return;
-        }
-        setLoading(true);
-        setError(null);
-        try {
-            const stockCollectionRef = collection(db, 'stockItems');
-            const stockQuery = query(stockCollectionRef, where("ownerId", "==", user.uid), orderBy("expiryDate", "asc"));
-            const querySnapshot = await getDocs(stockQuery);
-            const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as StockItem));
-            setStockItems(items);
-        } catch (e) {
-            console.error(e);
-            setError(e as Error);
-        } finally {
-            setLoading(false);
-        }
-    }, [user]);
+    const stockCollectionRef = useMemo(() => collection(db, 'stockItems'), []);
+    const stockQuery = useMemo(() => {
+        if (!user) return null;
+        return query(stockCollectionRef, where("ownerId", "==", user.uid), orderBy("expiryDate", "asc"));
+    }, [stockCollectionRef, user]);
 
-    useEffect(() => {
-        fetchStockItems();
-    }, [fetchStockItems]);
+    const [stockItems, loading, error] = useCollectionData(stockQuery, { idField: 'id' });
 
     const handleDelete = async (itemId: string) => {
         setDeletingId(itemId);
         try {
             await deleteDoc(doc(db, 'stockItems', itemId));
-            await fetchStockItems();
             toast({ title: "Item Removed", description: "The stock item has been removed from your basket." });
         } catch (error) {
             console.error("Error deleting item:", error);
@@ -173,9 +154,19 @@ export default function StockBasket() {
                         <Package /> Stock Basket & Expiry
                     </CardTitle>
                 </div>
-                <AddStockDialog onStockAdded={fetchStockItems} />
+                <AddStockDialog onStockAdded={() => {}} />
             </CardHeader>
             <CardContent>
+                {error && (
+                    <Alert variant="destructive" className="mb-4">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Error Loading Stock</AlertTitle>
+                        <AlertDescription>
+                            Could not fetch stock items. This may be due to missing Firestore security rules.
+                            <pre className="mt-2 p-2 bg-muted rounded-md text-xs whitespace-pre-wrap">{error.message}</pre>
+                        </AlertDescription>
+                    </Alert>
+                )}
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -195,7 +186,8 @@ export default function StockBasket() {
                             </TableRow>
                         ))}
                         {!loading && stockItems && stockItems.length > 0 ? (
-                            stockItems.map(item => {
+                            stockItems.map(itemData => {
+                                const item = itemData as StockItem;
                                 const daysUntilExpiry = differenceInDays(item.expiryDate.toDate(), new Date());
                                 const isExpiringSoon = daysUntilExpiry <= 7 && daysUntilExpiry > 0;
                                 const isExpired = daysUntilExpiry <= 0;
@@ -228,7 +220,7 @@ export default function StockBasket() {
                                 );
                             })
                         ) : (
-                           !loading && (
+                           !loading && !error && (
                             <TableRow>
                                 <TableCell colSpan={4} className="h-24 text-center">
                                     No stock items yet. Add one to get started.
@@ -236,13 +228,6 @@ export default function StockBasket() {
                             </TableRow>
                            )
                         )}
-                         {error && (
-                            <TableRow>
-                                <TableCell colSpan={4} className="text-center text-destructive py-4">
-                                     Error: {error.message}
-                                </TableCell>
-                            </TableRow>
-                         )}
                     </TableBody>
                 </Table>
             </CardContent>
