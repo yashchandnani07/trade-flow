@@ -3,23 +3,29 @@
 import { useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useBidding } from '@/hooks/use-bidding';
-import type { Proposal } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { List } from 'lucide-react';
+import { List, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
+import { Timestamp } from 'firebase/firestore';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+
 
 export function MyBidsList() {
     const { user } = useAuth();
-    const { proposals, loading } = useBidding();
+    const { proposals, loading, error } = useBidding();
 
     const myProposals = useMemo(() => {
         if (!user || !proposals) return [];
         return proposals
             .filter(p => p.supplierId === user.uid)
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            .sort((a, b) => {
+                const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(0);
+                const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : new Date(0);
+                return dateB.getTime() - dateA.getTime();
+            });
     }, [proposals, user]);
 
     return (
@@ -31,6 +37,16 @@ export function MyBidsList() {
                 <CardDescription>A list of all the proposals you have submitted.</CardDescription>
             </CardHeader>
             <CardContent>
+                 {error && (
+                     <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Error Loading Your Bids</AlertTitle>
+                        <AlertDescription>
+                            There was a problem fetching your bids. If you just created the Firestore index, please wait a few minutes for it to activate.
+                             <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
+                        </AlertDescription>
+                    </Alert>
+                )}
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -53,7 +69,7 @@ export function MyBidsList() {
                                 <TableRow key={proposal.id}>
                                     <TableCell className="font-bold">${proposal.price.toFixed(2)}</TableCell>
                                     <TableCell>
-                                        {format(new Date(proposal.createdAt), 'PPP')}
+                                        {proposal.createdAt instanceof Timestamp ? format(proposal.createdAt.toDate(), 'PPP') : 'Invalid Date'}
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant={proposal.status === 'accepted' ? 'success' : 'secondary'} className="capitalize">
@@ -63,7 +79,7 @@ export function MyBidsList() {
                                 </TableRow>
                             ))
                         ) : (
-                            !loading && (
+                            !loading && !error && (
                                 <TableRow>
                                     <TableCell colSpan={3} className="h-24 text-center">
                                         You haven't submitted any bids yet.

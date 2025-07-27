@@ -84,7 +84,7 @@ export type DiaryEntry = {
  * @property {number} quantity - The amount of the item required.
  * @property {number} targetPrice - The vendor's target price per unit.
  * @property {'open' | 'closed'} status - The current status of the bid.
- * @property {string} createdAt - The timestamp of when the bid was created (ISO string).
+ * @property {Timestamp} createdAt - The timestamp of when the bid was created.
  * @property {string} [acceptedProposalId] - The ID of the proposal that was accepted.
  */
 export type Bid = {
@@ -95,7 +95,7 @@ export type Bid = {
     quantity: number;
     targetPrice: number;
     status: 'open' | 'closed';
-    createdAt: string; // Using ISO string for in-memory state
+    createdAt: Timestamp;
     acceptedProposalId?: string;
 };
 
@@ -107,7 +107,7 @@ export type Bid = {
  * @property {string} supplierName - The business name of the supplier.
  * @property {number} price - The price offered by the supplier.
  * @property {'pending' | 'accepted' | 'rejected'} status - The status of the proposal.
- * @property {string} createdAt - The timestamp of when the proposal was created (ISO string).
+ * @property {Timestamp} createdAt - The timestamp of when the proposal was created.
  */
 export type Proposal = {
     id: string;
@@ -116,5 +116,5 @@ export type Proposal = {
     supplierName: string;
     price: number;
     status: 'pending' | 'accepted' | 'rejected';
-    createdAt: string; // Using ISO string for in-memory state
+    createdAt: Timestamp;
 };
