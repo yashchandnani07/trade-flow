@@ -88,6 +88,7 @@ export default function VendorStockBasket() {
             return;
         };
         setLoading(true);
+        setError(null);
         try {
             const stockCollectionRef = collection(db, 'stockItems');
             const stockQuery = query(stockCollectionRef, where("ownerId", "==", user.uid), orderBy("expiryDate", "asc"));
@@ -131,7 +132,6 @@ export default function VendorStockBasket() {
 
             await addDoc(stockCollectionRef, newDocData);
             
-            // Refetch after adding
             await fetchStockItems();
 
             toast({ title: 'Item Added', description: `${itemName} has been added to your stock basket.` });
@@ -158,7 +158,7 @@ export default function VendorStockBasket() {
         setDeletingId(itemId);
         try {
             await deleteDoc(doc(db, 'stockItems', itemId));
-            setStockItems(prevItems => prevItems.filter(item => item.id !== itemId));
+            await fetchStockItems();
             toast({ title: "Item Removed", description: "The stock item has been removed from your basket." });
         } catch (error) {
             console.error("Error deleting item:", error);

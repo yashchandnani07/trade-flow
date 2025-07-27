@@ -51,7 +51,7 @@ function AddStockDialog({ onStockAdded }: { onStockAdded: () => void }) {
                 name: itemName,
                 quantity: Number(quantity),
                 expiryDate: Timestamp.fromDate(new Date(expiryDate)),
-                ownerId: user.uid,
+                ownerId: user.uid, // Explicitly include ownerId
                 createdAt: serverTimestamp(),
             });
 
@@ -155,7 +155,7 @@ export default function StockBasket() {
         setDeletingId(itemId);
         try {
             await deleteDoc(doc(db, 'stockItems', itemId));
-            setStockItems(prevItems => prevItems.filter(item => item.id !== itemId));
+            await fetchStockItems();
             toast({ title: "Item Removed", description: "The stock item has been removed from your basket." });
         } catch (error) {
             console.error("Error deleting item:", error);

@@ -1,7 +1,7 @@
 
 'use client';
 import { useMemo } from 'react';
-import { collection, query, where, Timestamp, orderBy } from 'firebase/firestore';
+import { collection, query, where, Timestamp, orderBy, getDocs } from 'firebase/firestore';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
@@ -55,7 +55,7 @@ export function AlertsSection() {
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Error Loading Alerts</AlertTitle>
                     <AlertDescription>
-                        Could not load expiring stock alerts. This may be due to missing Firestore indexes or a permission issue. Please check the browser console.
+                        Could not load expiring stock alerts. This may be due to missing Firestore indexes or a permission issue. Please check the browser console and your Firestore rules.
                         <pre className="mt-2 p-2 bg-muted rounded-md text-xs whitespace-pre-wrap">{error.message}</pre>
                     </AlertDescription>
                 </Alert>

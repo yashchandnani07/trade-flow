@@ -13,7 +13,8 @@ import {
 import type { Bid, Proposal, Order } from '@/lib/types';
 import { useAuth } from './use-auth';
 import { useToast } from './use-toast';
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp, collection, addDoc, getDocs, query, where, writeBatch, doc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 // Helper functions to interact with localStorage
 const getFromLocalStorage = <T>(key: string, defaultValue: T): T => {
@@ -66,9 +67,10 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
         try {
             const storedBids = getFromLocalStorage<Bid[]>('bids', []);
             const storedProposals = getFromLocalStorage<Proposal[]>('proposals', []);
-            // Convert date strings back to Timestamp-like objects for consistency
-            const parsedBids = storedBids.map(b => ({ ...b, createdAt: new Timestamp(new Date(b.createdAt as any).getTime() / 1000, 0) }));
-            const parsedProposals = storedProposals.map(p => ({ ...p, createdAt: new Timestamp(new Date(p.createdAt as any).getTime() / 1000, 0) }));
+            // Convert date strings back to a format that can be used to create a Timestamp
+            const parsedBids = storedBids.map(b => ({ ...b, createdAt: b.createdAt ? new Timestamp((b.createdAt as any).seconds, (b.createdAt as any).nanoseconds) : Timestamp.now() }));
+            const parsedProposals = storedProposals.map(p => ({ ...p, createdAt: p.createdAt ? new Timestamp((p.createdAt as any).seconds, (p.createdAt as any).nanoseconds) : Timestamp.now() }));
+
             setBids(parsedBids);
             setProposals(parsedProposals);
         } catch(e) {
@@ -99,7 +101,7 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
             vendorId: user.uid,
             vendorName: user.businessName || 'Anonymous Vendor',
             status: 'open',
-            createdAt: new Timestamp(Math.floor(Date.now() / 1000), 0),
+            createdAt: Timestamp.now(),
         };
         setBids(prev => [...prev, newBid]);
 
@@ -107,6 +109,7 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
     
     const deleteBid = useCallback(async (bidId: string) => {
        setBids(prev => prev.filter(b => b.id !== bidId));
+       setProposals(prev => prev.filter(p => p.bidId !== bidId));
     }, []);
 
     const addProposal = useCallback(async (bidId: string, newProposalData: Omit<Proposal, 'id' | 'status' | 'createdAt' | 'bidId' | 'supplierId' | 'supplierName'>) => {
@@ -122,7 +125,7 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
             supplierId: user.uid,
             supplierName: user.businessName || 'Anonymous Supplier',
             status: 'pending',
-            createdAt: new Timestamp(Math.floor(Date.now() / 1000), 0),
+            createdAt: Timestamp.now(),
         };
 
         setProposals(prev => [...prev, newProposal]);
@@ -149,12 +152,29 @@ export const BiddingProvider = ({ children }: { children: ReactNode }) => {
             return p;
         }));
 
-        // Here you would typically create an order, but for localStorage, this is sufficient.
+        const ordersCollection = collection(db, 'orders');
+        const newOrder: Omit<Order, 'id'> = {
+            vendorId: bid.vendorId,
+            supplierId: proposal.supplierId,
+            supplierName: proposal.supplierName,
+            items: [{ name: bid.item, quantity: bid.quantity, price: proposal.price }],
+            status: 'Order Placed',
+            orderDate: Timestamp.now(),
+            deliveryTimestamp: null,
+        };
+        
+        try {
+            await addDoc(ordersCollection, newOrder);
+            toast({title: "Order Created", description: "A new order has been created from the accepted proposal."});
+        } catch(e) {
+            console.error("Failed to create order", e);
+            toast({variant: 'destructive', title: 'Order Creation Failed', description: (e as Error).message});
+        }
         
     }, [user, bids, proposals, toast]);
 
     const getProposalsForBid = useCallback((bidId: string) => {
-        return proposals.filter(p => p.bidId === bidId);
+        return proposals.filter(p => p.bidId === bidId).sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
     }, [proposals]);
 
     const value = {
