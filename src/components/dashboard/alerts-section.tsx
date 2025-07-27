@@ -8,9 +8,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { generateAlerts } from "@/app/actions";
 import { Bell, Loader2, PartyPopper } from "lucide-react";
-import type { Alert } from "@/lib/types";
+import type { AiEnhancedAlertOutput } from "@/ai/flows/ai-enhanced-alerts";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+
+// Extending the type to include a simple unique id for the key prop
+type Alert = AiEnhancedAlertOutput & {
+  id: string;
+  read: boolean;
+};
 
 const priorityVariantMap = {
   high: "destructive",
@@ -28,12 +34,12 @@ export function AlertsSection() {
       setIsLoading(true);
       generateAlerts(user.uid)
         .then((newAlertsData) => {
-          const newAlerts: Alert[] = newAlertsData.map((alertData) => ({
+          const alertsWithId: Alert[] = newAlertsData.map((alertData) => ({
             ...alertData,
-            id: Math.random().toString(36).substring(2, 9), // simple unique id
+            id: Math.random().toString(36).substring(2, 9), // Simple unique ID for list keys
             read: false,
           }));
-          setAlerts(newAlerts);
+          setAlerts(alertsWithId);
         })
         .catch(console.error)
         .finally(() => setIsLoading(false));
