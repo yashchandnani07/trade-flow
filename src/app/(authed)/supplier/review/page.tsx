@@ -15,9 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Star } from 'lucide-react';
 
@@ -43,59 +42,6 @@ const RatingInput = ({ rating, onRate }: { rating: number, onRate: (rating: numb
         ))}
     </div>
 );
-
-
-function SupplierCombobox({ onSelect, value, suppliers, loading }: { onSelect: (id: string) => void, value: string, suppliers: User[], loading: boolean }) {
-  const [open, setOpen] = useState(false);
-  const selectedSupplierName = useMemo(() => {
-    return suppliers.find(s => s.uid === value)?.businessName || "Select a supplier...";
-  }, [value, suppliers]);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between"
-          disabled={loading}
-        >
-          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : selectedSupplierName}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
-        <Command>
-          <CommandInput placeholder="Search supplier..." />
-          <CommandList>
-            <CommandEmpty>No supplier found.</CommandEmpty>
-            <CommandGroup>
-              {suppliers.map((supplier) => (
-                <CommandItem
-                  key={supplier.uid}
-                  value={supplier.businessName || ''}
-                  onSelect={() => {
-                    onSelect(supplier.uid);
-                    setOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === supplier.uid ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {supplier.businessName}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
 
 
 export default function SupplierReviewPage() {
@@ -154,12 +100,18 @@ export default function SupplierReviewPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Supplier</FormLabel>
-                     <SupplierCombobox
-                        onSelect={field.onChange}
-                        value={field.value}
-                        suppliers={suppliers}
-                        loading={suppliersLoading}
-                    />
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={suppliersLoading}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a supplier to review" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {suppliers.map(supplier => (
+                                <SelectItem key={supplier.uid} value={supplier.uid}>{supplier.businessName}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

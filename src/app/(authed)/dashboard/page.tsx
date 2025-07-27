@@ -56,12 +56,9 @@ export default function DashboardPage() {
             <AlertsSection />
         </section>
 
-        <div className="grid gap-8 lg:grid-cols-5">
-            <div className="lg:col-span-3">
+        <div className="grid gap-8 lg:grid-cols-1">
+            <div className="lg:col-span-1" id="reviews">
                  <SupplierReviews />
-            </div>
-            <div className="lg:col-span-2" id="reviews">
-                <SupplierReviews />
             </div>
         </div>
         <section id="stock">
