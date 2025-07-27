@@ -321,10 +321,6 @@ export function MarketplaceBidsList() {
     const { user } = useAuth();
     const { bids, loading, error } = useBidding();
     
-    const openBids = useMemo(() => {
-        return bids ? bids.filter(bid => bid.status === 'open') : [];
-    }, [bids]);
-
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
