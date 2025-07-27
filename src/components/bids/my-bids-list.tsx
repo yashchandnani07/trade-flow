@@ -70,7 +70,7 @@ export function MyBidsList() {
                         <AlertTriangle className="h-4 w-4" />
                         <AlertTitle>Error Loading Your Proposals</AlertTitle>
                         <AlertDescription>
-                            Could not fetch your proposals. This is often caused by a missing Firestore index. Please ensure you have created the required composite index in your Firestore database.
+                            Could not fetch your proposals. The client appears to be offline. Please check your network connection.
                              <pre className="mt-2 p-2 bg-muted rounded-md text-xs whitespace-pre-wrap">{combinedError.message}</pre>
                         </AlertDescription>
                     </Alert>
