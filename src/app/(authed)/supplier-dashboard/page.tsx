@@ -3,13 +3,11 @@
 import KeyMetrics from './components/key-metrics';
 import OrderManagement from './components/order-management';
 import ComplianceStatus from './components/compliance-status';
-import { MarketplaceBidsList } from '@/components/bids/marketplace-bids-list';
 import TrustBadges from './components/trust-badges';
 import { useAuth } from '@/hooks/use-auth';
 import StockBasket from './components/stock-basket';
 import FactoryDiary from './components/factory-diary';
 import { AlertsSection } from './components/alerts-section';
-import { MyBidsList } from '@/components/bids/my-bids-list';
 
 export default function SupplierDashboardPage() {
     const { user } = useAuth();
@@ -32,9 +30,6 @@ export default function SupplierDashboardPage() {
                 <section id="stock">
                     <StockBasket />
                 </section>
-                 <section id="my-bids">
-                    <MyBidsList />
-                </section>
             </div>
             <div className="space-y-6">
                 <section id="alerts">
@@ -49,11 +44,6 @@ export default function SupplierDashboardPage() {
                 </section>
             </div>
         </div>
-
-        <section id="bids">
-            <h2 className="text-2xl font-bold tracking-tight mb-4">Marketplace</h2>
-            <MarketplaceBidsList />
-        </section>
     </main>
   );
 }
