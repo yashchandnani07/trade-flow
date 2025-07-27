@@ -3,7 +3,7 @@
 
 import { useState, useMemo, FormEvent } from 'react';
 import { collection, addDoc, serverTimestamp, query, where, orderBy, doc, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
-import { useCollection, useDocumentData } from 'react-firebase-hooks/firestore';
+import { useCollection, useDocumentData, useCollectionData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import type { Bid, Proposal, User } from '@/lib/types';
@@ -20,6 +20,7 @@ import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
 
 function CreateBidDialog() {
+// ... keep existing code (CreateBidDialog component)
     const { user } = useAuth();
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
@@ -96,6 +97,7 @@ function CreateBidDialog() {
 }
 
 function ProposalsList({ bid }: { bid: Bid }) {
+// ... keep existing code (ProposalsList component)
     const proposalsCollection = useMemo(() => collection(db, 'bids', bid.id, 'proposals'), [bid.id]);
     const proposalsQuery = useMemo(() => query(proposalsCollection, orderBy('createdAt', 'desc')), [proposalsCollection]);
     const [proposalsSnapshot, loading, error] = useCollection(proposalsQuery);
@@ -159,6 +161,15 @@ function BidCard({ bid }: { bid: Bid }) {
 
     const isVendorOwner = user?.uid === bid.vendorId;
 
+    const proposalsCollection = useMemo(() => collection(db, 'bids', bid.id, 'proposals'), [bid.id]);
+    const userProposalQuery = useMemo(() => {
+        if (!user || user.role !== 'supplier') return null;
+        return query(proposalsCollection, where('supplierId', '==', user.uid), limit(1));
+    }, [proposalsCollection, user]);
+
+    const [userProposals, loadingUserProposals] = useCollectionData(userProposalQuery);
+    const hasUserBid = !loadingUserProposals && userProposals && userProposals.length > 0;
+
     const handleBidSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (!user || user.role !== 'supplier' || !price) {
@@ -188,8 +199,6 @@ function BidCard({ bid }: { bid: Bid }) {
     const handleDeleteBid = async () => {
         if (!window.confirm("Are you sure you want to delete this bid requirement?")) return;
         try {
-            // Note: In a real app, you might want to delete subcollections too.
-            // For simplicity here, we only delete the bid doc.
             await deleteDoc(doc(db, 'bids', bid.id));
             toast({ title: 'Bid Deleted', description: 'Your requirement has been removed from the marketplace.' });
         } catch (error) {
@@ -197,6 +206,8 @@ function BidCard({ bid }: { bid: Bid }) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the bid.' });
         }
     };
+    
+    const showBidForm = user?.role === 'supplier' && bid.status === 'open' && !isVendorOwner && !hasUserBid;
 
     return (
         <Card className="flex flex-col">
@@ -225,7 +236,7 @@ function BidCard({ bid }: { bid: Bid }) {
                 </div>
             </CardContent>
             <CardFooter className="flex-col items-stretch space-y-4">
-                {user?.role === 'supplier' && bid.status === 'open' && !isVendorOwner && (
+                {showBidForm && (
                     <form onSubmit={handleBidSubmit} className="flex gap-2">
                         <Input
                             type="number"
@@ -234,10 +245,17 @@ function BidCard({ bid }: { bid: Bid }) {
                             onChange={(e) => setPrice(e.target.value)}
                             required
                         />
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Submit Offer'}
+                        <Button type="submit" disabled={isSubmitting || loadingUserProposals}>
+                            {isSubmitting || loadingUserProposals ? <Loader2 className="animate-spin" /> : 'Submit Offer'}
                         </Button>
                     </form>
+                )}
+                {user?.role === 'supplier' && hasUserBid && (
+                     <Alert variant="success" className="text-sm">
+                        <CheckCircle className="h-4 w-4" />
+                        <AlertTitle>Offer Submitted</AlertTitle>
+                        <AlertDescription>You have already placed an offer on this item.</AlertDescription>
+                    </Alert>
                 )}
                 {isVendorOwner && (
                     <>
@@ -256,6 +274,7 @@ function BidCard({ bid }: { bid: Bid }) {
 }
 
 function AcceptedProposalInfo({ bid }: { bid: Bid }) {
+// ... keep existing code (AcceptedProposalInfo component)
     const proposalRef = useMemo(() => {
         if (!bid.acceptedProposalId) return null;
         return doc(db, 'bids', bid.id, 'proposals', bid.acceptedProposalId);
@@ -278,6 +297,7 @@ function AcceptedProposalInfo({ bid }: { bid: Bid }) {
 }
 
 export function MarketplaceBidsList() {
+// ... keep existing code (MarketplaceBidsList component)
     const { user } = useAuth();
     const bidsCollection = useMemo(() => collection(db, 'bids'), []);
     const bidsQuery = useMemo(() => query(bidsCollection, orderBy('createdAt', 'desc')), [bidsCollection]);
