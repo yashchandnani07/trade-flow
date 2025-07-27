@@ -13,19 +13,15 @@ const badgeIconMap: Record<string, LucideIcon> = {
     "Top Supplier 2024": Award,
 };
 
-const defaultBadges = [
-    { name: "Quality Certified", icon: ShieldCheck },
-    { name: "On-Time Delivery", icon: Clock },
-    { name: "Top Supplier 2024", icon: Award },
-]
+const defaultBadge = { name: "Newly Joined", icon: PartyPopper };
+
 
 export default function TrustBadges() {
     const { user } = useAuth();
     
-    // Use the user's badges if they exist, otherwise use the default static badges for display purposes
-    const badgesToDisplay = user?.badges && user.badges.length > 0 
+    const badgesToDisplay = (user?.badges && user.badges.length > 0)
         ? user.badges.map(b => ({ name: b.name, icon: badgeIconMap[b.name] || Award }))
-        : [];
+        : [defaultBadge]; // Default to "Newly Joined" if no badges exist
 
 
     return (
@@ -34,19 +30,15 @@ export default function TrustBadges() {
                 <CardTitle>Trust Badges</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
-                {badgesToDisplay.length > 0 ? (
-                    badgesToDisplay.map(badge => {
-                        const Icon = badge.icon;
-                        return (
-                             <Badge key={badge.name} variant="secondary" className="text-base p-2">
-                                <Icon className="mr-2 h-4 w-4" />
-                                {badge.name}
-                            </Badge>
-                        )
-                    })
-                ) : (
-                    <p className="text-sm text-muted-foreground">No badges earned yet.</p>
-                )}
+                {badgesToDisplay.map(badge => {
+                    const Icon = badge.icon;
+                    return (
+                         <Badge key={badge.name} variant="secondary" className="text-base p-2">
+                            <Icon className="mr-2 h-4 w-4" />
+                            {badge.name}
+                        </Badge>
+                    )
+                })}
             </CardContent>
         </Card>
     )
