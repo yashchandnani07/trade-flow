@@ -15,7 +15,7 @@ import {
   signInWithEmailAndPassword,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp, updateDoc, Timestamp } from 'firebase/firestore';
-import { app, db, auth } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { type AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import type { User, Role } from '@/lib/types';
 import { FirebaseError } from 'firebase/app';
@@ -47,10 +47,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   
   useEffect(() => {
+    if (!auth) {
+        setLoading(false);
+        return;
+    }
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       setLoading(true);
       if (firebaseUser) {
-        setLoading(false); // Optimistic: stop loading early
+        // Fetch user data from Firestore
         const userData = await fetchUserDocument(firebaseUser.uid);
         if (userData) {
             setUser({
@@ -58,14 +62,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 ...userData
             });
         } else {
+            // This case can happen if a user is created in Auth but the Firestore doc creation fails.
+            // Or if a user is deleted from Firestore but not from Auth.
             console.log("User exists in Auth but not in Firestore. Logging out.");
             await signOut(auth);
             setUser(null);
         }
       } else {
         setUser(null);
-        setLoading(false); 
       }
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -82,7 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if(additionalData.role === 'supplier') {
         newUserBadges.push({
             name: 'Newly Joined',
-            dateAwarded: Timestamp.now() // Use client-side timestamp
+            dateAwarded: Timestamp.now()
         });
     }
 
