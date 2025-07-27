@@ -330,19 +330,13 @@ export function MarketplaceBidsList() {
     const { user } = useAuth();
     const { bids, loading, error } = useBidding();
     
-    const otherUsersBids = useMemo(() => {
-        if (!user) return bids;
-        // Show bids that are not from the current user
-        return bids.filter(bid => bid.vendorId !== user.uid);
-    }, [bids, user]);
-
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div className="space-y-1">
-                    <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2"><Gavel /> Bidding Marketplace</h2>
+                    <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2"><Gavel /> Bidding Marketplace & History</h2>
                     <p className="text-muted-foreground">
-                        {user?.role === 'vendor' ? 'Post requirements and receive offers from suppliers.' : 'Find active and past requirements and place your offers.'}
+                       Find active and past requirements and place your offers.
                     </p>
                 </div>
                 {user?.role === 'vendor' && <CreateBidDialog />}
@@ -364,16 +358,16 @@ export function MarketplaceBidsList() {
                 </div>
             )}
 
-            {!loading && otherUsersBids.length === 0 && !error && (
+            {!loading && bids.length === 0 && !error && (
                 <Card className="bg-glass">
                     <CardContent className="p-6 text-center text-muted-foreground">
-                        No active requirements in the marketplace from other users.
+                        No requirements found in the marketplace.
                     </CardContent>
                 </Card>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {!loading && otherUsersBids.map(bid => {
+                {!loading && bids.map(bid => {
                     if (!bid?.id) return null;
                     return <BidCard key={bid.id} bid={bid} />;
                 })}
@@ -381,5 +375,3 @@ export function MarketplaceBidsList() {
         </div>
     );
 }
-
-    
