@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 
 const vendorNavItems = [
     { href: "/dashboard", icon: Home, label: "Dashboard" },
+    { href: "/bidding", icon: Gavel, label: "Bidding" },
     { href: "/dashboard#tracking", icon: Truck, label: "Tracking" },
     { href: "/dashboard#history", icon: Package, label: "Order History" },
     { href: "/dashboard#stock", icon: Boxes, label: "My Stock" },
@@ -45,6 +46,7 @@ const vendorNavItems = [
 
 const supplierNavItems = [
     { href: "/supplier-dashboard", icon: Home, label: "Dashboard" },
+    { href: "/bidding", icon: Gavel, label: "Bidding" },
     { href: "/supplier-dashboard#alerts", icon: Bell, label: "Alerts" },
     { href: "/supplier-dashboard#stock", icon: Boxes, label: "My Stock" },
     { href: "/supplier-dashboard#badges", icon: Award, label: "Badges" },
