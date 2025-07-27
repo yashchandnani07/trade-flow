@@ -1,7 +1,7 @@
 
 'use client';
 import React, { useMemo, useState, FormEvent, ReactNode } from 'react';
-import { collection, query, where, orderBy, Timestamp, addDoc, serverTimestamp, doc, writeBatch, updateDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, Timestamp, addDoc, serverTimestamp, doc, writeBatch, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, AlertTriangle, PackageSearch, Handshake, Inbox, MessageSquare, CornerDownLeft, Minus, Plus, ShieldCheck } from 'lucide-react';
+import { Loader2, AlertTriangle, PackageSearch, Handshake, Inbox, MessageSquare, CornerDownLeft, Minus, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 import { type Bid, type Proposal } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
@@ -26,6 +26,17 @@ import {
   DialogClose,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { FirebaseError } from 'firebase/app';
 
@@ -283,6 +294,7 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
     const { toast } = useToast();
     const [bidAmount, setBidAmount] = useState(bid.targetPrice);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     
     React.useEffect(() => {
         setBidAmount(bid.targetPrice);
@@ -341,6 +353,20 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
         }
     };
     
+    const handleDeleteBid = async () => {
+        setIsDeleting(true);
+        try {
+            const bidRef = doc(db, 'bids', bid.id);
+            await deleteDoc(bidRef);
+            toast({ title: 'Bid Deleted', description: 'Your requirement post has been successfully removed.' });
+        } catch (error) {
+            console.error("Error deleting bid:", error);
+            toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete the bid post. Please check permissions or try again.' });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const adjustBid = (adjustment: number) => {
         setBidAmount(prev => Math.max(0, prev + adjustment));
     };
@@ -365,9 +391,32 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
     return (
         <Card className="p-6 rounded-xl bg-background/50 flex flex-col justify-between gap-6 border-2">
             <div>
-                <div className="flex flex-wrap items-center gap-4 mb-2">
-                    <h3 className="font-semibold text-2xl">{bid.item}</h3>
-                    <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize text-sm h-7">{bid.status}</Badge>
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
+                    <div className="flex items-center gap-4">
+                        <h3 className="font-semibold text-2xl">{bid.item}</h3>
+                        <Badge variant={statusVariantMap[bid.status] || 'outline'} className="capitalize text-sm h-7">{bid.status}</Badge>
+                    </div>
+                     {isVendorOwner && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="icon" disabled={isDeleting}>
+                                    {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete your bid requirement for "{bid.item}".
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDeleteBid}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
                 </div>
                 <p className="text-lg text-muted-foreground">
                     {bid.quantity} kg | Target Price: ?{bid.targetPrice.toLocaleString()}
@@ -403,6 +452,7 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
                                 <Button type="submit" className="flex-1" disabled={isSubmitting}>
                                     {isSubmitting ? <Loader2 className="animate-spin" /> : "Submit Offer"}
                                 </Button>
+
                                 <Button type="button" onClick={onMatchAndAccept} className="flex-1" variant="outline" disabled={isSubmitting}>
                                     {isSubmitting ? <Loader2 className="animate-spin" /> : <><Handshake className="mr-2 h-4 w-4" /> Match & Accept</>}
                                 </Button>
