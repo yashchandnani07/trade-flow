@@ -17,6 +17,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
 import { Timestamp } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
 
 
 function CreateBidDialog() {
@@ -229,7 +230,12 @@ function BidCard({ bid }: { bid: Bid }) {
     }, [bid.createdAt]);
 
     return (
-        <Card className="flex flex-col bg-glass">
+        <Card className={cn(
+            "flex flex-col bg-glass/80 backdrop-blur-lg",
+            "border-transparent bg-gradient-to-tr from-primary/10 to-accent/10",
+            "hover:border-primary/20 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10"
+        )}>
+             <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 via-background to-accent/5 opacity-50 group-hover:opacity-100 transition-opacity duration-300" />
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
@@ -373,3 +379,5 @@ export function MarketplaceBidsList() {
         </div>
     );
 }
+
+    
