@@ -116,13 +116,15 @@ export default function VendorStockBasket() {
         setIsSubmitting(true);
         try {
             const stockCollectionRef = collection(db, 'stockItems');
-            const newDocRef = await addDoc(stockCollectionRef, {
+            const newDocData = {
                 name: itemName,
                 quantity: Number(quantity),
                 expiryDate: Timestamp.fromDate(new Date(expiryDate)),
                 ownerId: user.uid,
                 createdAt: serverTimestamp(),
-            });
+            };
+
+            const newDocRef = await addDoc(stockCollectionRef, newDocData);
 
             const newItem: StockItem = {
                 id: newDocRef.id,
@@ -308,3 +310,5 @@ export default function VendorStockBasket() {
         </Card>
     );
 }
+
+    
