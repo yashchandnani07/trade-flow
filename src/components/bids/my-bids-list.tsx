@@ -1,7 +1,7 @@
 
 'use client';
 import { useMemo } from 'react';
-import { collectionGroup, query, where, orderBy } from 'firebase/firestore';
+import { collectionGroup, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
@@ -18,7 +18,9 @@ export function MyBidsList() {
     const { user } = useAuth();
 
     const proposalsQuery = useMemo(() => {
-        if (!user) return null;
+        if (!user || user.role !== 'supplier') return null;
+        // This query fetches from the 'proposals' collection group, 
+        // which is necessary because proposals are nested under each bid.
         return query(
             collectionGroup(db, 'proposals'), 
             where("supplierId", "==", user.uid),
@@ -59,7 +61,10 @@ export function MyBidsList() {
                                     <Alert variant="destructive">
                                         <AlertTriangle className="h-4 w-4" />
                                         <AlertTitle>Error Loading Your Bids</AlertTitle>
-                                        <AlertDescription>{error.message}</AlertDescription>
+                                        <AlertDescription>
+                                            There was a problem fetching your bids. This might be due to a missing Firestore index or a permissions issue.
+                                            <pre className="mt-2 p-2 bg-muted rounded-md text-xs whitespace-pre-wrap">{error.message}</pre>
+                                        </AlertDescription>
                                     </Alert>
                                 </TableCell>
                             </TableRow>
