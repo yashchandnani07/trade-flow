@@ -14,7 +14,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Logo } from "@/components/icons/logo";
 import {
   BarChart2,
   Home,
@@ -68,25 +67,22 @@ export function AppSidebar() {
       )}
       collapsible="icon"
     >
-       <Button 
-            variant="ghost"
-            size="icon"
-            className="absolute top-6 -right-4 z-50 bg-glass/15 border border-glass-border backdrop-blur-md rounded-full text-white hover:bg-glass/25 transition-all duration-300 group-data-[collapsible=icon]:left-14 group-data-[collapsible=icon]:-right-auto"
-            onClick={toggleSidebar}
-        >
-            <ChevronLeft className={cn("transition-transform", state === "collapsed" && "rotate-180")} />
-        </Button>
       <SidebarHeader>
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500">
-             <Logo className="h-5 w-5 text-white" />
-          </div>
+        <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center">
           <span
             className="font-bold text-lg group-data-[collapsible=icon]:opacity-0 transition-opacity duration-300"
             data-testid="brand-name"
           >
             TradeFlow
           </span>
+          <Button 
+              variant="ghost"
+              size="icon"
+              className="bg-glass/15 border-0 text-white hover:bg-glass/25 transition-all duration-300"
+              onClick={toggleSidebar}
+          >
+              <ChevronLeft className={cn("transition-transform", state === "collapsed" && "rotate-180")} />
+          </Button>
         </div>
       </SidebarHeader>
       <SidebarContent>
