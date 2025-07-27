@@ -26,6 +26,7 @@ import {
   ChevronLeft,
   MessageSquare,
   Boxes,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -44,6 +45,7 @@ const vendorNavItems = [
 const supplierNavItems = [
     { href: "/supplier-dashboard", icon: Home, label: "Dashboard" },
     { href: "/supplier-dashboard#bids", icon: Gavel, label: "Bids" },
+    { href: "/supplier-dashboard#alerts", icon: Bell, label: "Alerts" },
 ];
 
 const commonNavItems = [
@@ -92,7 +94,7 @@ export function AppSidebar() {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href}
+                isActive={pathname === item.href.split('#')[0]}
                 tooltip={{ children: item.label, className:"dark:bg-popover dark:text-popover-foreground" }}
                 className="light:text-white/80 light:hover:text-white light:data-[active=true]:bg-glass-active light:data-[active=true]:text-white transition-all transform nav-link-shine"
               >

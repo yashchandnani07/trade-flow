@@ -8,6 +8,7 @@ import TrustBadges from './components/trust-badges';
 import { useAuth } from '@/hooks/use-auth';
 import StockBasket from './components/stock-basket';
 import FactoryDiary from './components/factory-diary';
+import { AlertsSection } from './components/alerts-section';
 
 export default function SupplierDashboardPage() {
     const { user } = useAuth();
@@ -27,6 +28,9 @@ export default function SupplierDashboardPage() {
                 <StockBasket />
             </div>
             <div className="space-y-6">
+                <section id="alerts">
+                    <AlertsSection />
+                </section>
                 <ComplianceStatus />
                 <TrustBadges />
                 <FactoryDiary />
