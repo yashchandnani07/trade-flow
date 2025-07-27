@@ -6,7 +6,7 @@ import { collection, addDoc, serverTimestamp, query, where, orderBy, doc, update
 import { useCollection, useDocumentData, useCollectionData } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
-import type { Bid, Proposal, User } from '@/lib/types';
+import type { Bid, Proposal } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,14 +14,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Gavel, Loader2, Plus, AlertTriangle, CheckCircle, User as UserIcon, Trash2 } from 'lucide-react';
+import { Gavel, Loader2, Plus, AlertTriangle, CheckCircle, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
 import { FirebaseError } from 'firebase/app';
 
 function CreateBidDialog() {
-// ... keep existing code (CreateBidDialog component)
     const { user } = useAuth();
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
@@ -74,18 +73,19 @@ function CreateBidDialog() {
                     <div className="space-y-4 py-4">
                         <div>
                             <Label htmlFor="item">Item Name</Label>
-                            <Input id="item" value={item} onChange={(e) => setItem(e.target.value)} required />
+                            <Input id="item" value={item} onChange={(e) => setItem(e.target.value)} required placeholder="e.g. Fresh Tomatoes"/>
                         </div>
                         <div>
-                            <Label htmlFor="quantity">Quantity (units)</Label>
-                            <Input id="quantity" type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
+                            <Label htmlFor="quantity">Quantity (in kg, units, etc.)</Label>
+                            <Input id="quantity" type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} required placeholder="e.g. 100"/>
                         </div>
                         <div>
-                            <Label htmlFor="targetPrice">Target Price ($)</Label>
-                            <Input id="targetPrice" type="number" value={targetPrice} onChange={(e) => setTargetPrice(e.target.value)} required />
+                            <Label htmlFor="targetPrice">Target Price ($ per unit)</Label>
+                            <Input id="targetPrice" type="number" value={targetPrice} onChange={(e) => setTargetPrice(e.target.value)} required placeholder="e.g. 2.50"/>
                         </div>
                     </div>
                     <DialogFooter>
+                         <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting && <Loader2 className="mr-2 animate-spin" />}
                             Post Requirement
@@ -98,7 +98,6 @@ function CreateBidDialog() {
 }
 
 function ProposalsList({ bid }: { bid: Bid }) {
-// ... keep existing code (ProposalsList component)
     const proposalsCollection = useMemo(() => collection(db, 'bids', bid.id, 'proposals'), [bid.id]);
     const proposalsQuery = useMemo(() => query(proposalsCollection, orderBy('createdAt', 'desc')), [proposalsCollection]);
     const [proposalsSnapshot, loading, error] = useCollection(proposalsQuery);
@@ -106,7 +105,7 @@ function ProposalsList({ bid }: { bid: Bid }) {
 
     const handleAcceptProposal = async (proposalId: string) => {
         try {
-            // This needs a transaction in a real app, but for simplicity:
+            // In a real-world app, this should be a transaction to ensure atomicity.
             const bidRef = doc(db, 'bids', bid.id);
             const proposalRef = doc(db, 'bids', bid.id, 'proposals', proposalId);
 
@@ -161,17 +160,15 @@ function DeleteBidDialog({ bid, onConfirm, isDeleting }: { bid: Bid, onConfirm: 
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md bg-glass">
                 <DialogHeader>
-                    <DialogTitle>Are you sure?</DialogTitle>
+                    <DialogTitle>Are you absolutely sure?</DialogTitle>
                     <DialogDescription>
-                        This action cannot be undone. This will permanently delete your bid requirement for <span className="font-bold">{bid.item}</span>.
+                        This action cannot be undone. This will permanently delete your requirement for <span className="font-bold">{bid.item}</span> from the marketplace.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                    <DialogClose asChild>
-                        <Button type="button" variant="secondary">Cancel</Button>
-                    </DialogClose>
+                    <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
                     <Button type="button" onClick={onConfirm} disabled={isDeleting} variant="destructive">
                         {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Delete
@@ -217,7 +214,7 @@ function BidCard({ bid }: { bid: Bid }) {
                 status: 'pending',
                 createdAt: serverTimestamp(),
             };
-            await addDoc(collection(db, 'bids', bid.id, 'proposals'), proposalData);
+            await addDoc(proposalsCollection, proposalData);
             toast({ title: 'Offer Submitted!', description: `Your bid for ${bid.item} has been placed.` });
             setPrice('');
         } catch (error) {
@@ -251,7 +248,7 @@ function BidCard({ bid }: { bid: Bid }) {
     const showBidForm = user?.role === 'supplier' && bid.status === 'open' && !isVendorOwner && !hasUserBid;
 
     return (
-        <Card className="flex flex-col">
+        <Card className="flex flex-col bg-glass">
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
@@ -313,7 +310,6 @@ function BidCard({ bid }: { bid: Bid }) {
 }
 
 function AcceptedProposalInfo({ bid }: { bid: Bid }) {
-// ... keep existing code (AcceptedProposalInfo component)
     const proposalRef = useMemo(() => {
         if (!bid.acceptedProposalId) return null;
         return doc(db, 'bids', bid.id, 'proposals', bid.acceptedProposalId);
@@ -336,7 +332,6 @@ function AcceptedProposalInfo({ bid }: { bid: Bid }) {
 }
 
 export function MarketplaceBidsList() {
-// ... keep existing code (MarketplaceBidsList component)
     const { user } = useAuth();
     const bidsCollection = useMemo(() => collection(db, 'bids'), []);
     const bidsQuery = useMemo(() => query(bidsCollection, orderBy('createdAt', 'desc')), [bidsCollection]);
@@ -363,7 +358,7 @@ export function MarketplaceBidsList() {
             )}
             {error && <Alert variant="destructive"><AlertTriangle className="mr-2" />{error.message}</Alert>}
             {!loading && bids.length === 0 && (
-                <Card>
+                <Card className="bg-glass">
                     <CardContent className="p-6 text-center text-muted-foreground">
                         No active requirements in the marketplace.
                     </CardContent>

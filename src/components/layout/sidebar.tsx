@@ -46,7 +46,7 @@ const vendorNavItems = [
 
 const supplierNavItems = [
     { href: "/supplier-dashboard", icon: Home, label: "Dashboard" },
-    { href: "/supplier-dashboard#bids", icon: Gavel, label: "Bids" },
+    { href: "/bidding", icon: Gavel, label: "Bids" },
     { href: "/supplier-dashboard#alerts", icon: Bell, label: "Alerts" },
     { href: "/supplier-dashboard#stock", icon: Boxes, label: "My Stock" },
     { href: "/supplier-dashboard#badges", icon: Award, label: "Badges" },

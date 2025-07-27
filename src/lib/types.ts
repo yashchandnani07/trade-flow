@@ -75,6 +75,18 @@ export type DiaryEntry = {
   createdAt: Timestamp;
 };
 
+/**
+ * Represents a bid requirement posted by a vendor in the marketplace.
+ * @property {string} id - The unique identifier for the bid.
+ * @property {string} vendorId - The UID of the vendor who posted the bid.
+ * @property {string} vendorName - The business name of the vendor.
+ * @property {string} item - The description of the item required.
+ * @property {number} quantity - The amount of the item required.
+ * @property {number} targetPrice - The vendor's target price per unit.
+ * @property {'open' | 'closed'} status - The current status of the bid.
+ * @property {Timestamp} createdAt - The timestamp of when the bid was created.
+ * @property {string} [acceptedProposalId] - The ID of the proposal that was accepted.
+ */
 export type Bid = {
     id: string;
     vendorId: string;
@@ -87,6 +99,15 @@ export type Bid = {
     acceptedProposalId?: string;
 };
 
+/**
+ * Represents a proposal submitted by a supplier in response to a bid requirement.
+ * @property {string} id - The unique identifier for the proposal.
+ * @property {string} supplierId - The UID of the supplier who submitted the proposal.
+ * @property {string} supplierName - The business name of the supplier.
+ * @property {number} price - The price offered by the supplier.
+ * @property {'pending' | 'accepted' | 'rejected'} status - The status of the proposal.
+ * @property {Timestamp} createdAt - The timestamp of when the proposal was created.
+ */
 export type Proposal = {
     id: string;
     supplierId: string;
