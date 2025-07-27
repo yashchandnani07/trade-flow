@@ -41,6 +41,7 @@ const vendorNavItems = [
     { href: "/dashboard#stock", icon: Boxes, label: "My Stock" },
     { href: "/supplier", icon: Users, label: "Suppliers" },
     { href: "/supplier/review", icon: MessageSquare, label: "Leave a Review" },
+    { href: "/bidding", icon: Gavel, label: "Bidding" },
 ];
 
 const supplierNavItems = [
@@ -98,7 +99,7 @@ export function AppSidebar() {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href.split('#')[0]}
+                isActive={pathname.startsWith(item.href.split('#')[0])}
                 tooltip={{ children: item.label, className:"dark:bg-popover dark:text-popover-foreground" }}
                 className="light:text-white/80 light:hover:text-white light:data-[active=true]:bg-glass-active light:data-[active=true]:text-white transition-all transform nav-link-shine"
               >

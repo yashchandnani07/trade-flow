@@ -21,56 +21,54 @@ service cloud.firestore {
       allow read, update, delete: if request.auth.uid == resource.data.ownerId;
     }
     
+    // Diary entries can only be accessed by their owner.
+    match /diaryEntries/{entryId} {
+      allow read, write, delete: if request.auth.uid == resource.data.ownerId;
+    }
+    
     // Orders can be managed by either the vendor or the supplier involved
     match /orders/{orderId} {
         allow read, write: if request.auth.uid == resource.data.vendorId || request.auth.uid == resource.data.supplierId;
     }
 
-    // Reviews can be read by anyone, but only created by the authenticated vendor
+    // Reviews can be read by anyone, but only created by the authenticated vendor who has a verified order
     match /reviews/{reviewId} {
         allow read: if request.auth != null;
-        allow create: if request.auth.uid == request.resource.data.vendorId;
-    }
-    
-    match /diaryEntries/{entryId} {
-        allow read, write: if request.auth.uid == resource.data.ownerId;
+        allow create: if request.auth.uid == request.resource.data.vendorId && request.resource.data.verified == true;
     }
 
-    // Bids can be read by any authenticated user
+    // Bids can be read by any authenticated user.
     match /bids/{bidId} {
         allow read: if request.auth != null;
-        // Bids can only be created by the vendor themselves
-        allow create, update: if request.auth.uid == request.resource.data.vendorId;
-        // Bids can only be deleted by the vendor who created them.
-        allow delete: if request.auth.uid == resource.data.vendorId;
+        
+        // Bids can only be created by a user with a 'vendor' role.
+        allow create: if request.auth.uid == request.resource.data.vendorId &&
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'vendor';
+
+        // Only the vendor who created the bid can update or delete it.
+        allow update, delete: if request.auth.uid == resource.data.vendorId;
     }
     
-    // FIXED PROPOSAL RULES:
+    // Rules for proposals on a specific bid.
     match /bids/{bidId}/proposals/{proposalId} {
-        allow read: if request.auth != null;
         
-        // Enhanced proposal creation rules with proper validation:
-        allow create: if 
-            // 1. User must be authenticated
-            request.auth != null &&
-            
-            // 2. The supplierId must match the authenticated user
+        // A user can read a proposal if they are the vendor of the bid OR the supplier who made the proposal.
+        allow read: if request.auth != null && 
+                    (get(/databases/$(database)/documents/bids/$(bidId)).data.vendorId == request.auth.uid ||
+                     resource.data.supplierId == request.auth.uid);
+
+        // A user can create a proposal if they are authenticated, have the 'supplier' role,
+        // and are not the vendor who created the bid.
+        allow create: if request.auth != null &&
             request.auth.uid == request.resource.data.supplierId &&
-            
-            // 3. The user document must exist
-            exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-            
-            // 4. The user must have 'supplier' role
             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'supplier' &&
-            
-            // 5. The supplier cannot bid on their own requirements
-            // (Check that the authenticated user is not the vendor who created the bid)
             request.auth.uid != get(/databases/$(database)/documents/bids/$(bidId)).data.vendorId;
-        
-        // The vendor who owns the bid can update/accept proposals
-        allow update: if 
-            request.auth != null &&
-            get(/databases/$(database)/documents/bids/$(bidId)).data.vendorId == request.auth.uid;
+            
+        // The vendor of the bid can update any proposal (to accept/reject).
+        // A supplier can update their own proposal (to change price, etc., if status is pending).
+        allow update: if request.auth != null &&
+            (get(/databases/$(database)/documents/bids/$(bidId)).data.vendorId == request.auth.uid ||
+             (request.auth.uid == resource.data.supplierId && resource.data.status == 'pending'));
     }
   }
 }

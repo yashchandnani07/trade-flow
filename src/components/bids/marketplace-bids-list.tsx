@@ -1,0 +1,313 @@
+
+'use client';
+
+import { useState, useMemo, FormEvent } from 'react';
+import { collection, addDoc, serverTimestamp, query, where, orderBy, doc, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { useCollection, useDocumentData } from 'react-firebase-hooks/firestore';
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
+import type { Bid, Proposal, User } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Gavel, Loader2, Plus, AlertTriangle, CheckCircle, User as UserIcon, Trash2 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { Skeleton } from '../ui/skeleton';
+import { Badge } from '../ui/badge';
+
+function CreateBidDialog() {
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [isOpen, setIsOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [item, setItem] = useState('');
+    const [quantity, setQuantity] = useState('');
+    const [targetPrice, setTargetPrice] = useState('');
+
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        if (!user || !item || !quantity || !targetPrice) {
+            toast({ variant: 'destructive', title: 'Missing Information' });
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            await addDoc(collection(db, 'bids'), {
+                vendorId: user.uid,
+                vendorName: user.businessName,
+                item,
+                quantity: Number(quantity),
+                targetPrice: Number(targetPrice),
+                status: 'open',
+                createdAt: serverTimestamp(),
+            });
+            toast({ title: 'Requirement Posted!', description: 'Your bid is now live on the marketplace.' });
+            setIsOpen(false);
+            setItem(''); setQuantity(''); setTargetPrice('');
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not post your requirement.' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                    <Plus className="mr-2" /> Post New Requirement
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Post a New Requirement</DialogTitle>
+                    <DialogDescription>Detail the item you need and your target price.</DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit}>
+                    <div className="space-y-4 py-4">
+                        <div>
+                            <Label htmlFor="item">Item Name</Label>
+                            <Input id="item" value={item} onChange={(e) => setItem(e.target.value)} required />
+                        </div>
+                        <div>
+                            <Label htmlFor="quantity">Quantity (units)</Label>
+                            <Input id="quantity" type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
+                        </div>
+                        <div>
+                            <Label htmlFor="targetPrice">Target Price ($)</Label>
+                            <Input id="targetPrice" type="number" value={targetPrice} onChange={(e) => setTargetPrice(e.target.value)} required />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 animate-spin" />}
+                            Post Requirement
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function ProposalsList({ bid }: { bid: Bid }) {
+    const proposalsCollection = useMemo(() => collection(db, 'bids', bid.id, 'proposals'), [bid.id]);
+    const proposalsQuery = useMemo(() => query(proposalsCollection, orderBy('createdAt', 'desc')), [proposalsCollection]);
+    const [proposalsSnapshot, loading, error] = useCollection(proposalsQuery);
+    const { toast } = useToast();
+
+    const handleAcceptProposal = async (proposalId: string) => {
+        try {
+            // This needs a transaction in a real app, but for simplicity:
+            const bidRef = doc(db, 'bids', bid.id);
+            const proposalRef = doc(db, 'bids', bid.id, 'proposals', proposalId);
+
+            await updateDoc(bidRef, { status: 'closed', acceptedProposalId: proposalId });
+            await updateDoc(proposalRef, { status: 'accepted' });
+
+            toast({ title: 'Proposal Accepted!', description: 'The supplier has been notified.' });
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not accept the proposal.' });
+        }
+    };
+
+    if (loading) return <Skeleton className="h-20 w-full" />;
+    if (error) return <Alert variant="destructive"><AlertTriangle className="mr-2" />{error.message}</Alert>;
+
+    const proposals = proposalsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Proposal)) || [];
+
+    if (proposals.length === 0) {
+        return <p className="text-sm text-center text-muted-foreground py-4">No proposals yet.</p>;
+    }
+
+    return (
+        <div className="space-y-2">
+            {proposals.map(p => (
+                <div key={p.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                    <div>
+                        <p className="font-semibold">{p.supplierName}</p>
+                        <p className="text-lg font-bold text-primary">${p.price.toFixed(2)}</p>
+                    </div>
+                    {bid.status === 'open' ? (
+                        <Button size="sm" onClick={() => handleAcceptProposal(p.id)} disabled={p.status === 'accepted'}>
+                            {p.status === 'accepted' ? <CheckCircle className="mr-2" /> : null}
+                            {p.status === 'accepted' ? 'Accepted' : 'Accept'}
+                        </Button>
+                    ) : (
+                        <Badge variant={p.id === bid.acceptedProposalId ? 'success' : 'secondary'}>
+                            {p.id === bid.acceptedProposalId ? 'Accepted' : 'Not Selected'}
+                        </Badge>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+}
+
+function BidCard({ bid }: { bid: Bid }) {
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [price, setPrice] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showProposals, setShowProposals] = useState(false);
+
+    const isVendorOwner = user?.uid === bid.vendorId;
+
+    const handleBidSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        if (!user || user.role !== 'supplier' || !price) return;
+        setIsSubmitting(true);
+        try {
+            const proposalData = {
+                supplierId: user.uid,
+                supplierName: user.businessName,
+                price: Number(price),
+                status: 'pending',
+                createdAt: serverTimestamp(),
+            };
+            await addDoc(collection(db, 'bids', bid.id, 'proposals'), proposalData);
+            toast({ title: 'Offer Submitted!', description: `Your bid for ${bid.item} has been placed.` });
+            setPrice('');
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not submit your offer.' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteBid = async () => {
+        if (!window.confirm("Are you sure you want to delete this bid?")) return;
+        try {
+            await deleteDoc(doc(db, 'bids', bid.id));
+            toast({ title: 'Bid Deleted', description: 'Your requirement has been removed from the marketplace.' });
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the bid.' });
+        }
+    };
+
+    return (
+        <Card className="flex flex-col">
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle>{bid.item}</CardTitle>
+                        <CardDescription>
+                            by {bid.vendorName} &bull; {formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true })}
+                        </CardDescription>
+                    </div>
+                     <div className="flex items-center gap-2">
+                        <Badge variant={bid.status === 'open' ? 'success' : 'secondary'} className="capitalize">{bid.status}</Badge>
+                         {isVendorOwner && (
+                            <Button variant="ghost" size="icon" onClick={handleDeleteBid} className="text-destructive h-6 w-6">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent className="flex-grow">
+                <div className="space-y-2 text-sm">
+                    <p><strong>Quantity:</strong> {bid.quantity} units</p>
+                    <p><strong>Target Price:</strong> ${bid.targetPrice.toFixed(2)}</p>
+                </div>
+            </CardContent>
+            <CardFooter className="flex-col items-stretch space-y-4">
+                {user?.role === 'supplier' && bid.status === 'open' && !isVendorOwner && (
+                    <form onSubmit={handleBidSubmit} className="flex gap-2">
+                        <Input
+                            type="number"
+                            placeholder="Your Price"
+                            value={price}
+                            onChange={(e) => setPrice(e.target.value)}
+                            required
+                        />
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="animate-spin" />}
+                            {!isSubmitting && 'Submit Offer'}
+                        </Button>
+                    </form>
+                )}
+                {isVendorOwner && (
+                    <>
+                        <Button variant="outline" onClick={() => setShowProposals(!showProposals)}>
+                            {showProposals ? 'Hide Proposals' : 'View Proposals'}
+                        </Button>
+                        {showProposals && <ProposalsList bid={bid} />}
+                    </>
+                )}
+                 {bid.status === 'closed' && bid.acceptedProposalId && (
+                    <AcceptedProposalInfo bid={bid} />
+                )}
+            </CardFooter>
+        </Card>
+    );
+}
+
+function AcceptedProposalInfo({ bid }: { bid: Bid }) {
+    const proposalRef = useMemo(() => doc(db, 'bids', bid.id, 'proposals', bid.acceptedProposalId!), [bid]);
+    const [proposal, loading, error] = useDocumentData(proposalRef);
+
+    if (loading) return <Skeleton className="h-10 w-full" />;
+    if (error || !proposal) return null;
+    
+    return (
+        <Alert variant="success">
+            <CheckCircle className="h-4 w-4" />
+            <AlertTitle>Proposal Accepted</AlertTitle>
+            <AlertDescription>
+                Accepted from <strong>{proposal.supplierName}</strong> at <strong>${(proposal.price as number).toFixed(2)}</strong>.
+            </AlertDescription>
+        </Alert>
+    );
+}
+
+export function MarketplaceBidsList() {
+    const { user } = useAuth();
+    const bidsCollection = useMemo(() => collection(db, 'bids'), []);
+    const bidsQuery = useMemo(() => query(bidsCollection, orderBy('createdAt', 'desc')), [bidsCollection]);
+    const [bidsSnapshot, loading, error] = useCollection(bidsQuery);
+
+    const bids = bidsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Bid)) || [];
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <div className="space-y-1">
+                    <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2"><Gavel /> Bidding Marketplace</h2>
+                    <p className="text-muted-foreground">
+                        {user?.role === 'vendor' ? 'Post requirements and receive offers from suppliers.' : 'Find requirements and place your offers.'}
+                    </p>
+                </div>
+                {user?.role === 'vendor' && <CreateBidDialog />}
+            </div>
+
+            {loading && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-64" />)}
+                </div>
+            )}
+            {error && <Alert variant="destructive"><AlertTriangle className="mr-2" />{error.message}</Alert>}
+            {!loading && bids.length === 0 && (
+                <Card>
+                    <CardContent className="p-6 text-center text-muted-foreground">
+                        No active requirements in the marketplace.
+                    </CardContent>
+                </Card>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {bids.map(bid => (
+                    <BidCard key={bid.id} bid={bid} />
+                ))}
+            </div>
+        </div>
+    );
+}

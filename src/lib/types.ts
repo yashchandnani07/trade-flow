@@ -74,3 +74,24 @@ export type DiaryEntry = {
   content: string;
   createdAt: Timestamp;
 };
+
+export type Bid = {
+    id: string;
+    vendorId: string;
+    vendorName: string;
+    item: string;
+    quantity: number;
+    targetPrice: number;
+    status: 'open' | 'closed';
+    createdAt: Timestamp;
+    acceptedProposalId?: string;
+};
+
+export type Proposal = {
+    id: string;
+    supplierId: string;
+    supplierName: string;
+    price: number;
+    status: 'pending' | 'accepted' | 'rejected';
+    createdAt: Timestamp;
+};
