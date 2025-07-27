@@ -1,7 +1,6 @@
 
 'use client';
 import KeyMetrics from './components/key-metrics';
-import OrderManagement from './components/order-management';
 import ComplianceStatus from './components/compliance-status';
 import TrustBadges from './components/trust-badges';
 import { useAuth } from '@/hooks/use-auth';
@@ -26,7 +25,6 @@ export default function SupplierDashboardPage() {
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-                <OrderManagement />
                 <section id="stock">
                     <StockBasket />
                 </section>
