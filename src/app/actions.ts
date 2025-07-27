@@ -4,12 +4,11 @@
 import { aiEnhancedAlert, type AiEnhancedAlertInput, type AiEnhancedAlertOutput } from "@/ai/flows/ai-enhanced-alerts";
 import { collection, getDocs, writeBatch, doc, query, where, limit, orderBy, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { mockSuppliers, mockReviews, mockOrders } from "@/lib/data";
 import type { StockItem } from "@/lib/types";
 import { differenceInDays, format } from "date-fns";
 
-async function getExpiringStockAlert(userId: string): Promise<AiEnhancedAlertInput | null> {
-    if (!userId) return null;
+async function getExpiringStockAlerts(userId: string): Promise<AiEnhancedAlertOutput[]> {
+    if (!userId) return [];
 
     const today = new Date();
     const fiveDaysFromNow = new Date();
@@ -25,70 +24,42 @@ async function getExpiringStockAlert(userId: string): Promise<AiEnhancedAlertInp
 
     const querySnapshot = await getDocs(q);
     if (querySnapshot.empty) {
-        return null;
+        return [];
     }
 
-    // Find the item that is expiring soonest from the results.
-    const expiringItemDoc = querySnapshot.docs.reduce((soonest, current) => {
-        return soonest.data().expiryDate.toMillis() < current.data().expiryDate.toMillis() ? soonest : current;
+    const expiringItems = querySnapshot.docs.map(doc => doc.data() as Omit<StockItem, 'id'>);
+
+    // Generate an AI-enhanced alert for each expiring item.
+    const alertPromises = expiringItems.map(item => {
+        const daysLeft = differenceInDays(item.expiryDate.toDate(), today);
+        const dayString = daysLeft <= 1 ? "day" : "days";
+
+        const input: AiEnhancedAlertInput = {
+            eventType: 'Urgent Stock Expiry',
+            eventDetails: `Your stock of ${item.name} (${item.quantity} units) is expiring in ${daysLeft} ${dayString} on ${format(item.expiryDate.toDate(), 'PPP')}.`,
+            userBehaviorData: 'User actively manages stock.',
+            urgency: 'high',
+        };
+        
+        return aiEnhancedAlert(input).catch(error => {
+            console.error("AI Alert Generation Error:", error);
+            // Fallback to a simple message if AI fails for a real alert
+            return {
+              alertTitle: "Urgent Stock Alert",
+              alertMessage: input.eventDetails,
+              priority: 'high' as const,
+            };
+        });
     });
 
-    const expiringItem = expiringItemDoc.data() as Omit<StockItem, 'id'>;
-    const daysLeft = differenceInDays(expiringItem.expiryDate.toDate(), today);
-    const dayString = daysLeft <= 1 ? "day" : "days";
-
-    return {
-        eventType: 'Urgent Stock Expiry',
-        eventDetails: `Your stock of ${expiringItem.name} (${expiringItem.quantity} units) is expiring in ${daysLeft} ${dayString} on ${format(expiringItem.expiryDate.toDate(), 'PPP')}. Consider using it or selling it soon.`,
-        userBehaviorData: 'User actively manages stock.',
-        urgency: 'high',
-    };
+    return Promise.all(alertPromises);
 }
 
 
-export async function generateAlert(userId: string): Promise<AiEnhancedAlertOutput> {
-  // First, check for a real, urgent alert about expiring stock for the specific user.
-  const expiringStockAlert = await getExpiringStockAlert(userId);
-  if (expiringStockAlert) {
-      try {
-          const result = await aiEnhancedAlert(expiringStockAlert);
-          return result;
-      } catch (error) {
-          console.error("AI Alert Generation Error (for stock):", error);
-          // Fallback to a simple message if AI fails for the real alert
-          return {
-              alertTitle: "Urgent Stock Alert",
-              alertMessage: expiringStockAlert.eventDetails,
-              priority: 'high',
-          };
-      }
-  }
-
-  // If no real alerts, generate a random mock alert.
-  const eventTypes = ['Order Shipped', 'New Bid Received', 'Payment Processed', 'Contract expiring soon'];
-  const userBehaviors = ['Frequently checks tracking page', 'Prefers email notifications', 'Has not logged in for a week', 'High-value customer'];
-  const urgencies: Array<"low" | "medium" | "high"> = ['low', 'medium', 'high'];
-
-  const randomElement = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-
-  const mockInput: AiEnhancedAlertInput = {
-    eventType: randomElement(eventTypes),
-    eventDetails: `Order #${Math.floor(Math.random() * 9000) + 1000} for 500 units of widgets.`,
-    userBehaviorData: randomElement(userBehaviors),
-    urgency: randomElement(urgencies),
-  };
-
-  try {
-    const result = await aiEnhancedAlert(mockInput);
-    return result;
-  } catch (error) {
-    console.error("AI Alert Generation Error (for mock):", error);
-    return {
-      alertTitle: "Error: Could Not Generate Alert",
-      alertMessage: "The AI service is currently unavailable. Please try again later.",
-      priority: 'high',
-    };
-  }
+export async function generateAlerts(userId: string): Promise<AiEnhancedAlertOutput[]> {
+  // Check for real, urgent alerts about expiring stock for the specific user.
+  const expiringStockAlerts = await getExpiringStockAlerts(userId);
+  return expiringStockAlerts;
 }
 
 export async function seedDatabase() {

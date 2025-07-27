@@ -1,17 +1,15 @@
 
 "use client";
 
-import React, { useState, useTransition } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect } from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { generateAlert } from "@/app/actions";
-import { Bell, Loader2 } from "lucide-react";
+import { generateAlerts } from "@/app/actions";
+import { Bell, Loader2, PartyPopper } from "lucide-react";
 import type { Alert } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 
 const priorityVariantMap = {
@@ -22,37 +20,25 @@ const priorityVariantMap = {
 
 export function AlertsSection() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [isPending, startTransition] = useTransition();
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
 
-  const handleGenerateAlert = () => {
-    if (!user) {
-        toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: "You must be logged in to generate alerts.",
-        });
-        return;
+  useEffect(() => {
+    if (user) {
+      setIsLoading(true);
+      generateAlerts(user.uid)
+        .then((newAlertsData) => {
+          const newAlerts: Alert[] = newAlertsData.map((alertData) => ({
+            ...alertData,
+            id: Math.random().toString(36).substring(2, 9), // simple unique id
+            read: false,
+          }));
+          setAlerts(newAlerts);
+        })
+        .catch(console.error)
+        .finally(() => setIsLoading(false));
     }
-    startTransition(async () => {
-      const newAlertData = await generateAlert(user.uid);
-      if (newAlertData.alertTitle.includes("Error")) {
-        toast({
-            variant: "destructive",
-            title: "AI Error",
-            description: newAlertData.alertMessage,
-        });
-      } else {
-        const newAlert: Alert = {
-          ...newAlertData,
-          id: Date.now().toString(),
-          read: false,
-        };
-        setAlerts((prevAlerts) => [newAlert, ...prevAlerts]);
-      }
-    });
-  };
+  }, [user]);
 
   return (
     <Card className="h-full flex flex-col glassmorphic">
@@ -62,59 +48,52 @@ export function AlertsSection() {
           <span>AI-Enhanced Alerts</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-grow overflow-hidden">
-        <ScrollArea className="h-[300px] pr-4">
-          {alerts.length === 0 ? (
+      <CardContent className="flex-grow overflow-hidden flex items-center justify-center">
+          {isLoading ? (
             <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-              <Bell className="w-12 h-12 mb-4" />
-              <p className="text-sm">No new alerts.</p>
-              <p className="text-xs">Click the button below to generate one.</p>
+                <Loader2 className="w-10 h-10 animate-spin" />
+                <p className="mt-2">Checking for alerts...</p>
+            </div>
+          ) : alerts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+              <PartyPopper className="w-12 h-12 mb-4 text-green-500" />
+              <p className="font-semibold text-lg">All good!</p>
+              <p className="text-sm">No items are expiring in the next 5 days.</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {alerts.map((alert, index) => (
-                <React.Fragment key={alert.id}>
-                  <div className="flex items-start gap-4">
-                    <div
-                      className={cn(
-                        "w-2 h-2 rounded-full mt-2",
-                        alert.read ? "bg-muted" : "bg-primary"
-                      )}
-                      aria-label={alert.read ? "Read" : "Unread"}
-                    />
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium leading-none">
-                          {alert.alertTitle}
-                        </p>
-                        <Badge variant={priorityVariantMap[alert.priority]}>
-                          {alert.priority}
-                        </Badge>
+             <ScrollArea className="h-[300px] w-full pr-4">
+                <div className="space-y-4">
+                  {alerts.map((alert, index) => (
+                    <React.Fragment key={alert.id}>
+                      <div className="flex items-start gap-4">
+                        <div
+                          className={cn(
+                            "w-2 h-2 rounded-full mt-2",
+                            alert.read ? "bg-muted" : "bg-primary"
+                          )}
+                          aria-label={alert.read ? "Read" : "Unread"}
+                        />
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium leading-none">
+                              {alert.alertTitle}
+                            </p>
+                            <Badge variant={priorityVariantMap[alert.priority]}>
+                              {alert.priority}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {alert.alertMessage}
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {alert.alertMessage}
-                      </p>
-                    </div>
-                  </div>
-                  {index < alerts.length - 1 && <Separator />}
-                </React.Fragment>
-              ))}
-            </div>
+                      {index < alerts.length - 1 && <Separator />}
+                    </React.Fragment>
+                  ))}
+                </div>
+            </ScrollArea>
           )}
-        </ScrollArea>
       </CardContent>
-      <CardFooter>
-        <Button
-          onClick={handleGenerateAlert}
-          disabled={isPending}
-          className="w-full"
-        >
-          {isPending ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : null}
-          Generate New Alert
-        </Button>
-      </CardFooter>
     </Card>
   );
 }
