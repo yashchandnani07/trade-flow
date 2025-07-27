@@ -34,26 +34,17 @@ export function AlertsSection() {
 
     const alertsQuery = useMemo(() => {
         if (!user) return null;
-        // The orderBy clause is removed to prevent the index error.
-        // We will sort the items on the client-side instead.
         return query(
             stockCollection, 
             where("ownerId", "==", user.uid),
-            where("expiryDate", "<=", thirtyDaysFromNow)
+            where("expiryDate", ">=", today),
+            where("expiryDate", "<=", thirtyDaysFromNow),
+            orderBy("expiryDate", "asc")
         );
-    }, [stockCollection, user, thirtyDaysFromNow]);
+    }, [stockCollection, user, today, thirtyDaysFromNow]);
 
-    const [expiringItemsData, loading, error] = useCollectionData(alertsQuery, { idField: 'id' });
+    const [expiringItems, loading, error] = useCollectionData(alertsQuery, { idField: 'id' });
     
-    const validExpiringItems = useMemo(() => {
-        if (!expiringItemsData) return [];
-        // Filter for items that have not yet expired and sort them on the client
-        return (expiringItemsData as StockItem[])
-            .filter(item => (item.expiryDate as Timestamp).toDate() >= today.toDate())
-            .sort((a, b) => (a.expiryDate as Timestamp).toMillis() - (b.expiryDate as Timestamp).toMillis());
-    }, [expiringItemsData, today]);
-
-
     const renderContent = () => {
         if (loading) {
             return <Skeleton className="h-24 w-full" />
@@ -69,7 +60,7 @@ export function AlertsSection() {
             );
         }
 
-        if (validExpiringItems.length === 0) {
+        if (expiringItems && expiringItems.length === 0) {
             return (
                 <Alert variant="default" className="bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400">
                     <CheckCircle className="h-4 w-4 text-green-500" />
@@ -81,7 +72,8 @@ export function AlertsSection() {
 
         return (
             <div className="space-y-3">
-                {validExpiringItems.map(item => {
+                {expiringItems && expiringItems.map(itemData => {
+                    const item = itemData as StockItem;
                     const daysUntilExpiry = differenceInDays(item.expiryDate.toDate(), new Date());
                      let alertVariant: "destructive" | "warning" | "default" = "default";
                      if (daysUntilExpiry <= 7) alertVariant = "warning";
