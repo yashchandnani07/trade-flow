@@ -62,7 +62,7 @@ export function MyBidsList() {
                                         <AlertTriangle className="h-4 w-4" />
                                         <AlertTitle>Error Loading Your Bids</AlertTitle>
                                         <AlertDescription>
-                                            There was a problem fetching your bids. This might be due to a missing Firestore index or a permissions issue.
+                                            There was a problem fetching your bids. If you just created the Firestore index, please wait a few minutes for it to activate.
                                             <pre className="mt-2 p-2 bg-muted rounded-md text-xs whitespace-pre-wrap">{error.message}</pre>
                                         </AlertDescription>
                                     </Alert>
