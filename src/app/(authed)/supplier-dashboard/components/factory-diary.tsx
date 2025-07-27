@@ -50,6 +50,44 @@ export default function FactoryDiary() {
         }
     };
 
+    const renderContent = () => {
+        if (loading) {
+            return <Skeleton className="h-24 w-full" />;
+        }
+        if (error) {
+            return (
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Error Loading Entries</AlertTitle>
+                    <AlertDescription>
+                        There was a problem fetching your diary entries. This might be due to a missing Firestore index or a permissions issue.
+                        <pre className="mt-2 p-2 bg-muted rounded-md text-xs whitespace-pre-wrap">{error.message}</pre>
+                    </AlertDescription>
+                </Alert>
+            );
+        }
+        if (entries && entries.length > 0) {
+            return (
+                <div className="space-y-3">
+                    {entries.map(entryData => {
+                        const entry = entryData as DiaryEntry;
+                        return (
+                            <div key={entry.id} className="text-sm p-3 bg-muted/50 rounded-md">
+                                <p className="text-muted-foreground text-xs mb-1">
+                                    {entry.createdAt ? format(entry.createdAt.toDate(), 'PPP p') : 'Just now'}
+                                </p>
+                                <p className="whitespace-pre-wrap">{entry.content}</p>
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+        return (
+            <p className="text-muted-foreground text-center py-4">No entries yet. Write one below!</p>
+        );
+    };
+
     return (
         <Card className="glassmorphic flex flex-col h-full">
             <CardHeader>
@@ -59,31 +97,7 @@ export default function FactoryDiary() {
                 </CardTitle>
             </CardHeader>
             <CardContent className="flex-grow space-y-4 overflow-y-auto max-h-60">
-                {loading && <Skeleton className="h-24 w-full" />}
-                {error && (
-                    <Alert variant="destructive">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>{error.message}</AlertDescription>
-                    </Alert>
-                )}
-                {!loading && entries && entries.length > 0 ? (
-                    <div className="space-y-3">
-                        {entries.map(entryData => {
-                            const entry = entryData as DiaryEntry;
-                            return (
-                                <div key={entry.id} className="text-sm p-3 bg-muted/50 rounded-md">
-                                    <p className="text-muted-foreground text-xs mb-1">
-                                        {entry.createdAt ? format(entry.createdAt.toDate(), 'PPP p') : 'Just now'}
-                                    </p>
-                                    <p>{entry.content}</p>
-                                </div>
-                            );
-                        })}
-                    </div>
-                ) : (
-                    !loading && <p className="text-muted-foreground text-center py-4">No entries yet. Write one below!</p>
-                )}
+                {renderContent()}
             </CardContent>
             <CardFooter>
                 <form onSubmit={handleSaveEntry} className="w-full space-y-2">
