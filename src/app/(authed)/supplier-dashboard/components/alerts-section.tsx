@@ -34,28 +34,19 @@ export function AlertsSection() {
 
     const alertsQuery = useMemo(() => {
         if (!user) return null;
-        // Sorting is removed from the query to avoid needing the index.
-        // It will be sorted on the client-side.
+        // This query now requires a composite index on (ownerId, expiryDate) in Firestore.
+        // The error message from Firestore in the browser console will provide a direct link to create it.
         return query(
             stockCollection, 
             where("ownerId", "==", user.uid),
             where("expiryDate", ">=", today),
-            where("expiryDate", "<=", thirtyDaysFromNow)
+            where("expiryDate", "<=", thirtyDaysFromNow),
+            orderBy("expiryDate", "asc")
         );
     }, [stockCollection, user, today, thirtyDaysFromNow]);
 
     const [expiringItems, loading, error] = useCollectionData(alertsQuery, { idField: 'id' });
     
-    // Sort the items on the client-side
-    const sortedExpiringItems = useMemo(() => {
-        if (!expiringItems) return [];
-        return [...expiringItems].sort((a, b) => {
-            const dateA = (a.expiryDate as Timestamp).toDate();
-            const dateB = (b.expiryDate as Timestamp).toDate();
-            return dateA.getTime() - dateB.getTime();
-        });
-    }, [expiringItems]);
-
     const renderContent = () => {
         if (loading) {
             return <Skeleton className="h-24 w-full" />
@@ -66,12 +57,15 @@ export function AlertsSection() {
                 <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Error Loading Alerts</AlertTitle>
-                    <AlertDescription>{error.message}</AlertDescription>
+                    <AlertDescription>
+                        Could not load expiring stock alerts. This may be due to missing Firestore indexes. Please check the browser console for a link to create the required index.
+                        <pre className="mt-2 p-2 bg-muted rounded-md text-xs whitespace-pre-wrap">{error.message}</pre>
+                    </AlertDescription>
                 </Alert>
             );
         }
 
-        if (sortedExpiringItems && sortedExpiringItems.length === 0) {
+        if (expiringItems && expiringItems.length === 0) {
             return (
                 <Alert variant="default" className="bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400">
                     <CheckCircle className="h-4 w-4 text-green-500" />
@@ -83,7 +77,7 @@ export function AlertsSection() {
 
         return (
             <div className="space-y-3 max-h-48 overflow-y-auto">
-                {sortedExpiringItems && sortedExpiringItems.map(itemData => {
+                {expiringItems && expiringItems.map(itemData => {
                     const item = itemData as StockItem;
                     const daysUntilExpiry = differenceInDays(item.expiryDate.toDate(), new Date());
                      let alertVariant: "destructive" | "warning" | "default" = "default";
