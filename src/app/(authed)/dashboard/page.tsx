@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { RecentOrders } from "@/components/dashboard/recent-orders";
 import VendorStockBasket from "./components/vendor-stock-basket";
+import { AlertsSection } from "@/components/dashboard/alerts-section";
 
 export default function DashboardPage() {
   const { toast } = useToast();
@@ -51,6 +52,10 @@ export default function DashboardPage() {
 
         <section>
           <OverviewCards />
+        </section>
+
+        <section id="alerts">
+            <AlertsSection />
         </section>
 
         <div className="grid gap-8 lg:grid-cols-1" id="tracking-and-alerts">
