@@ -14,24 +14,23 @@ import { Timestamp } from 'firebase/firestore';
 
 
 export function MyBidsList() {
-    const { user } = useAuth();
-    const { myBids, loading, error } = useBidding();
+    const { myProposals, loading, error } = useBidding();
 
     return (
         <Card className="glassmorphic mb-6">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <List /> My Submitted Bids
+                    <List /> My Submitted Proposals
                 </CardTitle>
-                <CardDescription>A list of all the bids you have submitted.</CardDescription>
+                <CardDescription>A list of all the proposals you have submitted.</CardDescription>
             </CardHeader>
             <CardContent>
                  {error && (
                      <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Error Loading Your Bids</AlertTitle>
+                        <AlertTitle>Error Loading Your Proposals</AlertTitle>
                         <AlertDescription>
-                            There was a problem fetching your bids.
+                            There was a problem fetching your proposals.
                              <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
                         </AlertDescription>
                     </Alert>
@@ -40,7 +39,7 @@ export function MyBidsList() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Item</TableHead>
-                            <TableHead>Your Bid</TableHead>
+                            <TableHead>Your Price</TableHead>
                             <TableHead>Date</TableHead>
                             <TableHead>Status</TableHead>
                         </TableRow>
@@ -55,20 +54,36 @@ export function MyBidsList() {
                             </TableRow>
                         ))}
                         
-                        {!loading && myBids.length > 0 ? (
-                            myBids.map((bid) => {
-                                const createdAtDate = bid.timestamp ? (bid.timestamp as Timestamp).toDate() : new Date();
-                                const uniqueKey = bid.id || `${bid.itemId}-${createdAtDate.getTime()}`;
+                        {!loading && myProposals.length > 0 ? (
+                            myProposals.map((proposal) => {
+                                const bid = proposal.bid;
+                                if (!bid) return null;
+                                const createdAtDate = proposal.createdAt ? (proposal.createdAt as Timestamp).toDate() : new Date();
+                                const uniqueKey = proposal.id || `${proposal.bidId}-${createdAtDate.getTime()}`;
+                                
+                                let status: 'Pending' | 'Accepted' | 'Not Accepted' = 'Pending';
+                                let variant: 'secondary' | 'success' | 'destructive' = 'secondary';
+
+                                if (bid.status === 'closed') {
+                                    if (bid.acceptedProposalId === proposal.id) {
+                                        status = 'Accepted';
+                                        variant = 'success';
+                                    } else {
+                                        status = 'Not Accepted';
+                                        variant = 'destructive';
+                                    }
+                                }
+
                                 return (
                                 <TableRow key={uniqueKey}>
-                                    <TableCell className="font-medium">{bid.itemName}</TableCell>
-                                    <TableCell className="font-bold">${bid.amount.toFixed(2)}</TableCell>
+                                    <TableCell className="font-medium">{bid.item}</TableCell>
+                                    <TableCell className="font-bold">${proposal.price.toFixed(2)}</TableCell>
                                     <TableCell>
                                         {format(createdAtDate, 'PPP')}
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant={bid.status === 'accepted' ? 'success' : 'secondary'} className="capitalize">
-                                            {bid.status}
+                                        <Badge variant={variant} className="capitalize">
+                                            {status}
                                         </Badge>
                                     </TableCell>
                                 </TableRow>
@@ -78,7 +93,7 @@ export function MyBidsList() {
                             !loading && !error && (
                                 <TableRow>
                                     <TableCell colSpan={4} className="h-24 text-center">
-                                        You haven't submitted any bids yet.
+                                        You haven't submitted any proposals yet.
                                     </TableCell>
                                 </TableRow>
                             )

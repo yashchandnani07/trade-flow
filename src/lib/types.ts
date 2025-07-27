@@ -78,26 +78,25 @@ export type DiaryEntry = {
 
 // --- New Bidding System Types ---
 
-export interface MarketplaceItem {
-    id: string;
-    name: string;
-    category: string;
-    currentPrice: number;
-    sellerId: string;
-    sellerName: string;
-    imageUrl: string;
-    aiHint: string;
-}
-
-export type BidStatus = 'active' | 'accepted' | 'rejected' | 'expired';
+export type BidStatus = 'open' | 'closed';
 
 export interface Bid {
     id: string;
-    itemId: string;
-    itemName: string;
+    vendorId: string;
+    vendorName: string;
+    item: string;
+    quantity: number;
+    targetPrice: number;
+    status: BidStatus;
+    createdAt: Timestamp;
+    acceptedProposalId?: string;
+}
+
+export interface Proposal {
+    id: string;
+    bidId: string;
     supplierId: string;
     supplierName: string;
-    amount: number;
-    timestamp: Timestamp;
-    status: BidStatus;
+    price: number;
+    createdAt: Timestamp;
 }

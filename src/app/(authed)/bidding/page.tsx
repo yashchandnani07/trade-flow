@@ -1,7 +1,8 @@
 
 'use client';
 import { useAuth } from "@/hooks/use-auth";
-import { MarketplaceItemsList } from "@/components/bids/marketplace-items-list";
+import { MarketplaceBidsList } from "@/components/bids/marketplace-bids-list";
+import { MyRequirementsList } from "@/components/bids/my-requirements-list";
 import { MyBidsList } from "@/components/bids/my-bids-list";
 
 export default function BiddingPage() {
@@ -9,7 +10,16 @@ export default function BiddingPage() {
 
     return (
         <div className="space-y-8">
-            <MarketplaceItemsList />
+            {user?.role === 'vendor' && (
+                <section id="my-requirements">
+                    <MyRequirementsList />
+                </section>
+            )}
+
+            <section id="marketplace">
+                 <MarketplaceBidsList />
+            </section>
+           
             {user?.role === 'supplier' && (
                 <section id="my-bids">
                     <MyBidsList />
