@@ -57,7 +57,7 @@ export function MyBidsList() {
                     </TableHeader>
                     <TableBody>
                         {loading && [...Array(3)].map((_, i) => (
-                            <TableRow key={i}>
+                            <TableRow key={`my-proposals-skeleton-${i}`}>
                                 <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                                 <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                                 <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
