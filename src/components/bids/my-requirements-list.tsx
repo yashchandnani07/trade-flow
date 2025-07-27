@@ -20,6 +20,7 @@ import { Input } from '../ui/input';
 import React from 'react';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { type Order, type User } from '@/lib/types';
+import { FirebaseError } from 'firebase/app';
 
 function AcceptedProposalInfo({ bid }: { bid: Bid }) {
     const proposalsCollection = useMemo(() => collection(db, 'proposals'), []);
@@ -346,7 +347,7 @@ export function MyRequirementsList() {
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Error Loading Requirements</AlertTitle>
                     <AlertDescription>
-                        There was a problem fetching your requirements. Please check your network connection.
+                        There was a problem fetching your requirements. This can happen due to a network issue or missing database indexes. Please check your connection and try again.
                          <pre className="mt-2 p-2 bg-muted rounded-md text-xs whitespace-pre-wrap">{error.message}</pre>
                     </AlertDescription>
                 </Alert>

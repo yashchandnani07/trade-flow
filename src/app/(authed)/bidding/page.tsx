@@ -8,16 +8,20 @@ import { MyBidsList } from "@/components/bids/my-bids-list";
 export default function BiddingPage() {
     const { user } = useAuth();
 
+    if (user?.role === 'vendor') {
+        return (
+            <div className="space-y-8">
+                <MyRequirementsList />
+                <MarketplaceBidsList />
+                 <MyBidsList />
+            </div>
+        )
+    }
+
     return (
         <div className="space-y-8">
-            {user?.role === 'vendor' ? (
-                <MyRequirementsList />
-            ) : (
-                <>
-                    <MarketplaceBidsList />
-                    <MyBidsList />
-                </>
-            )}
+            <MarketplaceBidsList />
+            <MyBidsList />
         </div>
     );
 }
