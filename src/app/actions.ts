@@ -5,16 +5,18 @@ import { aiEnhancedAlert, type AiEnhancedAlertInput, type AiEnhancedAlertOutput 
 import { collection, getDocs, writeBatch, doc, query, where, limit, orderBy, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { StockItem } from "@/lib/types";
-import { differenceInDays, format } from "date-fns";
+import { differenceInDays, format, startOfDay } from "date-fns";
 
 async function getExpiringStockAlerts(userId: string): Promise<AiEnhancedAlertOutput[]> {
     if (!userId) return [];
 
-    const today = new Date();
-    const fiveDaysFromNow = new Date();
+    const today = startOfDay(new Date()); // Normalize to the beginning of the day
+    const fiveDaysFromNow = new Date(today);
     fiveDaysFromNow.setDate(today.getDate() + 5);
 
     const stockCollection = collection(db, 'stockItems');
+    // This query now correctly checks for items expiring from the start of today
+    // up to the end of the 5th day.
     const q = query(
         stockCollection,
         where("ownerId", "==", userId),
@@ -82,9 +84,9 @@ export async function seedDatabase() {
     }
 
     let seeded = false;
-    seeded = await seedCollection("suppliers", mockSuppliers) || seeded;
-    seeded = await seedCollection("reviews", mockReviews) || seeded;
-    seeded = await seedCollection("orders", mockOrders) || seeded;
+    seeded = await seedCollection("suppliers", []) || seeded;
+    seeded = await seedCollection("reviews", []) || seeded;
+    seeded = await seedCollection("orders", []) || seeded;
 
     if (seeded) {
         await batch.commit();
@@ -122,3 +124,4 @@ export async function checkOrderHistory(vendorId: string, supplierId: string): P
     return { hasCompletedOrder: false };
   }
 }
+
