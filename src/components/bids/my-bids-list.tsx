@@ -32,7 +32,7 @@ export function MyBidsList() {
         <Card className="glassmorphic mb-6">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <List /> My Submitted Bids
+                    <List /> My Submitted Proposals
                 </CardTitle>
                 <CardDescription>A list of all the proposals you have submitted.</CardDescription>
             </CardHeader>
@@ -40,9 +40,9 @@ export function MyBidsList() {
                  {error && (
                      <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Error Loading Your Bids</AlertTitle>
+                        <AlertTitle>Error Loading Your Proposals</AlertTitle>
                         <AlertDescription>
-                            There was a problem fetching your bids. If you just created the Firestore index, please wait a few minutes for it to activate.
+                            There was a problem fetching your proposals. If you just created the Firestore index, please wait a few minutes for it to activate.
                              <pre className="mt-2 p-2 bg-muted rounded-md text-xs">{error.message}</pre>
                         </AlertDescription>
                     </Alert>
@@ -85,7 +85,7 @@ export function MyBidsList() {
                             !loading && !error && (
                                 <TableRow>
                                     <TableCell colSpan={3} className="h-24 text-center">
-                                        You haven't submitted any bids yet.
+                                        You haven't submitted any proposals yet.
                                     </TableCell>
                                 </TableRow>
                             )

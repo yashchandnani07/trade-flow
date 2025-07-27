@@ -68,7 +68,7 @@ function ProposalsList({ bidId }: { bidId: string}) {
                     </div>
                     {bid?.status === 'open' ? (
                         <Button size="sm" onClick={() => handleAcceptProposal(p.id)} disabled={isAccepting === p.id}>
-                            {isAccepting === p.id ? <Loader2 className="mr-2 animate-spin" /> : null}
+                            {isAccepting === p.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             Accept
                         </Button>
                     ) : (
@@ -186,7 +186,7 @@ export function MyRequirementsList() {
 
             {loading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[...Array(3)].map((_, i) => <Skeleton key={`bid-skeleton-${i}`} className="h-64" />)}
+                    {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-64" />)}
                 </div>
             )}
 

@@ -56,10 +56,10 @@ function CreateBidDialog() {
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 <Button>
-                    <Plus className="mr-2" /> Post New Requirement
+                    <Plus className="mr-2 h-4 w-4" /> Post New Requirement
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md bg-glass">
                 <DialogHeader>
                     <DialogTitle>Post a New Requirement</DialogTitle>
                     <DialogDescription>Detail the item you need and your target price.</DialogDescription>
@@ -82,7 +82,7 @@ function CreateBidDialog() {
                     <DialogFooter>
                          <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting && <Loader2 className="mr-2 animate-spin" />}
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Post Requirement
                         </Button>
                     </DialogFooter>
@@ -126,7 +126,7 @@ function ProposalsList({ bidId }: { bidId: string}) {
                     </div>
                     {bid?.status === 'open' ? (
                         <Button size="sm" onClick={() => handleAcceptProposal(p.id)} disabled={isAccepting === p.id}>
-                            {isAccepting === p.id ? <Loader2 className="mr-2 animate-spin" /> : null}
+                            {isAccepting === p.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             Accept
                         </Button>
                     ) : (
@@ -263,10 +263,10 @@ function BidCard({ bid }: { bid: Bid }) {
                     <div className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
                             <Button onClick={handleAccept} disabled={isSubmitting}>
-                                <Handshake className="mr-2" /> Accept
+                                <Handshake className="mr-2 h-4 w-4" /> Accept
                             </Button>
                             <Button variant="secondary" onClick={() => setShowNegotiateForm(!showNegotiateForm)}>
-                                <MessageSquareQuote className="mr-2" /> Negotiate
+                                <MessageSquareQuote className="mr-2 h-4 w-4" /> Negotiate
                             </Button>
                         </div>
                         {showNegotiateForm && (
@@ -280,7 +280,7 @@ function BidCard({ bid }: { bid: Bid }) {
                                     step="0.01"
                                 />
                                 <Button type="submit" disabled={isSubmitting}>
-                                    {isSubmitting ? <Loader2 className="animate-spin" /> : 'Submit'}
+                                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Submit'}
                                 </Button>
                             </form>
                         )}
@@ -331,8 +331,13 @@ export function MarketplaceBidsList() {
     const { bids, loading, error } = useBidding();
     
     const openBids = useMemo(() => {
+        // Show open bids that were NOT created by the current user if they are a supplier
+        if (user?.role === 'supplier') {
+            return bids.filter(bid => bid.status === 'open' && bid.vendorId !== user.uid);
+        }
+        // Show all open bids for vendors (they can't bid on their own anyway)
         return bids.filter(bid => bid.status === 'open');
-    }, [bids]);
+    }, [bids, user]);
 
     return (
         <div className="space-y-6">
@@ -379,5 +384,3 @@ export function MarketplaceBidsList() {
         </div>
     );
 }
-
-    

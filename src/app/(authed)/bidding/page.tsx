@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 export default function BiddingPage() {
     const { user } = useAuth();
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             {user?.role === 'vendor' && <MyRequirementsList />}
             {user?.role === 'supplier' && <MyBidsList />}
             <MarketplaceBidsList />
