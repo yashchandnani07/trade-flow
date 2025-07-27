@@ -309,5 +309,4 @@ export function MarketplaceBidsList() {
             </div>
         </div>
     );
-
-    
+}
