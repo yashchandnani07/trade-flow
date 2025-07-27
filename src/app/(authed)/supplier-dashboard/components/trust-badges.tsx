@@ -2,18 +2,18 @@
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShieldCheck, Clock, Award, PartyPopper, LucideIcon } from 'lucide-react';
+import { ShieldCheck, Clock, Award, Sparkles, LucideIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
 // A mapping from badge names to icons
 const badgeIconMap: Record<string, LucideIcon> = {
-    "Newly Joined": PartyPopper,
+    "Newly Joined": Sparkles,
     "Quality Certified": ShieldCheck,
     "On-Time Delivery": Clock,
     "Top Supplier 2024": Award,
 };
 
-const defaultBadge = { name: "Newly Joined", icon: PartyPopper };
+const defaultBadge = { name: "Newly Joined", icon: Sparkles };
 
 
 export default function TrustBadges() {
