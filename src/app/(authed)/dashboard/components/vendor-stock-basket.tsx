@@ -68,6 +68,31 @@ function DeleteConfirmationDialog({ item, onConfirm, isDeleting }: { item: Stock
     )
 }
 
+function StockTableSkeleton() {
+    return (
+        <>
+            <TableRow>
+                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
+            </TableRow>
+            <TableRow>
+                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
+            </TableRow>
+            <TableRow>
+                <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-36" /></TableCell>
+                <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
+            </TableRow>
+        </>
+    );
+}
+
 
 export default function VendorStockBasket() {
     const { user } = useAuth();
@@ -212,14 +237,7 @@ export default function VendorStockBasket() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {loading && [...Array(3)].map((_, i) => (
-                            <TableRow key={`skeleton-row-${i}`}>
-                                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
-                            </TableRow>
-                        ))}
+                        {loading && <StockTableSkeleton />}
                         {!loading && stockItems && stockItems.length > 0 ? (
                             stockItems.map(itemData => {
                                 const item = itemData as StockItem;
@@ -280,3 +298,5 @@ export default function VendorStockBasket() {
         </Card>
     );
 }
+
+    
