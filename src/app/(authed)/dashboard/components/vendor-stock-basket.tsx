@@ -282,7 +282,3 @@ export default function VendorStockBasket() {
         </Card>
     );
 }
-
-    
-
-    
