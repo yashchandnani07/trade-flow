@@ -33,7 +33,6 @@ export default function VendorStockBasket() {
     const { user } = useAuth();
     const { toast } = useToast();
     
-    // State for the "Add Item" dialog
     const [isOpen, setIsOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [itemName, setItemName] = useState('');
@@ -43,10 +42,23 @@ export default function VendorStockBasket() {
     const stockCollection = useMemo(() => collection(db, 'stockItems'), []);
     const stockQuery = useMemo(() => {
         if (!user) return null;
-        return query(stockCollection, where("ownerId", "==", user.uid), orderBy("expiryDate", "asc"));
+        // The orderBy clause is removed to prevent the index error.
+        // We will sort the items on the client-side instead.
+        return query(stockCollection, where("ownerId", "==", user.uid));
     }, [stockCollection, user]);
 
-    const [stockItems, loading, error] = useCollectionData(stockQuery, { idField: 'id' });
+    const [stockItemsData, loading, error] = useCollectionData(stockQuery, { idField: 'id' });
+
+    // Sort the items on the client-side
+    const stockItems = useMemo(() => {
+        if (!stockItemsData) return [];
+        return [...stockItemsData].sort((a, b) => {
+            const dateA = (a.expiryDate as Timestamp).toMillis();
+            const dateB = (b.expiryDate as Timestamp).toMillis();
+            return dateA - dateB;
+        });
+    }, [stockItemsData]);
+
     
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
