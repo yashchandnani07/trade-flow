@@ -99,7 +99,14 @@ export default function VendorStockBasket() {
             toast({ title: "Item Removed", description: "The stock item has been removed from your basket." });
         } catch (error) {
             console.error("Error deleting item:", error);
-            toast({ variant: 'destructive', title: "Error", description: "Could not remove the item." });
+            const isPermissionError = error instanceof FirebaseError && (error.code === 'permission-denied' || error.code === 'unauthenticated');
+            toast({ 
+                variant: 'destructive', 
+                title: "Deletion Failed", 
+                description: isPermissionError
+                    ? "You do not have permission to delete this item. Please check Firestore rules."
+                    : "Could not remove the item."
+            });
         } finally {
             setDeletingId(null);
         }
