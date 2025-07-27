@@ -285,10 +285,8 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     React.useEffect(() => {
-        if (bid) {
-            setBidAmount(bid.targetPrice);
-        }
-    }, [bid]);
+        setBidAmount(bid.targetPrice);
+    }, [bid.targetPrice]);
 
     const createdAt = bid.createdAt instanceof Timestamp 
         ? formatDistanceToNow(bid.createdAt.toDate(), { addSuffix: true }) 
@@ -297,13 +295,15 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
     const isSupplier = user?.role === 'supplier';
     const isVendorOwner = user?.uid === bid.vendorId;
 
-    const handleBidSubmit = async (amount: number) => {
+    const handleBidSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        
         if (!bid || !bid.id) {
             console.error("Bid information is missing. Received:", bid);
             toast({ variant: 'destructive', title: 'Error', description: 'Cannot place bid. Bid information is missing.' });
             return;
         }
-         if (!user) {
+        if (!user) {
             toast({ variant: 'destructive', title: 'Not Authenticated', description: 'You must be logged in to place a bid.' });
             return;
         }
@@ -316,14 +316,14 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
             await addDoc(proposalsCollection, {
                 supplierId: user.uid,
                 supplierName: businessName,
-                bidAmount: Number(amount),
+                bidAmount: Number(bidAmount),
                 createdAt: serverTimestamp(),
                 status: 'pending',
             });
 
             toast({
                 title: 'Bid Placed Successfully!',
-                description: `Your bid of ?${amount} for ${bid.item} has been submitted.`,
+                description: `Your bid of ?${bidAmount} for ${bid.item} has been submitted.`,
             });
         } catch (error: any) {
              let description = 'There was an error submitting your bid.';
@@ -344,15 +344,21 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
     const adjustBid = (adjustment: number) => {
         setBidAmount(prev => Math.max(0, prev + adjustment));
     };
-
-    const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        handleBidSubmit(bidAmount);
-    }
     
-    const onMatchAndAccept = () => {
+    const onMatchAndAccept = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        const tempForm = document.createElement('form');
+        const tempEvent = new Event('submit', { cancelable: true, bubbles: true });
+        tempForm.addEventListener('submit', (ev) => handleBidSubmit(ev as unknown as FormEvent));
+        
+        // Temporarily set bid amount for submission
+        const originalAmount = bidAmount;
         setBidAmount(bid.targetPrice);
-        handleBidSubmit(bid.targetPrice);
+
+        tempForm.dispatchEvent(tempEvent);
+
+        // Restore original bid amount if needed, though form re-render might handle this
+        setBidAmount(originalAmount);
     }
 
 
@@ -380,7 +386,7 @@ const BidCard = ({ bid, user }: { bid: Bid; user: any }) => {
 
                 {isSupplier && !isVendorOwner && bid.status === 'active' && (
                     <Card className="bg-glass p-4">
-                        <form onSubmit={onFormSubmit}>
+                        <form onSubmit={handleBidSubmit}>
                             <Label className="text-sm font-semibold mb-2 block">Your Offer (?)</Label>
                             <div className="flex items-center gap-2 mb-4">
                                 <Button type="button" variant="outline" size="icon" onClick={() => adjustBid(-100)} disabled={isSubmitting}><Minus className="h-4 w-4" /></Button>
