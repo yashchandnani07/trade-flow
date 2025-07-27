@@ -71,7 +71,7 @@ export default function DashboardPage() {
                 <SupplierReviews />
             </div>
         </div>
-        <section>
+        <section id="stock">
             <VendorStockBasket />
         </section>
     </div>
