@@ -109,7 +109,7 @@ function AddStockDialog() {
 }
 
 
-export default function StockBasket() {
+export default function VendorStockBasket() {
     const { user } = useAuth();
     const { toast } = useToast();
     
@@ -141,7 +141,7 @@ export default function StockBasket() {
             <CardHeader className="flex flex-row items-center justify-between">
                 <div className="space-y-1.5">
                     <CardTitle className="flex items-center gap-2">
-                        <Package /> Stock Basket & Expiry
+                        <Package /> My Stock & Expiry
                     </CardTitle>
                 </div>
                 <AddStockDialog />

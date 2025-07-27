@@ -10,6 +10,7 @@ import { seedDatabase } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { RecentOrders } from "@/components/dashboard/recent-orders";
+import VendorStockBasket from "./components/vendor-stock-basket";
 
 export default function DashboardPage() {
   const { toast } = useToast();
@@ -63,13 +64,16 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid gap-8 lg:grid-cols-5" id="history">
-        <div className="lg:col-span-3">
-            <OrderHistory />
+            <div className="lg:col-span-3">
+                <OrderHistory />
+            </div>
+            <div className="lg:col-span-2" id="reviews">
+                <SupplierReviews />
+            </div>
         </div>
-        <div className="lg:col-span-2" id="reviews">
-            <SupplierReviews />
-        </div>
-        </div>
+        <section>
+            <VendorStockBasket />
+        </section>
     </div>
     );
 }

@@ -103,5 +103,5 @@ export type StockItem = {
     name: string;
     quantity: number;
     expiryDate: Timestamp;
-    supplierId: string;
+    ownerId: string; // Changed from supplierId to be generic
 }
