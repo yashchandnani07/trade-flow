@@ -1,6 +1,5 @@
 
 'use client';
-import { AlertsSection } from "@/components/dashboard/alerts-section";
 import { OrderHistory } from "@/components/dashboard/order-history";
 import { OverviewCards } from "@/components/dashboard/overview-cards";
 import { SupplierReviews } from "@/components/dashboard/supplier-reviews";
@@ -54,12 +53,9 @@ export default function DashboardPage() {
           <OverviewCards />
         </section>
 
-        <div className="grid gap-8 lg:grid-cols-3" id="tracking-and-alerts">
+        <div className="grid gap-8 lg:grid-cols-1" id="tracking-and-alerts">
           <div className="lg:col-span-2">
               <RecentOrders />
-          </div>
-          <div>
-              <AlertsSection />
           </div>
         </div>
 

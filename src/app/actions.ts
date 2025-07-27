@@ -1,66 +1,8 @@
 
 'use server';
 
-import { aiEnhancedAlert, type AiEnhancedAlertInput, type AiEnhancedAlertOutput } from "@/ai/flows/ai-enhanced-alerts";
 import { collection, getDocs, writeBatch, doc, query, where, limit, orderBy, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { StockItem } from "@/lib/types";
-import { differenceInDays, format, startOfDay } from "date-fns";
-
-async function getExpiringStockAlerts(userId: string): Promise<AiEnhancedAlertOutput[]> {
-    if (!userId) return [];
-
-    const today = startOfDay(new Date());
-    const thirtyDaysFromNow = new Date(today);
-    thirtyDaysFromNow.setDate(today.getDate() + 30);
-
-    const stockCollection = collection(db, 'stockItems');
-    const q = query(
-        stockCollection,
-        where("ownerId", "==", userId),
-        where("expiryDate", ">=", Timestamp.fromDate(today)),
-        where("expiryDate", "<=", Timestamp.fromDate(thirtyDaysFromNow))
-    );
-
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) {
-        return [];
-    }
-
-    const expiringItems = querySnapshot.docs.map(doc => doc.data() as Omit<StockItem, 'id'>);
-
-    const alertPromises = expiringItems.map(item => {
-        const daysLeft = differenceInDays(item.expiryDate.toDate(), today);
-        const dayString = daysLeft <= 1 ? "day" : "days";
-
-        const input: AiEnhancedAlertInput = {
-            eventType: 'Stock Expiry Warning',
-            eventDetails: `Your stock of ${item.name} (${item.quantity} units) is expiring in ${daysLeft} ${dayString} on ${format(item.expiryDate.toDate(), 'PPP')}. Please take action.`,
-            userBehaviorData: 'User wants to be alerted about expiring stock to minimize waste.',
-            urgency: 'high',
-        };
-        
-        return aiEnhancedAlert(input).catch(error => {
-            console.error("AI Alert Generation Error:", error);
-            // Fallback to a simple, non-AI alert if the AI service fails.
-            return {
-              alertTitle: "Stock Expiry Warning",
-              alertMessage: `Item nearing expiration: ${item.name} expires on ${format(item.expiryDate.toDate(), 'PPP')}.`,
-              priority: 'high' as const,
-            };
-        });
-    });
-
-    return Promise.all(alertPromises);
-}
-
-
-export async function generateAlerts(userId: string): Promise<AiEnhancedAlertOutput[]> {
-  // This function now ONLY checks for real expiring stock alerts.
-  // It no longer falls back to mock alerts. This ensures the UI
-  // will correctly display the "All good!" message when no items are expiring.
-  return getExpiringStockAlerts(userId);
-}
 
 export async function seedDatabase() {
   try {
@@ -122,4 +64,3 @@ export async function checkOrderHistory(vendorId: string, supplierId: string): P
     return { hasCompletedOrder: false };
   }
 }
-

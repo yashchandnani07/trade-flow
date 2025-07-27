@@ -1,4 +1,5 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/ai-enhanced-alerts.ts';
+// This file is used to register AI flows for development.
+// It will be automatically hot-reloaded when you make changes.
